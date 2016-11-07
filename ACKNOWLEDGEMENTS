@@ -1,0 +1,3 @@
+The XSLT files used to extract the data element tables are a heavily modified
+version of Fleur Kelpin's dicom-tables.xslt available here:
+https://gist.github.com/fdlk/b52ef3af3b150a55314e

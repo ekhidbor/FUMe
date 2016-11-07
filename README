@@ -1,0 +1,45 @@
+FUMe is a C interface for the manipulation of DICOM objects. It is a
+reimplementation of a rather popular proprietary DICOM API but shares
+no code with what will be referred to as the "reference implementation"
+(as FUMe is written in C++ and makes heavy use of C++11 features
+it is highly unlikely the internal designs have much in common).
+
+Though FUMe is written in C++ the external interface is pure C,
+and it should be possible to use the library with a C (not C++)
+compiler. If that does not work, then it is a bug. It may be
+necessary to use a C++ linker to resolve some dynamic C++
+runtime libraries, but this may be resolved by statically
+linking libfume against the C++ runtime. This is not done yet
+because the primary development envrionment (OSX) doesn't have
+a static C++ runtime.
+
+FUMe is intended to be cross-platform (Windows, Mac, Linux) though
+the primary development platform is OSX. However it does require
+a relatively recent version of a C++ compiler as it makes use of
+C++11 features. It also requires a header-only instance of boost
+1.62.0. This can be accomplished by downloading the tarball into
+the extern directory and extracting it.
+
+FUMe also makes use of xsltproc to read in the DocBook versions
+of the DICOM standard to generate data element and IOD definitions
+files. It then makes use of the cheetah template engine to generate
+headers and executable code from those definition files. Consequently
+it should be pretty easy to update FUMe when new versions of the
+standard are released.
+
+FUMe is very much a work in progress. Currently writing files using
+the Explicit Little Endian Transfer Syntax is supported. Message
+validation, network support, DICOMDIR support all need to be done.
+No formal compatability testing with the reference implementation
+has been done. The code is sprinkled pretty liberally with TODOs.
+No one in their right mind would use this for a production anything,
+yet. Hopefully someday.
+
+FUMe is not a medical device, and no one in their right mind would
+use it in one. Hopefully someday it's at that level of quality and
+completeness, but today is not that day.
+
+FUMe is public domain. Anyone can use it for whatever purpose they
+want. I don't care what you do with it. I just wanted to further
+my understanding of the reference implementation specifically and
+DICOM generally
