@@ -11,6 +11,7 @@
 
 // std
 #include <cassert>
+#include <ctime>
 #include <limits>
 #include <memory>
 #include <algorithm>
@@ -38,6 +39,7 @@ using std::unique_ptr;
 using std::all_of;
 using std::pair;
 using std::string;
+using std::default_random_engine;
 
 using boost::bimap;
 using boost::numeric_cast;
@@ -46,14 +48,13 @@ using boost::bad_numeric_cast;
 namespace fume
 {
 
-typedef lock_guard<mutex> library_context_guard_t;
-
 unique_ptr<library_context> g_context;
 
 library_context::library_context()
       // Generate IDs greater than 0
     : m_tag_vr_dict( create_default_tag_vr_dict() ),
       m_transfer_syntax_map( create_transfer_syntax_to_uid_map() ),
+      m_rng( static_cast<default_random_engine::result_type>( clock() ) ),
       m_id_gen( 1, numeric_limits<int>::max() )
 {
 }
@@ -72,7 +73,7 @@ int library_context::create_file_object( const char* filename,
 
     if( filename != nullptr && service_name != nullptr )
     {
-        library_context_guard_t lock(m_mutex);
+        lock_guard<mutex> lock(m_mutex);
         const int id = generate_id();
         // generate_id shall maintain uniqueness, but assert here
         assert( m_data_dictionaries.count( id ) == 0 );
@@ -102,38 +103,7 @@ int library_context::create_file_object( const char* filename,
 // one helper function
 MC_STATUS library_context::free_file_object( int id )
 {
-    MC_STATUS ret = MC_CANNOT_COMPLY;
-
-    // Declare above lock_guard so destructor
-    // runs with library_context unlocked. Need
-    // to do this so data_dictionary elements
-    // containing sequence items don't deadlock
-    data_dictionary_ptr to_free = nullptr;
-
-    library_context_guard_t lock(m_mutex);
-
-    data_dictionary_map::iterator itr( m_data_dictionaries.find( id ) );
-    if( itr != m_data_dictionaries.end() &&
-        dynamic_cast<file_object*>( itr->second.get() ) != nullptr )
-    {
-        // Delete data_dictionary object after mutating
-        // map. data_dictionary elements can contain
-        // data_dictionary elements (SQ VR), so calling
-        // map::erase can be indirectly called from within
-        // map::erase, which is discomforting
-        to_free.swap( itr->second );
-
-        // Now erasing the element won't call the data_dictionary
-        // destructor
-        m_data_dictionaries.erase( itr );
-        ret = MC_NORMAL_COMPLETION;
-    }
-    else
-    {
-        ret = MC_INVALID_FILE_ID;
-    }
-
-    return ret;
+    return free_dictionary_object<file_object>( id, MC_INVALID_FILE_ID );
 }
 
 int library_context::create_item_object( const char* item_name )
@@ -144,7 +114,7 @@ int library_context::create_item_object( const char* item_name )
 
     if( item_name != nullptr )
     {
-        library_context_guard_t lock(m_mutex);
+        lock_guard<mutex> lock(m_mutex);
         const int id = generate_id();
         // generate_id shall maintain uniqueness, but assert here
         assert( m_data_dictionaries.count( id ) == 0 );
@@ -172,43 +142,12 @@ int library_context::create_item_object( const char* item_name )
 
 MC_STATUS library_context::free_item_object( int id )
 {
-    MC_STATUS ret = MC_CANNOT_COMPLY;
-
-    // Declare above lock_guard so destructor
-    // runs with library_context unlocked. Need
-    // to do this so data_dictionary elements
-    // containing sequence items don't deadlock
-    data_dictionary_ptr to_free = nullptr;
-
-    library_context_guard_t lock(m_mutex);
-
-    data_dictionary_map::iterator itr( m_data_dictionaries.find( id ) );
-    if( itr != m_data_dictionaries.end() &&
-        dynamic_cast<item_object*>( itr->second.get() ) != nullptr )
-    {
-        // Delete data_dictionary object after mutating
-        // map. data_dictionary elements can contain
-        // data_dictionary elements (SQ VR), so calling
-        // map::erase can be indirectly called from within
-        // map::erase, which is discomforting
-        to_free.swap( itr->second );
-
-        // Now erasing the element won't call the data_dictionary
-        // destructor
-        m_data_dictionaries.erase( itr );
-        ret = MC_NORMAL_COMPLETION;
-    }
-    else
-    {
-        ret = MC_INVALID_ITEM_ID;
-    }
-
-    return ret;
+    return free_dictionary_object<item_object>( id, MC_INVALID_ITEM_ID );
 }
 
 data_dictionary* library_context::get_object( int id )
 {
-    library_context_guard_t lock(m_mutex);
+    lock_guard<mutex> lock(m_mutex);
 
     data_dictionary_map::const_iterator itr( m_data_dictionaries.find( id ) );
     return itr == m_data_dictionaries.cend() ? nullptr : itr->second.get();
@@ -308,7 +247,7 @@ int library_context::register_application( const char* ae_title )
 
     if( ae_title != nullptr )
     {
-        library_context_guard_t lock(m_mutex);
+        lock_guard<mutex> lock(m_mutex);
 
         // Make sure application with the given AE Title doesn't already
         // exist
@@ -350,11 +289,18 @@ MC_STATUS library_context::release_application( int id )
 {
     MC_STATUS ret = MC_CANNOT_COMPLY;
 
-    library_context_guard_t lock(m_mutex);
+    // Delete application pointer outside of lock scope. No
+    // need to do this except for performance and consistency
+    // with file/message/item freeing logic
+    application_ptr to_free = nullptr;
 
-    application_map::const_iterator itr( m_applications.find( id ) );
+    lock_guard<mutex> lock(m_mutex);
+
+    application_map::iterator itr( m_applications.find( id ) );
     if( itr != m_applications.cend() )
     {
+        to_free.swap( itr->second );
+
         m_applications.erase( itr );
         ret = MC_NORMAL_COMPLETION;
     }
@@ -368,7 +314,7 @@ MC_STATUS library_context::release_application( int id )
 
 application* library_context::get_application( int id )
 {
-    library_context_guard_t lock(m_mutex);
+    lock_guard<mutex> lock(m_mutex);
 
     application_map::const_iterator itr( m_applications.find( id ) );
     return itr == m_applications.cend() ? nullptr : itr->second.get();

@@ -25,6 +25,7 @@
 #include "mcstatus.h"
 
 // local private
+#include "fume/value_representation.h"
 #include "fume/tag_to_vr.h"
 #include "fume/transfer_syntax_to_uid.h"
 
@@ -32,7 +33,6 @@ namespace fume
 {
 
 class data_dictionary;
-class value_representation;
 class application;
 
 class library_context
@@ -88,16 +88,57 @@ private:
 private:
     int generate_id();
 
+    template<class Derived>
+    MC_STATUS free_dictionary_object( int id, MC_STATUS invalid_id_stat );
+
 private:
     data_dictionary_map                m_data_dictionaries;
     application_map                    m_applications;
-    tag_to_vr_map                      m_tag_vr_dict;
-    transfer_syntax_map_t              m_transfer_syntax_map;
+    const tag_to_vr_map                m_tag_vr_dict;
+    const transfer_syntax_map_t        m_transfer_syntax_map;
     std::default_random_engine         m_rng;
     std::uniform_int_distribution<int> m_id_gen;
 
     mutable std::mutex                 m_mutex;
 };
+
+template<class Derived>
+MC_STATUS library_context::free_dictionary_object( int       id,
+                                                   MC_STATUS invalid_id_stat )
+{
+    MC_STATUS ret = MC_CANNOT_COMPLY;
+
+    // Declare above lock_guard so destructor
+    // runs with library_context unlocked. Need
+    // to do this so data_dictionary elements
+    // containing sequence items don't deadlock
+    data_dictionary_ptr to_free = nullptr;
+
+    std::lock_guard<std::mutex> lock(m_mutex);
+
+    data_dictionary_map::iterator itr( m_data_dictionaries.find( id ) );
+    if( itr != m_data_dictionaries.end() &&
+        dynamic_cast<Derived*>( itr->second.get() ) != nullptr )
+    {
+        // Delete data_dictionary object after mutating
+        // map. data_dictionary elements can contain
+        // data_dictionary elements (SQ VR), so calling
+        // map::erase can be indirectly called from within
+        // map::erase, which is discomforting
+        to_free.swap( itr->second );
+
+        // Now erasing the element won't call the data_dictionary
+        // destructor
+        m_data_dictionaries.erase( itr );
+        ret = MC_NORMAL_COMPLETION;
+    }
+    else
+    {
+        ret = invalid_id_stat;
+    }
+
+    return ret;
+}
 
 extern std::unique_ptr<library_context> g_context;
 
