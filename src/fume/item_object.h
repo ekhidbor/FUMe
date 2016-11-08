@@ -42,6 +42,10 @@ public:
     {
         return MC_INVALID_MESSAGE_ID;
     }
+
+// serializable
+public:
+    virtual MC_STATUS to_stream( tx_stream& stream ) const override final;
 };
 
 }

@@ -38,36 +38,6 @@ static MC_STATUS write_element_length( tx_stream& stream, bool empty )
     return stream.write_val( size );
 }
 
-static MC_STATUS write_item_tag( tx_stream& stream )
-{
-    MC_STATUS ret = stream.write_tag( 0xFFFEE000u );
-    if( ret == MC_NORMAL_COMPLETION )
-    {
-        ret = stream.write_val( static_cast<uint32_t>( 0xFFFFFFFFu ) );
-    }
-    else
-    {
-        // Do nothing. Will return error from write_vr
-    }
-
-    return ret;
-}
-
-static MC_STATUS write_item_delimitation( tx_stream& stream )
-{
-    MC_STATUS ret = stream.write_tag( 0xFFFEE00Du );
-    if( ret == MC_NORMAL_COMPLETION )
-    {
-        ret = stream.write_val( static_cast<uint32_t>( 0x00000000u ) );
-    }
-    else
-    {
-        // Do nothing. Will return error from write_vr
-    }
-
-    return ret;
-}
-
 static MC_STATUS write_sequence_delimitation( tx_stream& stream )
 {
     MC_STATUS ret = stream.write_tag( 0xFFFEE0DDu );
@@ -94,23 +64,7 @@ static MC_STATUS write_item( tx_stream& stream, int id )
         dynamic_cast<item_object*>( g_context->get_object( id ) );
     if( item != nullptr )
     {
-        ret = write_item_tag( stream );
-        if( ret == MC_NORMAL_COMPLETION )
-        {
-            ret = item->to_stream( stream );
-            if( ret == MC_NORMAL_COMPLETION )
-            {
-                ret = write_item_delimitation( stream );
-            }
-            else
-            {
-                // Do nothing. Will return error from to_stream
-            }
-        }
-        else
-        {
-            // Do nothing. Will return error from write_item_tag
-        }
+        ret = item->to_stream( stream );
     }
     else
     {
