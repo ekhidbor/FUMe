@@ -26,6 +26,7 @@
 #include "fume/value_representation.h"
 #include "fume/tx_stream.h"
 #include "fume/callback_vr_io.h"
+#include "fume/vr_factory.h"
 
 using std::numeric_limits;
 using std::for_each;
@@ -95,13 +96,30 @@ value_representation& data_dictionary::operator[]( unsigned long id )
     assert( check_tag( id ) == MC_NORMAL_COMPLETION );
 
     // check_tag verifies tag is a valid 32-bit unsigned integer
-    unique_vr_ptr& ret( m_value_dict[static_cast<uint32_t>(id)] );
+    const uint32_t id_u32 = static_cast<uint32_t>(id);
+    unique_vr_ptr& ret( m_value_dict[id_u32] );
     // If value was just created or was empty, create a new one
     if( ret == nullptr )
     {
-        // Caller should have already enforced this
-        assert( g_context != nullptr );
-        ret = g_context->create_vr( id, this );
+        nonstandard_vr_dict::const_iterator ns_itr =
+            m_nonstandard_vr_dict.find( id_u32 );
+        // If this is a "nonstandard" tag
+        if( ns_itr != m_nonstandard_vr_dict.cend() )
+        {
+            // Create a VR based on the contents of the nonstandard
+            // map, allowing any number of values
+            ret = create_vr( ns_itr->second,
+                             1,
+                             numeric_limits<unsigned short>::max(),
+                             1 );
+        }
+        else
+        {
+            // Caller should have already enforced this
+            assert( g_context != nullptr );
+            // Otherwise create a VR using the global tag -> VR table
+            ret = g_context->create_vr( id, this );
+        }
     }
     else
     {
@@ -275,6 +293,7 @@ MC_STATUS data_dictionary::add_standard_attribute( unsigned long id )
                 // add_standard_attribute adds a "placeholder" attribute.
                 // It does not add a zero-length attribute.
                 m_value_dict[idu32] = nullptr;
+                ret = MC_NORMAL_COMPLETION;
             }
             else
             {
@@ -289,6 +308,58 @@ MC_STATUS data_dictionary::add_standard_attribute( unsigned long id )
     catch( const bad_numeric_cast& )
     {
         ret = MC_INVALID_TAG;
+    }
+
+    return ret;
+}
+
+MC_STATUS data_dictionary::add_nonstandard_attribute( unsigned long id,
+                                                      MC_VR         vr )
+{
+    MC_STATUS ret = MC_CANNOT_COMPLY;
+
+    if( vr_is_valid( vr ) == true )
+    {
+        try
+        {
+            const uint32_t idu32 = numeric_cast<uint32_t>( id );
+            // Make sure there isn't already a "placeholder" with this tag
+            // in the value map and the nonstandard VR map
+            if( m_value_dict.count( idu32 ) == 0 &&
+                m_nonstandard_vr_dict.count( idu32 ) == 0 )
+            {
+                // should not be possible for this to be NULL
+                assert( g_context != nullptr );
+
+                MC_VR preexisting_vr = UNKNOWN_VR;
+                ret = g_context->get_vr_type( id, this, preexisting_vr );
+                // If the tag was not found in the main data dictionary
+                if( ret != MC_NORMAL_COMPLETION )
+                {
+                    // Add the tag to the nonstandard map
+                    m_nonstandard_vr_dict[idu32] = vr;
+                    // And add a "placeholder" attribute
+                    m_value_dict[idu32] = nullptr;
+                    ret = MC_NORMAL_COMPLETION;
+                }
+                else
+                {
+                    ret = MC_INVALID_TAG;
+                }
+            }
+            else
+            {
+                ret = MC_TAG_ALREADY_EXISTS;
+            }
+        }
+        catch( const bad_numeric_cast& )
+        {
+            ret = MC_INVALID_TAG;
+        }
+    }
+    else
+    {
+        ret = MC_INVALID_VR_CODE;
     }
 
     return ret;
@@ -322,7 +393,7 @@ MC_STATUS data_dictionary::write_values( tx_stream&                 stream,
     // should never happen
     assert( g_context != nullptr );
 
-    const application* app = g_context->get_application( m_application_id );
+    const application* const app = g_context->get_application( m_application_id );
 
     for( value_dict::const_iterator itr = begin;
          itr != end && ret == MC_NORMAL_COMPLETION;
@@ -344,7 +415,7 @@ MC_STATUS data_dictionary::write_values( tx_stream&                 stream,
                 {
                     MC_VR tag_vr = UNKNOWN_VR;
 
-                    ret = g_context->get_vr_type( itr->first, this, tag_vr );
+                    ret = get_vr_type( itr->first, tag_vr );
                     if( ret == MC_NORMAL_COMPLETION )
                     {
                         ret = stream.write_vr( tag_vr );
@@ -401,6 +472,39 @@ MC_STATUS data_dictionary::write_values( tx_stream&                 stream,
             // in the message" provided there also is not a Callback Function
             // registered for that tag. So do nothing
         }
+    }
+
+    return ret;
+}
+
+MC_STATUS data_dictionary::get_vr_type( uint32_t tag, MC_VR& type ) const
+{
+    MC_STATUS ret = MC_CANNOT_COMPLY;
+
+    // Check the nonstandard VR map first
+    const nonstandard_vr_dict::const_iterator itr =
+        m_nonstandard_vr_dict.find( tag );
+    if( itr == m_nonstandard_vr_dict.cend() )
+    {
+        // Should never happen
+        assert( g_context != nullptr );
+
+        MC_VR global_vr = UNKNOWN_VR;
+        ret = g_context->get_vr_type( tag, this, global_vr );
+        if( ret == MC_NORMAL_COMPLETION )
+        {
+            type = global_vr;
+            ret = MC_NORMAL_COMPLETION;
+        }
+        else
+        {
+            // Do nothing. Will return error from get_vr_type
+        }
+    }
+    else
+    {
+        type = itr->second;
+        ret = MC_NORMAL_COMPLETION;
     }
 
     return ret;

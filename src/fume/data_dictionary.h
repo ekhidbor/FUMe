@@ -55,6 +55,7 @@ public:
     MC_STATUS delete_range( unsigned long first_id, unsigned long last_id );
 
     MC_STATUS add_standard_attribute( unsigned long id );
+    MC_STATUS add_nonstandard_attribute( unsigned long id, MC_VR vr );
 
     bool created_empty() const
     {
@@ -107,15 +108,14 @@ protected:
     const_value_range get_value_range( uint32_t begin_id, uint32_t end_id ) const;
     value_range get_value_range( uint32_t begin_id, uint32_t end_id );
 
-protected:
-    
-
 private:
     typedef std::unordered_map<uint32_t, MC_VR> nonstandard_vr_dict;
 
 private:
     data_dictionary( const data_dictionary& );
     data_dictionary& operator=( const data_dictionary& );
+
+    MC_STATUS get_vr_type( uint32_t tag, MC_VR& type ) const;
 
 private:
     value_dict          m_value_dict;

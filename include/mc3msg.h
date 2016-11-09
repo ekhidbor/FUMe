@@ -758,8 +758,12 @@ MCEXPORT MC_STATUS MC_Delete_Range( int           MsgFileItemID,
                                     unsigned long FirstTag,
                                     unsigned long LastTag );
 
-MCEXPORT MC_STATUS MC_Add_Standard_Attribute( int MsgFileItemID,
+MCEXPORT MC_STATUS MC_Add_Standard_Attribute( int           MsgFileItemID,
                                               unsigned long tag );
+
+MCEXPORT MC_STATUS MC_Add_Nonstandard_Attribute( int           MsgFileItemID,
+                                                 unsigned long Tag,
+                                                 MC_VR         ValueRep );
 
 #ifndef _WIN32
 MCEXPORT void MC_List_Item ( int ItemID, FILE* StreamHandle );

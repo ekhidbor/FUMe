@@ -20,6 +20,7 @@
 
 // local private
 #include "fume/tx_stream.h"
+#include "fume/library_context.h"
 
 using boost::endian::native_to_big;
 using boost::endian::native_to_big_inplace;
@@ -167,7 +168,7 @@ MC_STATUS tx_stream::write_vr( MC_VR vr )
 {
     MC_STATUS ret = MC_CANNOT_COMPLY;
 
-    if( vr >= AE && vr <= OL )
+    if( vr_is_valid( vr ) == true )
     {
         const vr_field& field( VR_FIELDS[vr] );
         ret = write( field.field, field.size );
