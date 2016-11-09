@@ -18,7 +18,7 @@
 // local private
 #include "fume/library_context.h"
 
- using fume::g_context;
+using fume::g_context;
 
 MC_STATUS MC_Open_Item( int* ItemIDPtr, const char* ItemName )
 {
