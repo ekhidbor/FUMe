@@ -241,16 +241,17 @@ MC_STATUS data_dictionary::add_standard_attribute( unsigned long id )
             // should not be possible for this to be NULL
             assert( g_context != nullptr );
 
-            unique_vr_ptr ptr( g_context->create_vr( id, this ) );
-            if( ptr != nullptr )
+            MC_VR id_vr = UNKNOWN_VR;
+            ret = g_context->get_vr_type( id, this, id_vr );
+            if( ret == MC_NORMAL_COMPLETION )
             {
-                // Assign NULL element
-                m_value_dict[idu32].swap( ptr );
-                ret = MC_NORMAL_COMPLETION;
+                // add_standard_attribute adds a "placeholder" attribute.
+                // It does not add a zero-length attribute.
+                m_value_dict[idu32] = nullptr;
             }
             else
             {
-                ret = MC_INVALID_TAG;
+                // Do nothing will return error from get_vr_type
             }
         }
         else
@@ -298,59 +299,78 @@ MC_STATUS data_dictionary::to_stream( tx_stream& stream ) const
          itr != m_value_dict.cend() && ret == MC_NORMAL_COMPLETION;
          ++itr )
     {
-        // a NULL value_representation pointer is defined as "not present
-        // in the message"
-        if( itr->second != nullptr )
+        callback_parms_t callback =
+            app != nullptr ? app->get_callback_function( itr->first ) :
+                             callback_parms_t( nullptr, nullptr );
+
+        // Write an element if there is a Callback Function registered
+        // for this tag or if there is a value written to it
+        if( callback.first != nullptr || itr->second != nullptr )
         {
             // Write the tag number
             ret = stream.write_tag( itr->first );
             if( ret == MC_NORMAL_COMPLETION )
             {
-                // data_dictionary writes the VR. Techically the
-                // value_representation class could do this, but writing it
-                // here keeps symmetry between to_stream and from_stream
-                // implementations (since data_dictionary has to read the
-                // vr to be able to create the object). It also makes things
-                // consistent between using the callback function and using
-                // the value_representation.
-                ret = stream.write_vr( itr->second->vr() );
-                if( ret == MC_NORMAL_COMPLETION )
+                if( callback.first != nullptr )
                 {
-                    callback_parms_t callback =
-                        app != nullptr ? app->get_callback_function( itr->first ) :
-                                         callback_parms_t( nullptr, nullptr );
+                    MC_VR tag_vr = UNKNOWN_VR;
 
-                    // TODO: check for NULL VR and differentiate from
-                    // uninitialized VR (Set_Value_To_NULL disables callback)
-                    // Use the callback function if one is defined for this tag
-                    if( callback.first != nullptr )
+                    ret = g_context->get_vr_type( itr->first, this, tag_vr );
+                    if( ret == MC_NORMAL_COMPLETION )
                     {
-                        ret = write_vr_data_from_callback( stream,
-                                                           m_id,
-                                                           itr->first,
-                                                           callback );
+                        ret = stream.write_vr( tag_vr );
+                        if( ret == MC_NORMAL_COMPLETION )
+                        {
+                            ret = write_vr_data_from_callback( stream,
+                                                               m_id,
+                                                               itr->first,
+                                                               callback );
+                        }
+                        else
+                        {
+                            // Do nothing. Will return error from 
+                        }
                     }
-                    // Otherwise use the value_representation object
                     else
                     {
+                        // Do nothing. Will return error from get_vr_type
+                    }
+                }
+                else if( itr->second != nullptr )
+                {
+                    // data_dictionary writes the VR. Techically the
+                    // value_representation class could do this, but writing it
+                    // here keeps symmetry between to_stream and from_stream
+                    // implementations (since data_dictionary has to read the
+                    // vr to be able to create the object). It also makes things
+                    // consistent between using the callback function and using
+                    // the value_representation.
+                    ret = stream.write_vr( itr->second->vr() );
+                    if( ret == MC_NORMAL_COMPLETION )
+                    {
                         ret = itr->second->to_stream( stream );
+                    }
+                    else
+                    {
+                        // Do nothing. Will return error from write_vr
                     }
                 }
                 else
                 {
-                    // Do nothing. Will terminate loop and return error from
-                    // write_vr
+                    // Should be impossible
+                    assert( false );
                 }
             }
             else
             {
-                // Do nothing. Will terminate loop and return error from
-                // write_tag
+                // Do nothing. Will return error from write_tag
             }
         }
         else
         {
-            // Do nothing. Loop to next element
+            // a NULL value_representation pointer is defined as "not present
+            // in the message" provided there also is not a Callback Function
+            // registered for that tag. So do nothing
         }
     }
 
