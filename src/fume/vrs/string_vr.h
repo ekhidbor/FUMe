@@ -264,7 +264,7 @@ public:
     }
 
 protected:
-    virtual MC_STATUS validate_value( const char* val ) const = 0;
+    virtual MC_STATUS validate_value( const std::string& val ) const = 0;
 
     MC_STATUS set( std::string&& val );
     MC_STATUS set_next( std::string&& val );

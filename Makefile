@@ -1,6 +1,7 @@
 CC      = ccache-swig cc
 CXX     = ccache-swig c++
 RM      ?= rm
+RAGEL   ?= ragel
 
 CXXFLAGS  = -std=c++11                  \
             -Wall                       \
@@ -25,9 +26,13 @@ INC_FLAGS = -I./include -I./extern/boost_1_62_0 -I./src
 
 LDLIBS  = 
 
+VALIDATOR_RLS = ${wildcard ragel/*_validator.rl}
+VALIDATOR_CPPS = ${VALIDATOR_RLS:.rl=.cpp}
+
 LIB_CPPS = ${wildcard src/*.cpp}          \
            ${wildcard src/fume/*.cpp}     \
-           ${wildcard src/fume/vrs/*.cpp}
+           ${wildcard src/fume/vrs/*.cpp} \
+           $(VALIDATOR_CPPS)
 
 LIB_OBJS = ${LIB_CPPS:.cpp=.o}
 
@@ -56,6 +61,9 @@ libfume.so: $(LIB_OBJS)
 
 %.o: %.cpp $(INCS)
 	$(CXX) -c $(CXXFLAGS) $(INC_FLAGS) -o $@ $<
+
+%.cpp: %.rl
+	$(RAGEL) -C -G2 -o $@ $<
 
 clean:
 	$(RM) -f $(LIB_OBJS) $(TEST_OBJS) $(DEMO_OBJS) libfume.a libfume.so

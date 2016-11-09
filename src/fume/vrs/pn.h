@@ -21,6 +21,8 @@ namespace fume
 namespace vrs
 {
 
+bool validate_pn( const std::string& val );
+
 // Person Name value representation
 // TODO: support for Unicode
 class pn final : public string_vr
@@ -40,7 +42,10 @@ public:
     }
 
 protected:
-    virtual MC_STATUS validate_value( const char* val ) const override final;
+    virtual MC_STATUS validate_value( const std::string& val ) const override final
+    {
+        return validate_pn( val ) ? MC_NORMAL_COMPLETION : MC_INVALID_VALUE_FOR_VR;
+    }
 };
 
 } // namespace vrs

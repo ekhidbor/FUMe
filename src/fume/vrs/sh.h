@@ -21,6 +21,8 @@ namespace fume
 namespace vrs
 {
 
+bool validate_sh( const std::string& val );
+
 // Short String value representation
 // TODO: support for Unicode
 class sh final : public string_vr
@@ -40,7 +42,10 @@ public:
     }
 
 protected:
-    virtual MC_STATUS validate_value( const char* val ) const override final;
+    virtual MC_STATUS validate_value( const std::string& val ) const override final
+    {
+        return validate_sh( val ) ? MC_NORMAL_COMPLETION : MC_INVALID_VALUE_FOR_VR;
+    }
 };
 
 } // namespace vrs

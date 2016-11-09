@@ -12,6 +12,7 @@
  */
 
 // std
+#include <string>
 
 // local private
 #include "fume/vrs/string_vr.h"
@@ -20,6 +21,8 @@ namespace fume
 {
 namespace vrs
 {
+
+bool validate_ae( const std::string& val );
 
 // Application Entity value representation
 class ae final : public string_vr
@@ -39,7 +42,10 @@ public:
     }
 
 protected:
-    virtual MC_STATUS validate_value( const char* val ) const override final;
+    virtual MC_STATUS validate_value( const std::string& val ) const override final
+    {
+        return validate_ae( val ) ? MC_NORMAL_COMPLETION : MC_INVALID_VALUE_FOR_VR;
+    }
 };
 
 } // namespace vrs

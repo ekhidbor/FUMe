@@ -153,7 +153,7 @@ MC_STATUS string_vr::set( string&& val )
     // According to the docs, failing validation doesn't cause the value
     // to not be saved
     // Must validate before push_back
-    MC_STATUS ret = validate_value( val.c_str() );
+    MC_STATUS ret = validate_value( val );
 
     m_values.clear();
     m_current_idx = 0;
@@ -185,7 +185,7 @@ MC_STATUS string_vr::set_next( string&& val )
     if( m_values.size() < numeric_limits<uint16_t>::max() )
     {
         // Validate before push_back
-        ret = validate_value( val.c_str() );
+        ret = validate_value( val );
 
         m_current_idx = 0;
         m_values.push_back( move( val ) );

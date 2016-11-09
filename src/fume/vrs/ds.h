@@ -21,6 +21,8 @@ namespace fume
 namespace vrs
 {
 
+bool validate_ds( const std::string& val );
+
 // Decimal String value representation
 class ds final : public string_vr
 {
@@ -175,7 +177,10 @@ public:
     }
 
 protected:
-    virtual MC_STATUS validate_value( const char* val ) const override final;
+    virtual MC_STATUS validate_value( const std::string& val ) const override final
+    {
+        return validate_ds( val ) ? MC_NORMAL_COMPLETION : MC_INVALID_VALUE_FOR_VR;
+    }
 };
 
 } // namespace vrs

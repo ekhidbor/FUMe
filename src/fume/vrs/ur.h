@@ -21,6 +21,8 @@ namespace fume
 namespace vrs
 {
 
+bool validate_ur( const std::string& val );
+
 // Universal Resource Identifier value representation
 class ur final : public string_vr
 {
@@ -39,7 +41,10 @@ public:
     }
 
 protected:
-    virtual MC_STATUS validate_value( const char* val ) const override final;
+    virtual MC_STATUS validate_value( const std::string& val ) const override final
+    {
+        return validate_ur( val ) ? MC_NORMAL_COMPLETION : MC_INVALID_VALUE_FOR_VR;
+    }
 };
 
 } // namespace vrs
