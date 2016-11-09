@@ -12,6 +12,7 @@
 // std
 #include <cstring>
 #include <cassert>
+#include <algorithm>
 
 // boost
 #include "boost/numeric/conversion/cast.hpp"
@@ -28,6 +29,7 @@
 
 using std::memcpy;
 using std::strncpy;
+using std::find_if;
 
 using boost::numeric_cast;
 using boost::bad_numeric_cast;
@@ -144,7 +146,7 @@ MC_STATUS file_object::write( int               alignment,
         // TODO: fill in Group 2 attributes if not provided
         file_tx_stream stream( m_filename.c_str(), callback, user_info );
 
-        ret = to_stream( stream );
+        ret = write_file( stream );
         if( ret == MC_NORMAL_COMPLETION )
         {
             ret = stream.finalize();
@@ -173,7 +175,7 @@ MC_STATUS file_object::open( void*            user_info,
     return MC_CANNOT_COMPLY;
 }
 
-MC_STATUS file_object::to_stream( tx_stream& stream ) const
+MC_STATUS file_object::write_file( file_tx_stream& stream ) const
 {
     // Write the preamble data
     MC_STATUS ret = stream.write( m_preamble.data(), m_preamble.size() );
@@ -183,8 +185,7 @@ MC_STATUS file_object::to_stream( tx_stream& stream ) const
         ret = stream.write( DICOM_PREFIX, sizeof(DICOM_PREFIX) );
         if( ret == MC_NORMAL_COMPLETION )
         {
-            // Write the data dictionary
-            ret = data_dictionary::to_stream( stream );
+            ret = write_values( stream );
         }
         else
         {
@@ -197,12 +198,6 @@ MC_STATUS file_object::to_stream( tx_stream& stream ) const
     }
 
     return ret;
-}
-
-MC_STATUS file_object::from_stream( rx_stream& stream )
-{
-    // TODO: implement
-    return MC_CANNOT_COMPLY;
 }
 
 MC_STATUS file_object::set_transfer_syntax( TRANSFER_SYNTAX syntax )
@@ -261,6 +256,54 @@ MC_STATUS file_object::get_transfer_syntax( TRANSFER_SYNTAX& syntax ) const
     else
     {
         ret = MC_INVALID_TAG;
+    }
+
+    return ret;
+}
+
+MC_STATUS file_object::write_values( file_tx_stream& stream ) const
+{
+    // Get iterators for all Group 2 attributes.
+    const const_value_range& group2_range( get_value_range( 0x00000000,
+                                                            0x0002FFFFu ) );
+
+    TRANSFER_SYNTAX syntax = INVALID_TRANSFER_SYNTAX;
+    MC_STATUS ret = get_transfer_syntax( syntax );
+    if( ret == MC_NORMAL_COMPLETION )
+    {
+        // Group 2 attributes are always written in Explicit Little Endian
+        // transfer syntax
+        ret = stream.set_transfer_syntax( EXPLICIT_LITTLE_ENDIAN );
+        if( ret == MC_NORMAL_COMPLETION )
+        {
+            MC_STATUS ret = write_values( stream,
+                                          group2_range.first,
+                                          group2_range.second );
+            if( ret == MC_NORMAL_COMPLETION )
+            {
+                ret = stream.set_transfer_syntax( syntax );
+                if( ret == MC_NORMAL_COMPLETION )
+                {
+                    ret = write_values( stream, group2_range.second, end() );
+                }
+                else
+                {
+                    // Do nothing. Will return error from set_transfer_syntax
+                }
+            }
+            else
+            {
+                // Do nothing. Will return error from write_values
+            }
+        }
+        else
+        {
+            // Do nothing. Will return error from set_transfer_syntax
+        }
+    }
+    else
+    {
+        // Do nothing. Will return error from get_transfer_syntax
     }
 
     return ret;

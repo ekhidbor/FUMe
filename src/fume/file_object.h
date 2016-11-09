@@ -26,6 +26,8 @@
 namespace fume
 {
 
+class file_tx_stream;
+
 class file_object final : public data_dictionary
 {
 public:
@@ -51,10 +53,10 @@ public:
     virtual MC_STATUS set_transfer_syntax( TRANSFER_SYNTAX syntax ) override final;
     virtual MC_STATUS get_transfer_syntax( TRANSFER_SYNTAX& syntax ) const override final;
 
-// serializable
-public:
-    virtual MC_STATUS to_stream( tx_stream& stream ) const override final;
-    virtual MC_STATUS from_stream( rx_stream& stream ) override final;
+private:
+    MC_STATUS write_file( file_tx_stream& stream ) const;
+    MC_STATUS write_values( file_tx_stream& stream ) const;
+    using data_dictionary::write_values;
 
 private:
     std::string              m_filename;

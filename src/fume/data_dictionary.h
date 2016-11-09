@@ -16,20 +16,19 @@
 #include <map>
 #include <unordered_map>
 #include <memory>
+#include <utility>
 
 // local public
 #include "mcstatus.h"
 #include "mc3msg.h"
 
-// local private
-#include "fume/serializable.h"
-
 namespace fume
 {
 
 class value_representation;
+class tx_stream;
 
-class data_dictionary : public serializable
+class data_dictionary
 {
 public:
     data_dictionary( int id, bool created_empty );
@@ -67,22 +66,49 @@ public:
     virtual MC_STATUS set_transfer_syntax( TRANSFER_SYNTAX syntax ) = 0;
     virtual MC_STATUS get_transfer_syntax( TRANSFER_SYNTAX& syntax ) const = 0;
 
-// serializable
-public:
-    virtual MC_STATUS to_stream( tx_stream& stream ) const;
-    virtual MC_STATUS from_stream( rx_stream& stream );
-
 protected:
     typedef std::unique_ptr<value_representation> unique_vr_ptr;
     typedef std::map<uint32_t, unique_vr_ptr>     value_dict;
-    typedef value_dict::const_iterator            value_dict_itr;
+    typedef value_dict::const_iterator            value_dict_const_itr;
+    typedef value_dict::iterator                  value_dict_itr;
+    typedef std::pair<value_dict_const_itr,
+                      value_dict_const_itr>       const_value_range;
+    typedef std::pair<value_dict_itr,
+                      value_dict_itr>             value_range;
 
 protected:
     // Used to implement empty_file, empty_item, and empty_message
     void set_all_empty();
 
+    value_dict::iterator begin()
+    {
+        return m_value_dict.begin();
+    }
+
+    value_dict::const_iterator begin() const
+    {
+        return m_value_dict.begin();
+    }
+
+    value_dict::iterator end()
+    {
+        return m_value_dict.end();
+    }
+
+    value_dict::const_iterator end() const
+    {
+        return m_value_dict.end();
+    }
+
+    MC_STATUS write_values( tx_stream&                 stream,
+                            value_dict::const_iterator begin,
+                            value_dict::const_iterator end ) const;
+
+    const_value_range get_value_range( uint32_t begin_id, uint32_t end_id ) const;
+    value_range get_value_range( uint32_t begin_id, uint32_t end_id );
+
 protected:
-    value_dict m_value_dict;
+    
 
 private:
     typedef std::unordered_map<uint32_t, MC_VR> nonstandard_vr_dict;
@@ -92,11 +118,11 @@ private:
     data_dictionary& operator=( const data_dictionary& );
 
 private:
-    int                        m_id;
-    bool                       m_created_empty;
-    nonstandard_vr_dict        m_nonstandard_vr_dict;
-    //value_dict::const_iterator m_value_dict_itr;
-    int                        m_application_id;
+    value_dict          m_value_dict;
+    int                 m_id;
+    bool                m_created_empty;
+    nonstandard_vr_dict m_nonstandard_vr_dict;
+    int                 m_application_id;
 };
 
 } // namespace fume

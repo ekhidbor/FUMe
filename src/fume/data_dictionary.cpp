@@ -198,22 +198,9 @@ MC_STATUS data_dictionary::delete_range( unsigned long first_id,
         {
             const uint32_t first_idu32 = numeric_cast<uint32_t>( first_id );
             const uint32_t last_idu32 = numeric_cast<uint32_t>( last_id );
-            const value_dict::iterator begin =
-                find_if( m_value_dict.begin(),
-                         m_value_dict.end(),
-                         [first_idu32]( const value_dict::value_type& val )
-                         {
-                             return val.first >= first_idu32;
-                         } );
-            const value_dict::iterator end =
-                find_if( begin,
-                         m_value_dict.end(),
-                         [last_idu32]( const value_dict::value_type& val )
-                         {
-                             return val.first > last_idu32;
-                         } );
+            const value_range& range( get_value_range( first_idu32, last_idu32 ) );
 
-            m_value_dict.erase( begin, end );
+            m_value_dict.erase( range.first, range.second );
             ret = MC_NORMAL_COMPLETION;
         }
         catch( const bad_numeric_cast& )
@@ -225,6 +212,46 @@ MC_STATUS data_dictionary::delete_range( unsigned long first_id,
     {
         ret = MC_INVALID_TAG;
     }
+
+    return ret;
+}
+
+data_dictionary::const_value_range
+data_dictionary::get_value_range( uint32_t begin_id, uint32_t end_id ) const
+{
+    const_value_range ret;
+    ret.first = find_if( m_value_dict.begin(),
+                         m_value_dict.end(),
+                         [begin_id]( value_dict::const_reference val )
+                         {
+                             return val.first >= begin_id;
+                         } );
+    ret.second = find_if( ret.first,
+                          m_value_dict.end(),
+                          [end_id]( value_dict::const_reference val )
+                          {
+                              return val.first > end_id;
+                          } );
+
+    return ret;
+}
+
+data_dictionary::value_range
+data_dictionary::get_value_range( uint32_t begin_id, uint32_t end_id )
+{
+    value_range ret;
+    ret.first = find_if( m_value_dict.begin(),
+                         m_value_dict.end(),
+                         [begin_id]( value_dict::const_reference val )
+                         {
+                             return val.first >= begin_id;
+                         } );
+    ret.second = find_if( ret.first,
+                          m_value_dict.end(),
+                          [end_id]( value_dict::const_reference val )
+                          {
+                              return val.first > end_id;
+                          } );
 
     return ret;
 }
@@ -286,7 +313,9 @@ MC_STATUS data_dictionary::set_callbacks( int application_id )
     return ret;
 }
 
-MC_STATUS data_dictionary::to_stream( tx_stream& stream ) const
+MC_STATUS data_dictionary::write_values( tx_stream&                 stream,
+                                         value_dict::const_iterator begin,
+                                         value_dict::const_iterator end ) const
 {
     MC_STATUS ret = MC_NORMAL_COMPLETION;
 
@@ -295,8 +324,8 @@ MC_STATUS data_dictionary::to_stream( tx_stream& stream ) const
 
     const application* app = g_context->get_application( m_application_id );
 
-    for( value_dict::const_iterator itr = m_value_dict.cbegin();
-         itr != m_value_dict.cend() && ret == MC_NORMAL_COMPLETION;
+    for( value_dict::const_iterator itr = begin;
+         itr != end && ret == MC_NORMAL_COMPLETION;
          ++itr )
     {
         callback_parms_t callback =
@@ -375,12 +404,6 @@ MC_STATUS data_dictionary::to_stream( tx_stream& stream ) const
     }
 
     return ret;
-}
-
-MC_STATUS data_dictionary::from_stream( rx_stream& stream )
-{
-    // TODO: implement
-    return MC_CANNOT_COMPLY;
 }
 
 }

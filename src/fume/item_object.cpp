@@ -56,7 +56,7 @@ MC_STATUS item_object::to_stream( tx_stream& stream ) const
     MC_STATUS ret = write_item_tag( stream );
     if( ret == MC_NORMAL_COMPLETION )
     {
-        ret = data_dictionary::to_stream( stream );
+        ret = write_values( stream, begin(), end() );
         if( ret == MC_NORMAL_COMPLETION )
         {
             ret = write_item_delimitation( stream );

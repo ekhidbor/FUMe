@@ -36,6 +36,8 @@ public:
 
     MC_STATUS finalize();
 
+    MC_STATUS set_transfer_syntax( TRANSFER_SYNTAX syntax );
+
 // tx_stream
 public:
     virtual MC_STATUS write( const void* buffer, size_t buffer_bytes ) override final;
@@ -49,6 +51,7 @@ private:
     // Note: the passed in filename must have a lifetime exceeding
     // that of this object
     const std::string& m_filename;
+    TRANSFER_SYNTAX    m_syntax;
     // Callback pointer and user info are owned by caller and
     // not this class
     WriteFileCallback  m_callback;

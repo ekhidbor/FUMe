@@ -19,11 +19,12 @@
 
 // local private
 #include "fume/data_dictionary.h"
+#include "fume/serializable.h"
 
 namespace fume
 {
 
-class item_object final : public data_dictionary
+class item_object final : public data_dictionary, public serializable
 {
 public:
     item_object( int id, bool created_empty )
@@ -46,6 +47,14 @@ public:
 // serializable
 public:
     virtual MC_STATUS to_stream( tx_stream& stream ) const override final;
+    virtual MC_STATUS from_stream( rx_stream& stream ) override final
+    {
+        // TODO: implement
+        return MC_CANNOT_COMPLY;
+    }
+
+protected:
+    using data_dictionary::write_values;
 };
 
 }

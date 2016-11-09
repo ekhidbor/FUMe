@@ -24,6 +24,7 @@ file_tx_stream::file_tx_stream( const string&     filename,
                                 WriteFileCallback callback,
                                 void*             user_info )
     : m_filename( filename ),
+      m_syntax( IMPLICIT_LITTLE_ENDIAN ),
       m_callback( callback ),
       m_user_info( user_info ),
       m_first( true )
@@ -61,8 +62,15 @@ MC_STATUS file_tx_stream::finalize()
 
 TRANSFER_SYNTAX file_tx_stream::transfer_syntax() const
 {
-    // TODO: obtain from data_dictionary
-    return EXPLICIT_LITTLE_ENDIAN;
+    return m_syntax;
+}
+
+MC_STATUS file_tx_stream::set_transfer_syntax( TRANSFER_SYNTAX syntax )
+{
+    // TODO: validate syntax
+    m_syntax = syntax;
+
+    return MC_NORMAL_COMPLETION;
 }
 
 }
