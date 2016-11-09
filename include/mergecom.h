@@ -88,6 +88,8 @@ MCEXPORT MC_STATUS MC_Read_Message( int         AssociationID,
 
 MCEXPORT MC_STATUS MC_Close_Association( int* AssociationID );
 
+MC_STATUS MC_Cleanup_Memory( int Timeout );
+
 #ifdef __cplusplus
 }
 #endif
