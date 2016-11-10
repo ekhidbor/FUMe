@@ -35,6 +35,11 @@ public:
     {
     }
 
+    void empty_item()
+    {
+        return set_all_empty();
+    }
+
     virtual MC_STATUS set_transfer_syntax( TRANSFER_SYNTAX syntax ) override final
     {
         return MC_INVALID_MESSAGE_ID;

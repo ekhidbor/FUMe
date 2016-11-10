@@ -17,12 +17,12 @@
 
 // local private
 #include "fume/library_context.h"
-#include "fume/file_object.h"
+#include "fume/item_object.h"
 
 using fume::g_context;
-using fume::file_object;
+using fume::item_object;
 
-MC_STATUS MC_Empty_File( int FileID )
+MC_STATUS MC_Empty_Item( int ItemID )
 {
     MC_STATUS ret = MC_CANNOT_COMPLY;
 
@@ -30,16 +30,16 @@ MC_STATUS MC_Empty_File( int FileID )
     {
         if( g_context != nullptr )
         {
-            file_object* file =
-                dynamic_cast<file_object*>( g_context->get_object( FileID ) );
-            if( file != nullptr )
+            item_object* item =
+                dynamic_cast<item_object*>( g_context->get_object( ItemID ) );
+            if( item != nullptr )
             {
-                file->empty_file();
+                item->empty_item();
                 ret = MC_NORMAL_COMPLETION;
             }
             else
             {
-                ret = MC_INVALID_FILE_ID;
+                ret = MC_INVALID_ITEM_ID;
             }
         }
         else

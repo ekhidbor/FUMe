@@ -783,6 +783,8 @@ MCEXPORT MC_STATUS MC_Open_Message( int*        MessageIDPtr,
 
 MCEXPORT MC_STATUS MC_Open_Item( int* ItemIDPtr, const char* ItemName );
 
+MCEXPORT MC_STATUS MC_Empty_Item( int ItemID );
+
 MCEXPORT MC_STATUS MC_Validate_Message( int       MessageID,
                                         VAL_ERR** ErrorInfo,
                                         VAL_LEVEL ErrorLevel );
