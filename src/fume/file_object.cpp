@@ -200,6 +200,12 @@ MC_STATUS file_object::write_file( file_tx_stream& stream ) const
     return ret;
 }
 
+void file_object::empty_file()
+{
+    set_all_empty();
+    m_preamble.fill( 0u );
+}
+
 MC_STATUS file_object::set_transfer_syntax( TRANSFER_SYNTAX syntax )
 {
     // Should not be possible

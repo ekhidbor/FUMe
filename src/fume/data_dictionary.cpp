@@ -177,7 +177,7 @@ void data_dictionary::set_all_empty()
 {
     for_each( m_value_dict.begin(),
               m_value_dict.end(),
-              []( value_dict::value_type& val )
+              []( value_dict::reference val )
               {
                   val.second = nullptr;
               } );

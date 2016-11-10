@@ -50,6 +50,8 @@ public:
     MC_STATUS reset_filename( const char* filename );
     MC_STATUS get_filename( char* filename, int filesize ) const;
 
+    void empty_file();
+
     virtual MC_STATUS set_transfer_syntax( TRANSFER_SYNTAX syntax ) override final;
     virtual MC_STATUS get_transfer_syntax( TRANSFER_SYNTAX& syntax ) const override final;
 

@@ -104,6 +104,8 @@ MCEXPORT MC_STATUS MC_Free_File( int* FileID );
 
 MCEXPORT MC_STATUS MC_Set_File_Preamble( int FileID, const char* Preamble );
 
+MCEXPORT MC_STATUS MC_Empty_File( int FileID );
+
 MCEXPORT MC_STATUS MC_Write_File( int               FileID,
                                   int               NumBytes,
                                   void*             UserInfo,
