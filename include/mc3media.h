@@ -117,6 +117,8 @@ MCEXPORT MC_STATUS MC_Validate_File( int       FileID,
                                      VAL_ERR** ErrorInfo,
                                      VAL_LEVEL ErrorLevel );
 
+MCEXPORT MC_STATUS MC_Reset_Filename( int FileID, const char* NewFilename );
+
 MCEXPORT MC_STATUS MC_DDH_Create( const char* FilePath,
                                   const char* FileSetID,
                                   int         TemplateFileID,
