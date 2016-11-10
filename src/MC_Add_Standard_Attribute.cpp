@@ -11,6 +11,9 @@
 
 // std
 
+// boost
+#include "boost/numeric/conversion/cast.hpp"
+
 // local public
 #include "mcstatus.h"
 #include "mc3msg.h"
@@ -18,6 +21,9 @@
 // local private
 #include "fume/library_context.h"
 #include "fume/data_dictionary.h"
+
+using boost::numeric_cast;
+using boost::bad_numeric_cast;
 
 using fume::g_context;
 using fume::data_dictionary;
@@ -33,7 +39,7 @@ MC_STATUS MC_Add_Standard_Attribute( int MsgFileItemID, unsigned long Tag )
             data_dictionary* dict = g_context->get_object( MsgFileItemID );
             if( dict != nullptr )
             {
-                ret = dict->add_standard_attribute( Tag );
+                ret = dict->add_standard_attribute( numeric_cast<uint32_t>( Tag ) );
             }
             else
             {
@@ -44,6 +50,10 @@ MC_STATUS MC_Add_Standard_Attribute( int MsgFileItemID, unsigned long Tag )
         {
             ret = MC_LIBRARY_NOT_INITIALIZED;
         }
+    }
+    catch( const bad_numeric_cast& )
+    {
+        ret = MC_INVALID_TAG;
     }
     catch( ... )
     {

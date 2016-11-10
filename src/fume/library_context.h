@@ -54,20 +54,23 @@ public:
     data_dictionary* get_object( int id );
     // create_vr can optionally take in a data_dictionary object for
     // dictionary-specific VR specializations (eg. pixel data)
+
     std::unique_ptr<value_representation>
-    create_vr( unsigned long          tag,
+    create_vr( uint32_t               tag,
                const data_dictionary* dict ) const;
 
-    MC_STATUS get_vr_type( unsigned long          tag,
+    MC_STATUS get_vr_type( uint32_t               tag,
                            const data_dictionary* dict,
                            MC_VR&                 type ) const;
 
-    MC_STATUS get_vr_info( unsigned long          tag,
+    MC_STATUS get_vr_info( uint32_t               tag,
                            const data_dictionary* dict,
                            MC_VR&                 type,
                            unsigned short&        min_vals,
                            unsigned short&        max_vals,
                            unsigned short&        multiple ) const;
+
+public:
 
     int register_application( const char* ae_title );
     MC_STATUS release_application( int id );

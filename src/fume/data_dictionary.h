@@ -36,26 +36,26 @@ public:
 
     // Make sure the tag can be accessed if modifying
     // the data_dictionary object is allowed
-    MC_STATUS check_tag( unsigned long id );
+    MC_STATUS check_tag( uint32_t tag );
     // Make sure the tag can be accessed without modifying
     // the data_dictionary_object
-    MC_STATUS check_tag_const( unsigned long id) const;
+    MC_STATUS check_tag_const( uint32_t tag ) const;
 
     // TODO: make VR API consistent with the external API (ie. have get/set
     // functions in data_dictionary)
     // Will attempt to create a value_representation if is empty
-    value_representation& operator[]( unsigned long id );
+    value_representation& operator[]( uint32_t tag );
 
     // Will return NULL if the value representation is empty
-    value_representation* at( unsigned long id ) const;
+    value_representation* at( uint32_t tag ) const;
 
-    MC_STATUS set_empty( unsigned long id );
+    MC_STATUS set_empty( uint32_t tag );
 
-    MC_STATUS delete_attribute( unsigned long id );
-    MC_STATUS delete_range( unsigned long first_id, unsigned long last_id );
+    MC_STATUS delete_attribute( uint32_t tag );
+    MC_STATUS delete_range( uint32_t first_tag, uint32_t last_tag );
 
-    MC_STATUS add_standard_attribute( unsigned long id );
-    MC_STATUS add_nonstandard_attribute( unsigned long id, MC_VR vr );
+    MC_STATUS add_standard_attribute( uint32_t tag );
+    MC_STATUS add_nonstandard_attribute( uint32_t tag, MC_VR vr );
 
     bool created_empty() const
     {
@@ -113,8 +113,8 @@ protected:
                             value_dict::const_iterator begin,
                             value_dict::const_iterator end ) const;
 
-    const_value_range get_value_range( uint32_t begin_id, uint32_t end_id ) const;
-    value_range get_value_range( uint32_t begin_id, uint32_t end_id );
+    const_value_range get_value_range( uint32_t begin_tag, uint32_t end_tag ) const;
+    value_range get_value_range( uint32_t begin_tag, uint32_t end_tag );
 
     int application_id() const
     {

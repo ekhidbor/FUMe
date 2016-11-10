@@ -11,6 +11,9 @@
 
 // std
 
+// boost
+#include "boost/numeric/conversion/cast.hpp"
+
 // local public
 #include "mcstatus.h"
 #include "mc3msg.h"
@@ -18,6 +21,9 @@
 // local private
 #include "fume/library_context.h"
 #include "fume/data_dictionary.h"
+
+using boost::numeric_cast;
+using boost::bad_numeric_cast;
 
 using fume::g_context;
 using fume::data_dictionary;
@@ -35,7 +41,8 @@ MC_STATUS MC_Delete_Range( int           MsgFileItemID,
             data_dictionary* dict = g_context->get_object( MsgFileItemID );
             if( dict != nullptr )
             {
-                ret = dict->delete_range( FirstTag, LastTag );
+                ret = dict->delete_range( numeric_cast<uint32_t>( FirstTag ),
+                                          numeric_cast<uint32_t>( LastTag ) );
             }
             else
             {
@@ -46,6 +53,10 @@ MC_STATUS MC_Delete_Range( int           MsgFileItemID,
         {
             ret = MC_LIBRARY_NOT_INITIALIZED;
         }
+    }
+    catch( const bad_numeric_cast& )
+    {
+        ret = MC_INVALID_TAG;
     }
     catch( ... )
     {

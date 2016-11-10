@@ -39,12 +39,12 @@ public:
         return m_ae_title;
     }
 
-    MC_STATUS register_callback_function( unsigned long    tag,
+    MC_STATUS register_callback_function( uint32_t         tag,
                                           CallbackFunction function,
                                           void*            function_context );
-    MC_STATUS release_callback_function( unsigned long tag );
+    MC_STATUS release_callback_function( uint32_t tag );
 
-    callback_parms_t get_callback_function( unsigned long tag ) const;
+    callback_parms_t get_callback_function( uint32_t tag ) const;
 
 private:
     typedef std::unordered_map<uint32_t, callback_parms_t> callback_map_t;

@@ -12,6 +12,9 @@
 // std
 #include <cstring>
 
+// boost
+#include "boost/numeric/conversion/cast.hpp"
+
 // local public
 #include "mcstatus.h"
 #include "mc3msg.h"
@@ -20,6 +23,9 @@
 #include "fume/library_context.h"
 #include "fume/data_dictionary.h"
 #include "fume/value_representation.h"
+
+using boost::numeric_cast;
+using boost::bad_numeric_cast;
 
 using fume::g_context;
 using fume::data_dictionary;
@@ -42,10 +48,11 @@ static MC_STATUS get_next_value( int            msg,
             const data_dictionary* dict = g_context->get_object( msg );
             if( dict != nullptr )
             {
-                ret = dict->check_tag_const( tag );
+                const uint32_t tag_u32 = numeric_cast<uint32_t>( tag );
+                ret = dict->check_tag_const( tag_u32 );
                 if( ret == MC_NORMAL_COMPLETION )
                 {
-                    const value_representation* element = dict->at( tag );
+                    const value_representation* element = dict->at( tag_u32 );
                     if( element != nullptr )
                     {
                         ret = element->get_next( value );
@@ -69,6 +76,10 @@ static MC_STATUS get_next_value( int            msg,
         {
             ret = MC_LIBRARY_NOT_INITIALIZED;
         }
+    }
+    catch( const bad_numeric_cast& )
+    {
+        ret = MC_INVALID_TAG;
     }
     catch( ... )
     {

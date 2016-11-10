@@ -169,7 +169,7 @@ data_dictionary* library_context::get_object( int id )
 }
 
 unique_ptr<value_representation>
-library_context::create_vr( unsigned long          tag,
+library_context::create_vr( uint32_t               tag,
                             const data_dictionary* dict ) const
 {
     unique_vr_ptr_t ret = nullptr;
@@ -196,7 +196,7 @@ library_context::create_vr( unsigned long          tag,
     return ret;
 }
 
-MC_STATUS library_context::get_vr_type( unsigned long          tag,
+MC_STATUS library_context::get_vr_type( uint32_t               tag,
                                         const data_dictionary* dict,
                                         MC_VR&                 type ) const
 {
@@ -207,7 +207,7 @@ MC_STATUS library_context::get_vr_type( unsigned long          tag,
     return get_vr_info( tag, dict, type, min_vals, max_vals, multiple );
 }
 
-MC_STATUS library_context::get_vr_info( unsigned long          tag,
+MC_STATUS library_context::get_vr_info( uint32_t               tag,
                                         const data_dictionary* dict,
                                         MC_VR&                 type,
                                         unsigned short&        min_vals,
@@ -216,37 +216,27 @@ MC_STATUS library_context::get_vr_info( unsigned long          tag,
 {
     MC_STATUS ret = MC_CANNOT_COMPLY;
 
-    try
+    tag_to_vr_map::const_iterator itr = m_tag_vr_dict.find( tag );
+    if( itr != m_tag_vr_dict.cend() )
     {
-        const uint32_t tag_u32 = numeric_cast<uint32_t>( tag );
-
-        unordered_map<uint32_t, tag_vr_packed>::const_iterator itr =
-            m_tag_vr_dict.find( tag_u32 );
-        if( itr != m_tag_vr_dict.cend() )
+        if( dict == nullptr ||
+            get_conditional_tag_vr( tag, *dict, type ) == false )
         {
-            if( dict == nullptr ||
-                get_conditional_tag_vr( tag_u32, *dict, type ) == false )
-            {
-                type = static_cast<MC_VR>( itr->second.vr );
-            }
-            else
-            {
-                // Do nothing. get_conditional_tag_vr provided a value
-                // for actual_vr
-            }
-
-            min_vals = itr->second.min_vals;
-            max_vals = itr->second.max_vals;
-            multiple = itr->second.multiple;
-
-            ret = MC_NORMAL_COMPLETION;
+            type = static_cast<MC_VR>( itr->second.vr );
         }
         else
         {
-            ret = MC_INVALID_TAG;
+            // Do nothing. get_conditional_tag_vr provided a value
+            // for actual_vr
         }
+
+        min_vals = itr->second.min_vals;
+        max_vals = itr->second.max_vals;
+        multiple = itr->second.multiple;
+
+        ret = MC_NORMAL_COMPLETION;
     }
-    catch( const bad_numeric_cast& )
+    else
     {
         ret = MC_INVALID_TAG;
     }

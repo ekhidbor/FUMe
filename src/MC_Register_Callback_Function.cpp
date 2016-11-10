@@ -11,6 +11,9 @@
 
 // std
 
+// boost
+#include "boost/numeric/conversion/cast.hpp"
+
 // local public
 #include "mcstatus.h"
 #include "mergecom.h"
@@ -18,6 +21,9 @@
 // local private
 #include "fume/library_context.h"
 #include "fume/application.h"
+
+using boost::numeric_cast;
+using boost::bad_numeric_cast;
 
 using fume::g_context;
 using fume::application;
@@ -36,7 +42,9 @@ MC_STATUS MC_Register_Callback_Function ( int              ApplicationID,
             application* app = g_context->get_application( ApplicationID );
             if( app != nullptr )
             {
-                ret = app->register_callback_function( Tag, Callback, UserInfo );
+                ret = app->register_callback_function( numeric_cast<uint32_t>( Tag ),
+                                                       Callback,
+                                                       UserInfo );
             }
             else
             {
@@ -47,6 +55,10 @@ MC_STATUS MC_Register_Callback_Function ( int              ApplicationID,
         {
             ret = MC_LIBRARY_NOT_INITIALIZED;
         }
+    }
+    catch( const bad_numeric_cast& )
+    {
+        ret = MC_INVALID_TAG;
     }
     catch( ... )
     {

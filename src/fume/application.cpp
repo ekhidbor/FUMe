@@ -28,68 +28,53 @@ using boost::bad_numeric_cast;
 namespace fume
 {
 
-MC_STATUS application::register_callback_function( unsigned long    tag,
+MC_STATUS application::register_callback_function( uint32_t         tag,
                                                    CallbackFunction function,
                                                    void*            function_context )
 {
     MC_STATUS ret = MC_CANNOT_COMPLY;
 
-    try
+    if( function != nullptr )
     {
-        if( function != nullptr )
-        {
-            assert( g_context != nullptr );
+        assert( g_context != nullptr );
 
-            MC_VR tag_vr = UNKNOWN_VR;
-            ret = g_context->get_vr_type( tag, nullptr, tag_vr );
-            if( ret == MC_NORMAL_COMPLETION )
+        MC_VR tag_vr = UNKNOWN_VR;
+        ret = g_context->get_vr_type( tag, nullptr, tag_vr );
+        if( ret == MC_NORMAL_COMPLETION )
+        {
+            if( tag_vr == OB || tag_vr == OW ||
+                tag_vr == OL || tag_vr == OF || tag_vr == OD )
             {
-                if( tag_vr == OB || tag_vr == OW ||
-                    tag_vr == OL || tag_vr == OF || tag_vr == OD )
-                {
-                    m_callbacks[numeric_cast<uint32_t>( tag )] =
-                        callback_parms_t( function, function_context );
-                    ret = MC_NORMAL_COMPLETION;
-                }
-                else
-                {
-                    ret = MC_INVALID_VALUE_FOR_VR;
-                }
+                m_callbacks[tag] = callback_parms_t( function, function_context );
+                ret = MC_NORMAL_COMPLETION;
             }
             else
             {
-                // Do nothing. Return error from get_vr_type
+                ret = MC_INVALID_VALUE_FOR_VR;
             }
         }
         else
         {
-            ret = MC_NULL_POINTER_PARM;
+            // Do nothing. Return error from get_vr_type
         }
     }
-    catch( const bad_numeric_cast& )
+    else
     {
-        ret = MC_INVALID_TAG;
+        ret = MC_NULL_POINTER_PARM;
     }
 
     return ret;
 }
 
-MC_STATUS application::release_callback_function( unsigned long tag )
+MC_STATUS application::release_callback_function( uint32_t tag )
 {
     MC_STATUS ret = MC_CANNOT_COMPLY;
 
-    try
+    if( m_callbacks.erase( tag ) != 0 )
     {
-        if( m_callbacks.erase( numeric_cast<uint32_t>( tag ) ) != 0 )
-        {
-            ret = MC_NORMAL_COMPLETION;
-        }
-        else
-        {
-            ret = MC_INVALID_TAG;
-        }
+        ret = MC_NORMAL_COMPLETION;
     }
-    catch( const bad_numeric_cast& )
+    else
     {
         ret = MC_INVALID_TAG;
     }
@@ -97,25 +82,16 @@ MC_STATUS application::release_callback_function( unsigned long tag )
     return ret;
 }
 
-callback_parms_t application::get_callback_function( unsigned long tag ) const
+callback_parms_t application::get_callback_function( uint32_t tag ) const
 {
     callback_parms_t ret( nullptr, nullptr );
 
-    try
+    const callback_map_t::const_iterator itr = m_callbacks.find( tag );
+    if( itr != m_callbacks.cend() )
     {
-        const callback_map_t::const_iterator itr =
-            m_callbacks.find( numeric_cast<uint32_t>( tag ) );
-        if( itr != m_callbacks.cend() )
-        {
-            ret = itr->second;
-        }
-        else
-        {
-            ret.first = nullptr;
-            ret.second = nullptr;
-        }
+        ret = itr->second;
     }
-    catch( const bad_numeric_cast& )
+    else
     {
         ret.first = nullptr;
         ret.second = nullptr;
