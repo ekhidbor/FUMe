@@ -103,10 +103,23 @@ protected:
 
     MC_STATUS write_values( tx_stream&                 stream,
                             value_dict::const_iterator begin,
+                            value_dict::const_iterator end ) const
+    {
+        return write_values( stream, m_application_id, begin, end );
+    }
+
+    MC_STATUS write_values( tx_stream&                 stream,
+                            int                        app_id,
+                            value_dict::const_iterator begin,
                             value_dict::const_iterator end ) const;
 
     const_value_range get_value_range( uint32_t begin_id, uint32_t end_id ) const;
     value_range get_value_range( uint32_t begin_id, uint32_t end_id );
+
+    int application_id() const
+    {
+        return m_application_id;
+    }
 
 private:
     typedef std::unordered_map<uint32_t, MC_VR> nonstandard_vr_dict;

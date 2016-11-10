@@ -385,6 +385,7 @@ MC_STATUS data_dictionary::set_callbacks( int application_id )
 }
 
 MC_STATUS data_dictionary::write_values( tx_stream&                 stream,
+                                         int                        app_id,
                                          value_dict::const_iterator begin,
                                          value_dict::const_iterator end ) const
 {
@@ -393,7 +394,7 @@ MC_STATUS data_dictionary::write_values( tx_stream&                 stream,
     // should never happen
     assert( g_context != nullptr );
 
-    const application* const app = g_context->get_application( m_application_id );
+    const application* const app = g_context->get_application( app_id );
 
     for( value_dict::const_iterator itr = begin;
          itr != end && ret == MC_NORMAL_COMPLETION;

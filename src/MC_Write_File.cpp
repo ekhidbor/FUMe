@@ -17,11 +17,9 @@
 
 // local private
 #include "fume/library_context.h"
-#include "fume/data_dictionary.h"
 #include "fume/file_object.h"
 
 using fume::g_context;
-using fume::data_dictionary;
 using fume::file_object;
 
 MC_STATUS MC_Write_File( int               FileID,

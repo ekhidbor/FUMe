@@ -135,7 +135,8 @@ MC_STATUS file_object::get_filename( char* filename, int filesize ) const
     return ret;
 }
 
-MC_STATUS file_object::write( int               alignment,
+MC_STATUS file_object::write( int               app_id,
+                              int               alignment,
                               void*             user_info,
                               WriteFileCallback callback ) const
 {
@@ -146,7 +147,7 @@ MC_STATUS file_object::write( int               alignment,
         // TODO: fill in Group 2 attributes if not provided
         file_tx_stream stream( m_filename.c_str(), callback, user_info );
 
-        ret = write_file( stream );
+        ret = write_file( stream, app_id );
         if( ret == MC_NORMAL_COMPLETION )
         {
             ret = stream.finalize();
@@ -175,7 +176,7 @@ MC_STATUS file_object::open( void*            user_info,
     return MC_CANNOT_COMPLY;
 }
 
-MC_STATUS file_object::write_file( file_tx_stream& stream ) const
+MC_STATUS file_object::write_file( file_tx_stream& stream, int app_id ) const
 {
     // Write the preamble data
     MC_STATUS ret = stream.write( m_preamble.data(), m_preamble.size() );
@@ -185,7 +186,7 @@ MC_STATUS file_object::write_file( file_tx_stream& stream ) const
         ret = stream.write( DICOM_PREFIX, sizeof(DICOM_PREFIX) );
         if( ret == MC_NORMAL_COMPLETION )
         {
-            ret = write_values( stream );
+            ret = write_values( stream, app_id );
         }
         else
         {
@@ -267,7 +268,7 @@ MC_STATUS file_object::get_transfer_syntax( TRANSFER_SYNTAX& syntax ) const
     return ret;
 }
 
-MC_STATUS file_object::write_values( file_tx_stream& stream ) const
+MC_STATUS file_object::write_values( file_tx_stream& stream, int app_id ) const
 {
     // Get iterators for all Group 2 attributes.
     const const_value_range& group2_range( get_value_range( 0x00000000,
@@ -283,6 +284,7 @@ MC_STATUS file_object::write_values( file_tx_stream& stream ) const
         if( ret == MC_NORMAL_COMPLETION )
         {
             MC_STATUS ret = write_values( stream,
+                                          app_id,
                                           group2_range.first,
                                           group2_range.second );
             if( ret == MC_NORMAL_COMPLETION )
@@ -290,7 +292,10 @@ MC_STATUS file_object::write_values( file_tx_stream& stream ) const
                 ret = stream.set_transfer_syntax( syntax );
                 if( ret == MC_NORMAL_COMPLETION )
                 {
-                    ret = write_values( stream, group2_range.second, end() );
+                    ret = write_values( stream,
+                                        app_id,
+                                        group2_range.second,
+                                        end() );
                 }
                 else
                 {

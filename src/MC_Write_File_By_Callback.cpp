@@ -15,7 +15,12 @@
 #include "mcstatus.h"
 #include "mc3media.h"
 
-// local private
+/// local private
+#include "fume/library_context.h"
+#include "fume/file_object.h"
+
+using fume::g_context;
+using fume::file_object;
 
 MC_STATUS MC_Write_File_By_Callback( int               ApplicationID,
                                      int               FileID,
@@ -27,7 +32,26 @@ MC_STATUS MC_Write_File_By_Callback( int               ApplicationID,
 
     try
     {
-        // TODO: implement
+        if( g_context != nullptr )
+        {
+            file_object* file =
+                dynamic_cast<file_object*>( g_context->get_object( FileID ) );
+            if( file != nullptr )
+            {
+                ret = file->write( ApplicationID,
+                                   NumBytes,
+                                   UserInfo,
+                                   YourToMediaFunction );
+            }
+            else
+            {
+                ret = MC_INVALID_FILE_ID;
+            }
+        }
+        else
+        {
+            ret = MC_LIBRARY_NOT_INITIALIZED;
+        }
     }
     catch( ... )
     {
