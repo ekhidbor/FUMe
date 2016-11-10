@@ -87,7 +87,10 @@ MC_STATUS string_vr::to_stream( tx_stream& stream ) const
     MC_STATUS ret = MC_CANNOT_COMPLY;
     // UC, UR, UT are 32-bit length
     const MC_VR this_vr = vr();
-    if( this_vr == UC || this_vr == UR || this_vr == UT )
+    if( this_vr == UC ||
+        this_vr == UR ||
+        this_vr == UT ||
+        stream.transfer_syntax() == IMPLICIT_LITTLE_ENDIAN )
     {
         ret = stream.write_val( value_length_even );
     }

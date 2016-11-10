@@ -22,6 +22,7 @@
 // local private
 #include "fume/callback_vr_io.h"
 #include "fume/tx_stream.h"
+#include "fume/library_context.h"
 
 using boost::numeric_cast;
 using boost::bad_numeric_cast;
@@ -160,6 +161,17 @@ MC_STATUS write_vr_data_from_callback( tx_stream&              stream,
     if( ret == MC_NORMAL_COMPLETION )
     {
         // Write the length
+        // caller should validate the callback function is registered with
+        // a tag with ID of OB, OW, OD, OF, or OL. Therefore the length
+        // will always be 32-bit
+        MC_VR tag_vr = UNKNOWN_VR;
+        assert( g_context != nullptr );
+        assert( g_context->get_vr_type( tag,
+                                        nullptr,
+                                        tag_vr ) == MC_NORMAL_COMPLETION &&
+                (tag_vr == OB || tag_vr == OW ||
+                 tag_vr == OL || tag_vr == OD || tag_vr == OF) );
+
         ret = stream.write_val( vr_length );
         while( ret == MC_NORMAL_COMPLETION && io.is_done() == false )
         {
@@ -186,6 +198,5 @@ MC_STATUS write_vr_data_from_callback( tx_stream&              stream,
 
     return ret;
 }
-
 
 }

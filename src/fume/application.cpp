@@ -15,8 +15,12 @@
 // boost
 #include "boost/numeric/conversion/cast.hpp"
 
+// local public
+#include "mc3msg.h"
+
 // local private
 #include "fume/application.h"
+#include "fume/library_context.h"
 
 using boost::numeric_cast;
 using boost::bad_numeric_cast;
@@ -34,9 +38,28 @@ MC_STATUS application::register_callback_function( unsigned long    tag,
     {
         if( function != nullptr )
         {
-            m_callbacks[numeric_cast<uint32_t>( tag )] =
-                callback_parms_t( function, function_context );
-            ret = MC_NORMAL_COMPLETION;
+            assert( g_context != nullptr );
+
+            MC_VR tag_vr = UNKNOWN_VR;
+            ret = g_context->get_vr_type( tag, nullptr, tag_vr );
+            if( ret == MC_NORMAL_COMPLETION )
+            {
+                if( tag_vr == OB || tag_vr == OW ||
+                    tag_vr == OL || tag_vr == OF || tag_vr == OD )
+                {
+                    m_callbacks[numeric_cast<uint32_t>( tag )] =
+                        callback_parms_t( function, function_context );
+                    ret = MC_NORMAL_COMPLETION;
+                }
+                else
+                {
+                    ret = MC_INVALID_VALUE_FOR_VR;
+                }
+            }
+            else
+            {
+                // Do nothing. Return error from get_vr_type
+            }
         }
         else
         {

@@ -170,8 +170,16 @@ MC_STATUS tx_stream::write_vr( MC_VR vr )
 
     if( vr_is_valid( vr ) == true )
     {
-        const vr_field& field( VR_FIELDS[vr] );
-        ret = write( field.field, field.size );
+        // Don't write transfer syntax if implicit little endian
+        if( transfer_syntax() != IMPLICIT_LITTLE_ENDIAN )
+        {
+            const vr_field& field( VR_FIELDS[vr] );
+            ret = write( field.field, field.size );
+        }
+        else
+        {
+            ret = MC_NORMAL_COMPLETION;
+        }
     }
     else
     {

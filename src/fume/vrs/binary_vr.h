@@ -13,6 +13,7 @@
 
 // std
 #include <cstdint>
+#include <cassert>
 #include <deque>
 #include <algorithm>
 #include <limits>
@@ -404,8 +405,21 @@ private:
 template<class T, MC_VR VR>
 MC_STATUS binary_vr<T, VR>::to_stream( tx_stream& stream ) const
 {
-    MC_STATUS ret =
-        stream.write_val( static_cast<uint16_t>( m_values.size() * sizeof(T) ) );
+    MC_STATUS ret = MC_CANNOT_COMPLY;
+
+    const uint32_t value_size = m_values.size() * sizeof(T);
+    if( stream.transfer_syntax() == IMPLICIT_LITTLE_ENDIAN )
+    {
+        // sizes are always 32-bit for implicit little endian
+        ret = stream.write_val( value_size );
+    }
+    else
+    {
+        // set_next_native ensures size is under 16-bit limit
+        assert( value_size < std::numeric_limits<uint16_t>::max() );
+        ret = stream.write_val( static_cast<uint16_t>( value_size ) );
+    }
+
     if( ret == MC_NORMAL_COMPLETION && m_values.empty() == false )
     {
         for( typename std::deque<T>::const_iterator itr = m_values.cbegin();
@@ -439,7 +453,8 @@ MC_STATUS binary_vr<T, VR>::set_next_native( T val )
 {
     MC_STATUS ret = MC_CANNOT_COMPLY;
 
-    if( m_values.size() < std::numeric_limits<uint16_t>::max() )
+    const size_t size_bytes = m_values.size() * sizeof(T);
+    if( size_bytes < std::numeric_limits<uint16_t>::max() )
     {
         m_current_idx = 0;
         m_values.push_back( val );
