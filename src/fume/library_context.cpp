@@ -70,16 +70,33 @@ int library_context::create_file_object( const char* filename,
     // NOTE: error codes from this function are NEGATIVE because the
     // positive values indicate file IDs returned
     int ret = -MC_CANNOT_COMPLY;
+    if( service_name != nullptr )
+    {
+        // TODO: don't create empty
+        ret = create_empty_file_object( filename );
+    }
+    else
+    {
+        ret = -MC_NULL_POINTER_PARM;
+    }
 
-    if( filename != nullptr && service_name != nullptr )
+    return ret;
+}
+
+int library_context::create_empty_file_object( const char* filename )
+{
+    // NOTE: error codes from this function are NEGATIVE because the
+    // positive values indicate file IDs returned
+    int ret = -MC_CANNOT_COMPLY;
+
+    if( filename != nullptr )
     {
         lock_guard<mutex> lock(m_mutex);
         const int id = generate_id();
         // generate_id shall maintain uniqueness, but assert here
         assert( m_data_dictionaries.count( id ) == 0 );
 
-        // Create file object
-        // TODO: don't create empty
+        // Create empty file object
         data_dictionary_ptr file_obj( new file_object( id, filename, true ) );
 
         // TODO: initialize file object dictionary based on service name/command
@@ -99,8 +116,6 @@ int library_context::create_file_object( const char* filename,
     return ret;
 }
 
-// TODO: implement free_(file|item|message)_object in
-// one helper function
 MC_STATUS library_context::free_file_object( int id )
 {
     return free_dictionary_object<file_object>( id, MC_INVALID_FILE_ID );

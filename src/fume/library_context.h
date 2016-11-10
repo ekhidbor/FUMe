@@ -44,6 +44,8 @@ public:
     int create_file_object( const char* filename,
                             const char* service_name,
                             MC_COMMAND  command );
+    int create_empty_file_object( const char* filename );
+
     MC_STATUS free_file_object( int id );
 
     int create_item_object( const char* item_name );

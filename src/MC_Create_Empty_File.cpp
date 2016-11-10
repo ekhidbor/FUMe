@@ -20,21 +20,16 @@
 
 using fume::g_context;
 
-MC_STATUS MC_Create_File( int*        FileIDPtr,
-                          const char* Filename,
-                          const char* ServiceName,
-                          MC_COMMAND  command )
+MC_STATUS MC_Create_Empty_File( int* FileIDPtr, const char* Filename )
 {
     MC_STATUS ret = MC_CANNOT_COMPLY;
 
     try
     {
-        if( g_context   != nullptr &&
-            FileIDPtr   != nullptr )
+        if( g_context != nullptr &&
+            FileIDPtr != nullptr )
         {
-            const int file_id = g_context->create_file_object( Filename,
-                                                               ServiceName,
-                                                               command );
+            const int file_id = g_context->create_empty_file_object( Filename );
             if( file_id > 0 )
             {
                 *FileIDPtr = file_id;

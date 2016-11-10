@@ -98,6 +98,8 @@ MCEXPORT MC_STATUS MC_Create_File( int*        FileIDPtr,
                                    const char* ServiceName,
                                    MC_COMMAND  command );
 
+MCEXPORT MC_STATUS MC_Create_Empty_File( int* FileIDPtr, const char* Filename );
+
 MCEXPORT MC_STATUS MC_Free_File( int* FileID );
 
 MCEXPORT MC_STATUS MC_Set_File_Preamble( int FileID, const char* Preamble );
