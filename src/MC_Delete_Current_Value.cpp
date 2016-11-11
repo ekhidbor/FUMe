@@ -41,16 +41,15 @@ MC_STATUS MC_Delete_Current_Value( int MsgFileItemID, unsigned long Tag )
             data_dictionary* dict = g_context->get_object( MsgFileItemID );
             if( dict != nullptr )
             {
-                const uint32_t tag_u32 = numeric_cast<uint32_t>( Tag );
-                ret = dict->check_tag( tag_u32 );
-                if( ret == MC_NORMAL_COMPLETION )
+                value_representation* element =
+                    dict->at( numeric_cast<uint32_t>( Tag ) );
+                if( element != nullptr )
                 {
-                    value_representation& element( (*dict)[tag_u32] );
-                    ret = element.delete_current();
+                    ret = element->delete_current();
                 }
                 else
                 {
-                    // Do nothing. Returns value from check_tag
+                    ret = MC_INVALID_TAG;
                 }
             }
             else

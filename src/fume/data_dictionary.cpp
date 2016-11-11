@@ -28,6 +28,7 @@
 using std::numeric_limits;
 using std::for_each;
 using std::find_if;
+using std::unique_ptr;
 
 namespace fume
 {
@@ -44,80 +45,78 @@ data_dictionary::~data_dictionary()
 {
 }
 
-MC_STATUS data_dictionary::check_tag_const( uint32_t tag ) const
+bool data_dictionary::has_tag( uint32_t tag ) const
 {
-    MC_STATUS ret = MC_CANNOT_COMPLY;
-
-    const bool has_value = m_value_dict.count( tag ) > 0;
-    ret = has_value ? MC_NORMAL_COMPLETION : MC_INVALID_TAG;
-
-    return ret;
+    return m_value_dict.count( tag ) > 0;
 }
 
-MC_STATUS data_dictionary::check_tag( uint32_t tag )
-{
-    MC_STATUS ret = MC_CANNOT_COMPLY;
-
-    const bool has_value = m_value_dict.count( tag ) > 0;
-    ret = (has_value || created_empty()) ? MC_NORMAL_COMPLETION :
-                                           MC_INVALID_TAG;
-
-    return ret;
-}
-
+// NOTE: this internal function asserts that the Tag is valid. It
+// is intended as an internal function where the caller is absolutely
+// sure that the tag id is valid and an invalid tag id represents an
+// internal bug
 value_representation& data_dictionary::operator[]( uint32_t tag )
 {
-    // Caller should have already done this. Verifies
-    // tag either is in this object or file was created empty
-    // TODO: don't use assert here. Move id cast logic in here instead
-    // of in the MC_Get_Value and MC_Set_Value functions
-    assert( check_tag( tag ) == MC_NORMAL_COMPLETION );
-
     unique_vr_ptr& ret( m_value_dict[tag] );
+
     // If value was just created or was empty, create a new one
     if( ret == nullptr )
     {
-        nonstandard_vr_dict::const_iterator ns_itr =
-            m_nonstandard_vr_dict.find( tag );
-        // If this is a "nonstandard" tag
-        if( ns_itr != m_nonstandard_vr_dict.cend() )
-        {
-            // Create a VR based on the contents of the nonstandard
-            // map, allowing any number of values
-            ret = create_vr( ns_itr->second,
-                             1,
-                             numeric_limits<unsigned short>::max(),
-                             1 );
-        }
-        else
-        {
-            // Caller should have already enforced this
-            assert( g_context != nullptr );
-            // Otherwise create a VR using the global tag -> VR table
-            ret = g_context->create_vr( tag, this );
-        }
+        ret = create_vr( tag );
     }
     else
     {
-        // Do nothing. value already non-null
+        // Do nothing. Value already non-NULL
     }
 
-    // If we are here ret should not be NULL
     assert( ret != nullptr );
     return *ret;
 }
 
-value_representation* data_dictionary::at( uint32_t tag ) const
+value_representation* data_dictionary::at( uint32_t tag )
 {
-    // Caller should have already done this
-    assert( check_tag_const( tag ) == MC_NORMAL_COMPLETION );
+    value_representation* ret = nullptr;
 
+    const value_dict::const_iterator itr = m_value_dict.find( tag );
+    if( itr != m_value_dict.cend() )
+    {
+        // Already exists; return
+        ret = itr->second.get();
+    }
+    else
+    {
+        // Doesn't exist
+        if( m_created_empty )
+        {
+            // This is an object created with _Empty If tag is valid,
+            // insert into dictionary
+            unique_vr_ptr new_vr( create_vr( tag ) );
+            // Can return NULL if tag invalid
+            if( new_vr != nullptr )
+            {
+                ret = new_vr.get();
+                m_value_dict[tag].swap( new_vr );
+            }
+            else
+            {
+                ret = nullptr;
+            }
+        }
+        else
+        {
+            // Not created empty. Return NULL without modifying the
+            // map
+            ret = nullptr;
+        }
+    }
+
+    return ret;
+}
+
+const value_representation* data_dictionary::at( uint32_t tag ) const
+{
     value_dict::const_iterator itr = m_value_dict.find( tag );
 
-    // check_tag_const should have already ensured this
-    assert( itr != m_value_dict.cend() );
-
-    return itr->second.get();
+    return itr != m_value_dict.cend() ? itr->second.get() : nullptr;
 }
 
 MC_STATUS data_dictionary::set_empty( uint32_t tag )
@@ -436,6 +435,33 @@ MC_STATUS data_dictionary::get_vr_type( uint32_t tag, MC_VR& type ) const
     {
         type = itr->second;
         ret = MC_NORMAL_COMPLETION;
+    }
+
+    return ret;
+}
+
+unique_ptr<value_representation> data_dictionary::create_vr( uint32_t tag ) const
+{
+    unique_vr_ptr ret = nullptr;
+
+    const nonstandard_vr_dict::const_iterator ns_itr =
+        m_nonstandard_vr_dict.find( tag );
+    // If this is a "nonstandard" tag
+    if( ns_itr != m_nonstandard_vr_dict.cend() )
+    {
+        // Create a VR based on the contents of the nonstandard
+        // map, allowing any number of values
+        ret = fume::create_vr( ns_itr->second,
+                               1,
+                               numeric_limits<unsigned short>::max(),
+                               1 );
+    }
+    else
+    {
+        // Should never happen
+        assert( g_context != nullptr );
+        // Otherwise create a VR using the global tag -> VR table
+        ret = g_context->create_vr( tag, this );
     }
 
     return ret;

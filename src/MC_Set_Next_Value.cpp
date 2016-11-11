@@ -45,16 +45,15 @@ static MC_STATUS set_next_value( int            msg,
             data_dictionary* dict = g_context->get_object( msg );
             if( dict != nullptr )
             {
-                const uint32_t tag_u32 = numeric_cast<uint32_t>( tag );
-                ret = dict->check_tag( tag_u32 );
-                if( ret == MC_NORMAL_COMPLETION )
+                value_representation* element =
+                    dict->at( numeric_cast<uint32_t>( tag ) );
+                if( element != nullptr )
                 {
-                    value_representation& element( (*dict)[tag_u32] );
-                    ret = element.set_next( value );
+                    ret = element->set_next( value );
                 }
                 else
                 {
-                    // Do nothing. Returns value from check_tag
+                    ret = MC_INVALID_TAG;
                 }
             }
             else

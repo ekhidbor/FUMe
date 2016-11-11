@@ -49,8 +49,7 @@ static MC_STATUS get_next_value( int            msg,
             if( dict != nullptr )
             {
                 const uint32_t tag_u32 = numeric_cast<uint32_t>( tag );
-                ret = dict->check_tag_const( tag_u32 );
-                if( ret == MC_NORMAL_COMPLETION )
+                if( dict->has_tag( tag_u32) == true )
                 {
                     const value_representation* element = dict->at( tag_u32 );
                     if( element != nullptr )
@@ -64,7 +63,7 @@ static MC_STATUS get_next_value( int            msg,
                 }
                 else
                 {
-                    // Do nothing. Returns value from check_tag
+                    ret = MC_INVALID_TAG;
                 }
             }
             else

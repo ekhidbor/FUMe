@@ -34,20 +34,11 @@ public:
     data_dictionary( int id, bool created_empty );
     virtual ~data_dictionary();
 
-    // Make sure the tag can be accessed if modifying
-    // the data_dictionary object is allowed
-    MC_STATUS check_tag( uint32_t tag );
-    // Make sure the tag can be accessed without modifying
-    // the data_dictionary_object
-    MC_STATUS check_tag_const( uint32_t tag ) const;
-
-    // TODO: make VR API consistent with the external API (ie. have get/set
-    // functions in data_dictionary)
     // Will attempt to create a value_representation if is empty
-    value_representation& operator[]( uint32_t tag );
+    value_representation* at( uint32_t tag );
 
     // Will return NULL if the value representation is empty
-    value_representation* at( uint32_t tag ) const;
+    const value_representation* at( uint32_t tag ) const;
 
     MC_STATUS set_empty( uint32_t tag );
 
@@ -61,6 +52,8 @@ public:
     {
         return m_created_empty;
     }
+
+    bool has_tag( uint32_t tag ) const;
 
     MC_STATUS set_callbacks( int application_id );
 
@@ -101,6 +94,9 @@ protected:
         return m_value_dict.end();
     }
 
+    // Will always attempt to create a value_representation
+    value_representation& operator[]( uint32_t tag );
+
     MC_STATUS write_values( tx_stream&                 stream,
                             value_dict::const_iterator begin,
                             value_dict::const_iterator end ) const
@@ -129,6 +125,7 @@ private:
     data_dictionary& operator=( const data_dictionary& );
 
     MC_STATUS get_vr_type( uint32_t tag, MC_VR& type ) const;
+    std::unique_ptr<value_representation> create_vr( uint32_t tag ) const;
 
 private:
     value_dict          m_value_dict;
