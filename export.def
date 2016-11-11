@@ -1,5 +1,8 @@
+_MC_Add_Nonstandard_Attribute
 _MC_Add_Standard_Attribute
 _MC_Close_Association
+_MC_Close_Encapsulated_Value
+_MC_Create_Empty_File
 _MC_Create_File
 _MC_DDH_Add_Record
 _MC_DDH_Copy_Values
@@ -15,11 +18,14 @@ _MC_DDH_Update
 _MC_Delete_Attribute
 _MC_Delete_Current_Value
 _MC_Delete_Range
+_MC_Empty_File
+_MC_Empty_Item
 _MC_Error_Message
 _MC_Free_File
 _MC_Free_Item
 _MC_Free_Message
 _MC_Get_Enum_From_Transfer_Syntax
+_MC_Get_Filename
 _MC_Get_Message_Transfer_Syntax
 _MC_Get_Next_Validate_Error
 _MC_Get_Next_Value
@@ -58,10 +64,13 @@ _MC_Register_Application
 _MC_Register_Callback_Function
 _MC_Release_Application
 _MC_Release_Callback_Function
+_MC_Reset_Filename
 _MC_Send_Request_Message
+_MC_Set_Encapsulated_Value_From_Function
 _MC_Set_File_Preamble
 _MC_Set_Message_Callbacks
 _MC_Set_Message_Transfer_Syntax
+_MC_Set_Next_Encapsulated_Value_From_Function
 _MC_Set_Next_Value
 _MC_Set_Next_Value_From_Buffer
 _MC_Set_Next_Value_From_Double

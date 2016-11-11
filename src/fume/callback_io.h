@@ -1,5 +1,5 @@
-#ifndef CALLBACK_VR_IO_H
-#define CALLBACK_VR_IO_H
+#ifndef CALLBACK_IO_H
+#define CALLBACK_IO_H
 /**
  * This file is a part of the FUMe project.
  *
@@ -20,6 +20,7 @@
 
 // local private
 #include "fume/application.h"
+#include "fume/value_representation.h"
 
 namespace fume
 {
@@ -31,6 +32,13 @@ MC_STATUS write_vr_data_from_callback( tx_stream&              stream,
                                        uint32_t                tag,
                                        const callback_parms_t& callback );
 
+MC_STATUS write_encapsulated_value_from_function( tx_stream&            stream,
+                                                  const set_func_parms& parms );
+
+MC_STATUS write_next_encapsulated_value_from_function( tx_stream&            stream,
+                                                       const set_func_parms& parms );
+
+MC_STATUS close_encapsulated_value( tx_stream& stream );
 
 }
 

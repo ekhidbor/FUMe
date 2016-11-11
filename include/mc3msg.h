@@ -609,6 +609,25 @@ MCEXPORT MC_STATUS MC_Set_Value_To_NULL( int MsgFileItemID, unsigned long Tag );
 // Can only be used on text VRs which allow a "\" delimiter
 MCEXPORT MC_STATUS MC_Set_Next_Value_To_NULL( int MsgFileItemID, unsigned long Tag );
 
+MCEXPORT MC_STATUS MC_Set_Encapsulated_Value_From_Function
+(
+    int              MsgFileItemID,
+    unsigned long    Tag,
+    void*            UserInfo,
+    SetValueCallback YourSetFunction
+);
+
+MCEXPORT MC_STATUS MC_Set_Next_Encapsulated_Value_From_Function
+(
+    int              MsgFileItemID,
+    unsigned long    Tag,
+    void*            UserInfo,
+    SetValueCallback YourSetFunction
+);
+
+MCEXPORT MC_STATUS MC_Close_Encapsulated_Value( int           MsgFileItemID,
+                                                unsigned long Tag );
+
 // Deletes the last value returned by MC_Get_Value or MC_Get_Next_Value
 MCEXPORT MC_STATUS MC_Delete_Current_Value( int MsgFileItemID, unsigned long Tag );
 

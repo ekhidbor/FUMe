@@ -22,6 +22,7 @@
 
 // local private
 #include "fume/value_representation.h"
+#include "fume/tx_stream.h"
 
 namespace fume
 {
@@ -30,7 +31,7 @@ namespace vrs
 
 // Base class for the "other" value representations
 template<class T, MC_VR VR>
-class other_vr final : public value_representation
+class other_vr : public value_representation
 {
 public:
     other_vr()
@@ -267,6 +268,18 @@ public:
     virtual MC_VR vr() const override final
     {
         return VR;
+    }
+
+protected:
+    template<class Iterator>
+    void append( Iterator begin, Iterator end )
+    {
+        m_values.insert( m_values.cend(), begin, end );
+    }
+
+    size_t data_size() const
+    {
+        return m_values.size();
     }
 
 private:

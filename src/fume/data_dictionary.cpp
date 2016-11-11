@@ -22,7 +22,7 @@
 #include "fume/library_context.h"
 #include "fume/value_representation.h"
 #include "fume/tx_stream.h"
-#include "fume/callback_vr_io.h"
+#include "fume/callback_io.h"
 #include "fume/vr_factory.h"
 
 using std::numeric_limits;

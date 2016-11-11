@@ -13,9 +13,14 @@
 
 // std
 #include <cstdint>
+#include <limits>
+
+// local public
+#include "mc3media.h"
 
 // local private
 #include "fume/vrs/other_vr.h"
+#include "fume/tx_stream.h"
 
 namespace fume
 {
@@ -27,7 +32,26 @@ namespace vrs
 // tx_stream and rx_stream to enable implementation of
 // MC_Set_(Next)?_Encapsulated_Value_From_Function and
 // MC_Get_(Next)?_Encapsulated_Value_From_Function
-typedef other_vr<uint8_t, OB> ob;
+class ob final : public other_vr<uint8_t, OB>, public tx_stream
+{
+public:
+    ob()
+        : other_vr<uint8_t, OB>(),
+          m_syntax( INVALID_TRANSFER_SYNTAX )
+    {
+    }
+    virtual ~ob()
+    {
+    }
+
+    virtual MC_STATUS write( const void* buffer, size_t buffer_bytes );
+
+    virtual TRANSFER_SYNTAX transfer_syntax() const;
+    MC_STATUS set_transfer_syntax( TRANSFER_SYNTAX syntax );
+
+private:
+    TRANSFER_SYNTAX m_syntax;
+};
 
 } // namespace vrs
 } // namespace fume
