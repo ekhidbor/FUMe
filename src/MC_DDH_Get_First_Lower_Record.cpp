@@ -27,15 +27,15 @@ using fume::record_object;
 using fume::data_dictionary;
 using std::max;
 
-MC_STATUS MC_DDH_Get_Next_Record( int RecordID, int* NextID )
+MC_STATUS MC_DDH_Get_First_Lower_Record( int ParentID, int* LowerID )
 {
     MC_STATUS ret = MC_CANNOT_COMPLY;
 
     try
     {
-        if( g_context != nullptr && NextID != nullptr )
+        if( g_context != nullptr && LowerID != nullptr )
         {
-            data_dictionary* dict = g_context->get_object( RecordID );
+            data_dictionary* dict = g_context->get_object( ParentID );
             if( dict != nullptr )
             {
                 dicomdir_object* dicomdir = dynamic_cast<dicomdir_object*>( dict );
@@ -43,14 +43,16 @@ MC_STATUS MC_DDH_Get_Next_Record( int RecordID, int* NextID )
 
                 if( dicomdir != nullptr )
                 {
-                    *NextID = 0;
+                    // Return 0 if no next record (get_next_record will return
+                    // negaitve value)
+                    *LowerID = max( 0, dicomdir->get_child_record() );
                     ret = MC_NORMAL_COMPLETION;
                 }
                 else if( record != nullptr )
                 {
                     // Return 0 if no next record (get_next_record will return
                     // negaitve value)
-                    *NextID = max( 0, record->get_next_record() );
+                    *LowerID = max( 0, record->get_child_record() );
                     ret = MC_NORMAL_COMPLETION;
                 }
                 else

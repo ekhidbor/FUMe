@@ -50,7 +50,17 @@ MC_STATUS MC_Close_Encapsulated_Value( int           MsgFileItemID,
                     ob* element = dynamic_cast<ob*>( dict->at( tag_u32) );
                     if( element != nullptr )
                     {
-                        ret = close_encapsulated_value( *element );
+                        TRANSFER_SYNTAX syntax = INVALID_TRANSFER_SYNTAX;
+                        ret = dict->get_transfer_syntax( syntax );
+                        if( ret == MC_NORMAL_COMPLETION )
+                        {
+                            ret = close_encapsulated_value( *element, syntax );
+                        }
+                        else
+                        {
+                            // Do nothing. Will return error from
+                            // get_transfer_syntax
+                        }
                     }
                     else
                     {

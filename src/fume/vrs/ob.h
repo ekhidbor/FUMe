@@ -36,21 +36,30 @@ class ob final : public other_vr<uint8_t, OB>, public tx_stream
 {
 public:
     ob()
-        : other_vr<uint8_t, OB>(),
-          m_syntax( INVALID_TRANSFER_SYNTAX )
+        : other_vr<uint8_t, OB>()
     {
     }
     virtual ~ob()
     {
     }
 
-    virtual MC_STATUS write( const void* buffer, size_t buffer_bytes );
+    virtual MC_STATUS write( const void* buffer,
+                            size_t       buffer_bytes ) override final;
+    virtual uint32_t bytes_written() const override final
+    {
+        return static_cast<uint32_t>( count() );
+    }
 
-    virtual TRANSFER_SYNTAX transfer_syntax() const;
-    MC_STATUS set_transfer_syntax( TRANSFER_SYNTAX syntax );
+    virtual std::unique_ptr<value_representation> clone() const override final
+    {
+        return std::unique_ptr<value_representation>( new ob( *this ) );
+    }
 
 private:
-    TRANSFER_SYNTAX m_syntax;
+    ob( const ob& rhs )
+        : other_vr<uint8_t, OB>( rhs )
+    {
+    }
 };
 
 } // namespace vrs

@@ -158,6 +158,7 @@ MC_STATUS callback_io::get_value_data( const void*& data, size_t& data_length )
 
 
 MC_STATUS write_vr_data_from_callback( tx_stream&              stream,
+                                       TRANSFER_SYNTAX         syntax,
                                        int                     message_id,
                                        uint32_t                tag,
                                        const callback_parms_t& callback )
@@ -180,7 +181,7 @@ MC_STATUS write_vr_data_from_callback( tx_stream&              stream,
                 (tag_vr == OB || tag_vr == OW ||
                  tag_vr == OL || tag_vr == OD || tag_vr == OF) );
 
-        ret = stream.write_val( vr_length );
+        ret = stream.write_val( vr_length, syntax );
         while( ret == MC_NORMAL_COMPLETION && io.is_done() == false )
         {
             const void* data = nullptr;
@@ -208,20 +209,23 @@ MC_STATUS write_vr_data_from_callback( tx_stream&              stream,
 }
 
 MC_STATUS write_encapsulated_value_from_function( tx_stream&            stream,
+                                                  TRANSFER_SYNTAX       syntax,
                                                   const set_func_parms& parms )
 {
     MC_STATUS ret = MC_CANNOT_COMPLY;
 
-    if( is_encapsulated( stream.transfer_syntax() ) == true )
+    if( is_encapsulated( syntax ) == true )
     {
         // Write empty Offset table
-        ret = stream.write_tag( MC_ATT_ITEM );
+        ret = stream.write_tag( MC_ATT_ITEM, syntax );
         if( ret == MC_NORMAL_COMPLETION )
         {
-            ret = stream.write_val( static_cast<uint32_t>( 0x00000000 ) );
+            ret = stream.write_val( static_cast<uint32_t>( 0x00000000 ), syntax );
             if( ret == MC_NORMAL_COMPLETION )
             {
-                ret = write_next_encapsulated_value_from_function( stream, parms );
+                ret = write_next_encapsulated_value_from_function( stream,
+                                                                   syntax,
+                                                                   parms );
             }
             else
             {
@@ -242,13 +246,14 @@ MC_STATUS write_encapsulated_value_from_function( tx_stream&            stream,
 }
 
 MC_STATUS write_next_encapsulated_value_from_function( tx_stream&            stream,
+                                                       TRANSFER_SYNTAX       syntax,
                                                        const set_func_parms& parms )
 {
     MC_STATUS ret = MC_CANNOT_COMPLY;
 
-    if( is_encapsulated( stream.transfer_syntax() ) == true )
+    if( is_encapsulated( syntax ) == true )
     {
-        ret = stream.write_tag( MC_ATT_ITEM );
+        ret = stream.write_tag( MC_ATT_ITEM, syntax );
         if( ret == MC_NORMAL_COMPLETION )
         {
             vector<uint8_t> buffer;
@@ -257,7 +262,8 @@ MC_STATUS write_next_encapsulated_value_from_function( tx_stream&            str
             if( ret == MC_NORMAL_COMPLETION )
             {
                 // Write the length of the buffer
-                ret = stream.write_val( static_cast<uint32_t>( buffer.size() ) );
+                ret = stream.write_val( static_cast<uint32_t>( buffer.size() ),
+                                        syntax );
                 if( ret == MC_NORMAL_COMPLETION )
                 {
                     ret = stream.write( buffer.data(), buffer.size() );
@@ -285,12 +291,12 @@ MC_STATUS write_next_encapsulated_value_from_function( tx_stream&            str
     return ret;
 }
 
-MC_STATUS close_encapsulated_value( tx_stream& stream )
+MC_STATUS close_encapsulated_value( tx_stream& stream, TRANSFER_SYNTAX syntax )
 {
-    MC_STATUS ret = stream.write_tag( MC_ATT_ITEM_DELIMITATION_ITEM );
+    MC_STATUS ret = stream.write_tag( MC_ATT_ITEM_DELIMITATION_ITEM, syntax );
     if( ret == MC_NORMAL_COMPLETION )
     {
-        ret = stream.write_val( static_cast<uint32_t>( 0x00000000 ) );
+        ret = stream.write_val( static_cast<uint32_t>( 0x00000000 ), syntax );
     }
     else
     {

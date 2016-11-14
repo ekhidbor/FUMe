@@ -33,22 +33,6 @@ using fume::set_func_parms;
 using fume::vrs::ob;
 using fume::write_encapsulated_value_from_function;
 
-static MC_STATUS copy_transfer_syntax( ob& dst, const data_dictionary& src )
-{
-    TRANSFER_SYNTAX syntax = INVALID_TRANSFER_SYNTAX;
-    MC_STATUS ret = src.get_transfer_syntax( syntax );
-    if( ret == MC_NORMAL_COMPLETION )
-    {
-        ret = dst.set_transfer_syntax( syntax );
-    }
-    else
-    {
-        // Do nothing. Will return error from get_transfer_syntax
-    }
-
-    return ret;
-}
-
 MC_STATUS MC_Set_Encapsulated_Value_From_Function( int              MsgFileItemID,
                                                    unsigned long    Tag,
                                                    void*            UserInfo,
@@ -69,7 +53,8 @@ MC_STATUS MC_Set_Encapsulated_Value_From_Function( int              MsgFileItemI
                     ob* element = dynamic_cast<ob*>( dict->at( tag_u32) );
                     if( element != nullptr )
                     {
-                        ret = copy_transfer_syntax( *element, *dict );
+                        TRANSFER_SYNTAX syntax = INVALID_TRANSFER_SYNTAX;
+                        ret = dict->get_transfer_syntax( syntax );
                         if( ret == MC_NORMAL_COMPLETION )
                         {
                             set_func_parms parms =
@@ -80,11 +65,12 @@ MC_STATUS MC_Set_Encapsulated_Value_From_Function( int              MsgFileItemI
                                 Tag
                             };
                             ret = write_encapsulated_value_from_function( *element,
+                                                                          syntax,
                                                                           parms );
                         }
                         else
                         {
-                            // Do nothing. Returns error from copy_transfer_syntax
+                            // Do nothing. Returns error from get_transfer_syntax
                         }
                     }
                     else

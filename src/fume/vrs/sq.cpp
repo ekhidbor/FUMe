@@ -32,18 +32,21 @@ namespace fume
 namespace vrs
 {
 
-static MC_STATUS write_element_length( tx_stream& stream, bool empty )
+static MC_STATUS write_element_length( tx_stream&      stream,
+                                       TRANSFER_SYNTAX syntax,
+                                       bool            empty )
 {
     const uint32_t size = empty ? 0u : 0xFFFFFFFFu;
-    return stream.write_val( size );
+    return stream.write_val( size, syntax );
 }
 
-static MC_STATUS write_sequence_delimitation( tx_stream& stream )
+static MC_STATUS write_sequence_delimitation( tx_stream&      stream,
+                                              TRANSFER_SYNTAX syntax )
 {
-    MC_STATUS ret = stream.write_tag( 0xFFFEE0DDu );
+    MC_STATUS ret = stream.write_tag( 0xFFFEE0DDu, syntax );
     if( ret == MC_NORMAL_COMPLETION )
     {
-        ret = stream.write_val( static_cast<uint32_t>( 0x00000000u ) );
+        ret = stream.write_val( static_cast<uint32_t>( 0x00000000u ), syntax );
     }
     else
     {
@@ -53,7 +56,7 @@ static MC_STATUS write_sequence_delimitation( tx_stream& stream )
     return ret;
 }
 
-static MC_STATUS write_item( tx_stream& stream, int id )
+static MC_STATUS write_item( tx_stream& stream, TRANSFER_SYNTAX syntax, int id )
 {
     // Caller should have done this
     assert( g_context != nullptr );
@@ -64,7 +67,7 @@ static MC_STATUS write_item( tx_stream& stream, int id )
         dynamic_cast<item_object*>( g_context->get_object( id ) );
     if( item != nullptr )
     {
-        ret = item->to_stream( stream );
+        ret = item->to_stream( stream, syntax );
     }
     else
     {
@@ -94,24 +97,24 @@ sq::~sq()
     }
 }
 
-MC_STATUS sq::to_stream( tx_stream& stream ) const
+MC_STATUS sq::to_stream( tx_stream& stream, TRANSFER_SYNTAX syntax ) const
 {
     // Caller should have done this
     assert( g_context != nullptr );
 
-    MC_STATUS ret = write_element_length( stream, m_items.empty() );
+    MC_STATUS ret = write_element_length( stream, syntax, m_items.empty() );
     if( ret == MC_NORMAL_COMPLETION && m_items.empty() == false )
     {
         for( deque<int>::const_iterator itr = m_items.cbegin();
              ret == MC_NORMAL_COMPLETION && itr != m_items.cend();
              ++itr )
         {
-            ret = write_item( stream, *itr );
+            ret = write_item( stream, syntax, *itr );
         }
 
         if( ret == MC_NORMAL_COMPLETION )
         {
-            ret = write_sequence_delimitation( stream );
+            ret = write_sequence_delimitation( stream, syntax );
         }
         else
         {

@@ -29,18 +29,28 @@ namespace fume
 namespace vrs
 {
 
-MC_STATUS at::to_stream( tx_stream& stream ) const
+MC_STATUS at::to_stream( tx_stream& stream, TRANSFER_SYNTAX syntax ) const
 {
-    MC_STATUS ret =
-        stream.write_val( static_cast<uint16_t>( m_values.size() *
-                                                 sizeof(uint32_t) ) );
+    const uint32_t value_size = m_values.size() * sizeof(uint32_t);
+    MC_STATUS ret = MC_CANNOT_COMPLY;
+
+    if( syntax != IMPLICIT_LITTLE_ENDIAN )
+    {
+        // TODO: proper length validation
+        ret = stream.write_val( static_cast<uint16_t>( value_size ), syntax );
+    }
+    else
+    {
+        ret = stream.write_val( value_size, syntax );
+    }
+
     if( ret == MC_NORMAL_COMPLETION && m_values.empty() == false )
     {
         for( typename deque<uint32_t>::const_iterator itr = m_values.cbegin();
              ret == MC_NORMAL_COMPLETION && itr != m_values.cend();
              ++itr )
         {
-            ret = stream.write_tag( *itr );
+            ret = stream.write_tag( *itr, syntax );
         }
     }
     else

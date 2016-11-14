@@ -79,7 +79,7 @@ string_vr::string_vr( unsigned int min_vals,
 {
 }
 
-MC_STATUS string_vr::to_stream( tx_stream& stream ) const
+MC_STATUS string_vr::to_stream( tx_stream& stream, TRANSFER_SYNTAX syntax ) const
 {
     const uint32_t value_length = get_total_length( m_values );
     const uint32_t value_length_even = value_length + (value_length % 2u);
@@ -90,14 +90,15 @@ MC_STATUS string_vr::to_stream( tx_stream& stream ) const
     if( this_vr == UC ||
         this_vr == UR ||
         this_vr == UT ||
-        stream.transfer_syntax() == IMPLICIT_LITTLE_ENDIAN )
+        syntax == IMPLICIT_LITTLE_ENDIAN )
     {
-        ret = stream.write_val( value_length_even );
+        ret = stream.write_val( value_length_even, syntax );
     }
     else
     {
         // TODO: proper length validation
-        ret = stream.write_val( static_cast<uint16_t>( value_length_even ) );
+        ret = stream.write_val( static_cast<uint16_t>( value_length_even ),
+                                syntax );
     }
 
     if( ret == MC_NORMAL_COMPLETION && m_values.empty() == false )
@@ -108,7 +109,7 @@ MC_STATUS string_vr::to_stream( tx_stream& stream ) const
              ++itr )
         {
             static const char DELIM = '\\';
-            ret = stream.write_val( static_cast<uint8_t>( DELIM ) );
+            ret = stream.write_val( static_cast<uint8_t>( DELIM ), syntax );
             if( ret == MC_NORMAL_COMPLETION )
             {
                 ret = write_string( stream, *itr );
@@ -119,7 +120,7 @@ MC_STATUS string_vr::to_stream( tx_stream& stream ) const
         if( ret == MC_NORMAL_COMPLETION && value_length != value_length_even )
         {
             // Do so
-            ret = stream.write_val( static_cast<uint8_t>( m_pad ) );
+            ret = stream.write_val( static_cast<uint8_t>( m_pad ), syntax );
         }
         else
         {

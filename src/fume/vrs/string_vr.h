@@ -41,7 +41,8 @@ public:
 
 // serializable (value_representation)
 public:
-    virtual MC_STATUS to_stream( tx_stream& stream ) const override final;
+    virtual MC_STATUS to_stream( tx_stream&      stream,
+                                 TRANSFER_SYNTAX syntax ) const override final;
     virtual MC_STATUS from_stream( rx_stream& stream ) override final
     {
         // TODO: implement
@@ -311,6 +312,15 @@ protected:
                                             {
                                                 return get_next( str_val );
                                             } );
+    }
+
+protected:
+    string_vr( const string_vr& rhs )
+        : value_representation( rhs ),
+          m_values( rhs.m_values ),
+          m_current_idx( rhs.m_current_idx ),
+          m_pad( rhs.m_pad )
+    {
     }
 
 private:

@@ -176,7 +176,7 @@ MC_STATUS file_object::open( void*            user_info,
     return MC_CANNOT_COMPLY;
 }
 
-MC_STATUS file_object::write_file( file_tx_stream& stream, int app_id ) const
+MC_STATUS file_object::write_file( tx_stream& stream, int app_id ) const
 {
     // Write the preamble data
     MC_STATUS ret = stream.write( m_preamble.data(), m_preamble.size() );
@@ -268,7 +268,7 @@ MC_STATUS file_object::get_transfer_syntax( TRANSFER_SYNTAX& syntax ) const
     return ret;
 }
 
-MC_STATUS file_object::write_values( file_tx_stream& stream, int app_id ) const
+MC_STATUS file_object::write_values( tx_stream& stream, int app_id ) const
 {
     // Get iterators for all Group 2 attributes.
     const const_value_range& group2_range( get_value_range( 0x00000000,
@@ -280,36 +280,22 @@ MC_STATUS file_object::write_values( file_tx_stream& stream, int app_id ) const
     {
         // Group 2 attributes are always written in Explicit Little Endian
         // transfer syntax
-        ret = stream.set_transfer_syntax( EXPLICIT_LITTLE_ENDIAN );
+        MC_STATUS ret = write_values( stream,
+                                      EXPLICIT_LITTLE_ENDIAN,
+                                      app_id,
+                                      group2_range.first,
+                                      group2_range.second );
         if( ret == MC_NORMAL_COMPLETION )
         {
-            MC_STATUS ret = write_values( stream,
-                                          app_id,
-                                          group2_range.first,
-                                          group2_range.second );
-            if( ret == MC_NORMAL_COMPLETION )
-            {
-                ret = stream.set_transfer_syntax( syntax );
-                if( ret == MC_NORMAL_COMPLETION )
-                {
-                    ret = write_values( stream,
-                                        app_id,
-                                        group2_range.second,
-                                        end() );
-                }
-                else
-                {
-                    // Do nothing. Will return error from set_transfer_syntax
-                }
-            }
-            else
-            {
-                // Do nothing. Will return error from write_values
-            }
+            ret = write_values( stream,
+                                syntax,
+                                app_id,
+                                group2_range.second,
+                                end() );
         }
         else
         {
-            // Do nothing. Will return error from set_transfer_syntax
+            // Do nothing. Will return error from write_values
         }
     }
     else

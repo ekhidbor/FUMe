@@ -27,7 +27,9 @@
 #include "fume/library_context.h"
 #include "fume/application.h"
 #include "fume/file_object.h"
+#include "fume/dicomdir_object.h"
 #include "fume/item_object.h"
+#include "fume/record_object.h"
 #include "fume/vr_factory.h"
 #include "fume/transfer_syntax_to_uid.h"
 
@@ -116,6 +118,65 @@ int library_context::create_empty_file_object( const char* filename )
     return ret;
 }
 
+int library_context::create_dicomdir_object( const char*        filename,
+                                             const char*        fileset,
+                                             const file_object* template_file )
+{
+    // NOTE: error codes from this function are NEGATIVE because the
+    // positive values indicate file IDs returned
+    int ret = -MC_CANNOT_COMPLY;
+
+    if( filename != nullptr )
+    {
+        lock_guard<mutex> lock(m_mutex);
+        const int id = generate_id();
+        // generate_id shall maintain uniqueness, but assert here
+        assert( m_data_dictionaries.count( id ) == 0 );
+
+        // Create empty dicomdir object
+        // TODO: figure out how to populate with record type
+        data_dictionary_ptr dicomdir_obj( new dicomdir_object( id,
+                                                               filename, 
+                                                               true ) );
+
+        // TODO: initialize item object dictionary based on service name/command
+
+        if( template_file != nullptr )
+        {
+            const MC_STATUS stat = dicomdir_obj->copy_values( *template_file,
+                                                              nullptr );
+            if( stat == MC_NORMAL_COMPLETION )
+            {
+                // Insert the item object into the dictionary. Two-step process
+                // (create then swap) to prevent memory leak in case operator[]
+                // throws an exception
+                m_data_dictionaries[id].swap( dicomdir_obj );
+
+                ret = id;
+            }
+            else
+            {
+                ret = -stat;
+            }
+        }
+        else
+        {
+            // Insert the item object into the dictionary. Two-step process
+            // (create then swap) to prevent memory leak in case operator[]
+            // throws an exception
+            m_data_dictionaries[id].swap( dicomdir_obj );
+
+            ret = id;
+        }
+    }
+    else
+    {
+        ret = -MC_NULL_POINTER_PARM;
+    }
+
+    return ret;
+}
+
 MC_STATUS library_context::free_file_object( int id )
 {
     return free_dictionary_object<file_object>( id, MC_INVALID_FILE_ID );
@@ -141,6 +202,45 @@ int library_context::create_item_object( const char* item_name )
         // TODO: initialize item object dictionary based on item name
 
         // Insert the file object into the dictionary. Two-step process
+        // (create then swap) to prevent memory leak in case operator[]
+        // throws an exception
+        m_data_dictionaries[id].swap( item_obj );
+
+        ret = id;
+    }
+    else
+    {
+        ret = -MC_NULL_POINTER_PARM;
+    }
+
+    return ret;
+}
+
+int library_context::create_record_object( int         file_id,
+                                           int         parent_id,
+                                           const char* record_type )
+{
+    // NOTE: error codes from this function are NEGATIVE because the
+    // positive values indicate file IDs returned
+    int ret = -MC_CANNOT_COMPLY;
+
+    if( record_type != nullptr )
+    {
+        lock_guard<mutex> lock(m_mutex);
+        const int id = generate_id();
+        // generate_id shall maintain uniqueness, but assert here
+        assert( m_data_dictionaries.count( id ) == 0 );
+
+        // Create empty record object
+        // TODO: figure out how to populate with record type
+        data_dictionary_ptr item_obj( new record_object( file_id, 
+                                                         parent_id,
+                                                         id,
+                                                         true ) );
+
+        // TODO: initialize item object dictionary based on service name/command
+
+        // Insert the item object into the dictionary. Two-step process
         // (create then swap) to prevent memory leak in case operator[]
         // throws an exception
         m_data_dictionaries[id].swap( item_obj );

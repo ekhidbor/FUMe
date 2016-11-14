@@ -40,10 +40,21 @@ public:
         return CS;
     }
 
+    virtual std::unique_ptr<value_representation> clone() const override final
+    {
+        return std::unique_ptr<value_representation>( new cs( *this ) );
+    }
+
 protected:
     virtual MC_STATUS validate_value( const std::string& val ) const override final
     {
         return validate_cs( val ) ? MC_NORMAL_COMPLETION : MC_INVALID_VALUE_FOR_VR;
+    }
+
+private:
+    cs( const cs& rhs )
+        : string_vr( rhs )
+    {
     }
 };
 

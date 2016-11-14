@@ -15,6 +15,9 @@
 #include <limits>
 #include <algorithm>
 
+// boost
+#include "boost/numeric/conversion/cast.hpp"
+
 // local public
 
 // local private
@@ -29,6 +32,9 @@ using std::numeric_limits;
 using std::for_each;
 using std::find_if;
 using std::unique_ptr;
+
+using boost::numeric_cast;
+using boost::bad_numeric_cast;
 
 namespace fume
 {
@@ -221,6 +227,65 @@ data_dictionary::get_value_range( uint32_t begin_tag, uint32_t end_tag )
     return ret;
 }
 
+MC_STATUS data_dictionary::copy_values( const data_dictionary& source,
+                                        const unsigned long*   tags )
+{
+    if( tags != nullptr )
+    {
+        for( size_t i = 0; tags[i] != 0; ++i )
+        {
+            try
+            {
+                const uint32_t tag_u32 = numeric_cast<uint32_t>( tags[i] );
+                // If this is a group length tag (has a elemt ID of 9)
+                if( (tag_u32 & 0x0000FFFFu) == 0 )
+                {
+                    // Copy all tags with that group ID
+                    const uint32_t tag_start = tag_u32 & 0xFFFF0000u;
+                    const uint32_t tag_end   = tag_u32 | 0x0000FFFFu;
+                    const_value_range range = source.get_value_range( tag_start,
+                                                                      tag_end );
+                    for( value_dict_const_itr itr = range.first;
+                         itr != range.second;
+                         ++itr )
+                    {
+                        if( itr->second != nullptr )
+                        {
+                            m_value_dict[itr->first] = itr->second->clone();
+                        }
+                    }
+                }
+                else
+                {
+                    const value_representation* vr = source.at( tag_u32 );
+                    if( vr != nullptr )
+                    {
+                        m_value_dict[tag_u32] = vr->clone();
+                    }
+                }
+            }
+            catch( const bad_numeric_cast& )
+            {
+                // Just ignore like any other tag not present in the message
+            }
+        }
+    }
+    else
+    {
+        for( value_dict_const_itr itr = source.begin();
+             itr != source.end();
+             ++itr )
+        {
+            if( itr->second != nullptr )
+            {
+                m_value_dict[itr->first] = itr->second->clone();
+            }
+        }
+    }
+
+    return MC_NORMAL_COMPLETION;
+}
+
 MC_STATUS data_dictionary::add_standard_attribute( uint32_t tag )
 {
     MC_STATUS ret = MC_CANNOT_COMPLY;
@@ -315,6 +380,7 @@ MC_STATUS data_dictionary::set_callbacks( int application_id )
 }
 
 MC_STATUS data_dictionary::write_values( tx_stream&                 stream,
+                                         TRANSFER_SYNTAX            syntax,
                                          int                        app_id,
                                          value_dict::const_iterator begin,
                                          value_dict::const_iterator end ) const
@@ -339,7 +405,7 @@ MC_STATUS data_dictionary::write_values( tx_stream&                 stream,
         if( callback.first != nullptr || itr->second != nullptr )
         {
             // Write the tag number
-            ret = stream.write_tag( itr->first );
+            ret = stream.write_tag( itr->first, syntax );
             if( ret == MC_NORMAL_COMPLETION )
             {
                 if( callback.first != nullptr )
@@ -349,10 +415,11 @@ MC_STATUS data_dictionary::write_values( tx_stream&                 stream,
                     ret = get_vr_type( itr->first, tag_vr );
                     if( ret == MC_NORMAL_COMPLETION )
                     {
-                        ret = stream.write_vr( tag_vr );
+                        ret = stream.write_vr( tag_vr, syntax );
                         if( ret == MC_NORMAL_COMPLETION )
                         {
                             ret = write_vr_data_from_callback( stream,
+                                                               syntax,
                                                                m_id,
                                                                itr->first,
                                                                callback );
@@ -376,10 +443,10 @@ MC_STATUS data_dictionary::write_values( tx_stream&                 stream,
                     // vr to be able to create the object). It also makes things
                     // consistent between using the callback function and using
                     // the value_representation.
-                    ret = stream.write_vr( itr->second->vr() );
+                    ret = stream.write_vr( itr->second->vr(), syntax );
                     if( ret == MC_NORMAL_COMPLETION )
                     {
-                        ret = itr->second->to_stream( stream );
+                        ret = itr->second->to_stream( stream, syntax );
                     }
                     else
                     {

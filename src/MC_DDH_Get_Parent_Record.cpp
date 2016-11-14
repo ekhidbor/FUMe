@@ -16,6 +16,14 @@
 #include "mc3media.h"
 
 // local private
+#include "fume/library_context.h"
+#include "fume/dicomdir_object.h"
+#include "fume/record_object.h"
+
+using fume::g_context;
+using fume::dicomdir_object;
+using fume::record_object;
+using fume::data_dictionary;
 
 MC_STATUS MC_DDH_Get_Parent_Record( int RecordID, int* ParentID )
 {
@@ -23,7 +31,42 @@ MC_STATUS MC_DDH_Get_Parent_Record( int RecordID, int* ParentID )
 
     try
     {
-        // TODO: implement
+        if( g_context != nullptr && ParentID != nullptr )
+        {
+            data_dictionary* dict = g_context->get_object( RecordID );
+            if( dict != nullptr )
+            {
+                dicomdir_object* dicomdir = dynamic_cast<dicomdir_object*>( dict );
+                record_object* record = dynamic_cast<record_object*>( dict );
+
+                if( dicomdir != nullptr )
+                {
+                    *ParentID = 0;
+                    ret = MC_NORMAL_COMPLETION;
+                }
+                else if( record != nullptr )
+                {
+                    *ParentID = record->get_parent_record();
+                    ret = MC_NORMAL_COMPLETION;
+                }
+                else
+                {
+                    ret = MC_INVALID_RECORD_ID;
+                }
+            }
+            else
+            {
+                ret = MC_INVALID_RECORD_ID;
+            }
+        }
+        else if( g_context == nullptr )
+        {
+            ret = MC_LIBRARY_NOT_INITIALIZED;
+        }
+        else
+        {
+            ret = MC_NULL_POINTER_PARM;
+        }
     }
     catch( ... )
     {

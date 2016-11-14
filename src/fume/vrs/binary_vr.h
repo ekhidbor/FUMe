@@ -50,7 +50,8 @@ public:
 
 // serializable (value_representation)
 public:
-    virtual MC_STATUS to_stream( tx_stream& stream ) const override final;
+    virtual MC_STATUS to_stream( tx_stream&      stream,
+                                 TRANSFER_SYNTAX syntax ) const override final;
     virtual MC_STATUS from_stream( rx_stream& stream ) override final
     {
         // TODO: implement
@@ -389,6 +390,19 @@ public:
         return VR;
     }
 
+    virtual std::unique_ptr<value_representation> clone() const override
+    {
+        return std::unique_ptr<value_representation>( new binary_vr( *this ) );
+    }
+
+protected:
+    binary_vr( const binary_vr& rhs )
+        : value_representation( rhs ),
+          m_values( rhs.m_values ),
+          m_current_idx( rhs.m_current_idx )
+    {
+    }
+
 private:
     MC_STATUS set_native( T val );
     MC_STATUS set_next_native( T val );
@@ -403,21 +417,22 @@ private:
 };
 
 template<class T, MC_VR VR>
-MC_STATUS binary_vr<T, VR>::to_stream( tx_stream& stream ) const
+MC_STATUS binary_vr<T, VR>::to_stream( tx_stream&      stream,
+                                       TRANSFER_SYNTAX syntax ) const
 {
     MC_STATUS ret = MC_CANNOT_COMPLY;
 
     const uint32_t value_size = m_values.size() * sizeof(T);
-    if( stream.transfer_syntax() == IMPLICIT_LITTLE_ENDIAN )
+    if( syntax == IMPLICIT_LITTLE_ENDIAN )
     {
         // sizes are always 32-bit for implicit little endian
-        ret = stream.write_val( value_size );
+        ret = stream.write_val( value_size, syntax );
     }
     else
     {
         // set_next_native ensures size is under 16-bit limit
         assert( value_size < std::numeric_limits<uint16_t>::max() );
-        ret = stream.write_val( static_cast<uint16_t>( value_size ) );
+        ret = stream.write_val( static_cast<uint16_t>( value_size ), syntax );
     }
 
     if( ret == MC_NORMAL_COMPLETION && m_values.empty() == false )
@@ -426,7 +441,7 @@ MC_STATUS binary_vr<T, VR>::to_stream( tx_stream& stream ) const
              ret == MC_NORMAL_COMPLETION && itr != m_values.cend();
              ++itr )
         {
-            ret = stream.write_val( *itr );
+            ret = stream.write_val( *itr, syntax );
         }
     }
     else

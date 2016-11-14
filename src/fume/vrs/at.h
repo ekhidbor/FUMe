@@ -47,7 +47,8 @@ public:
 
 // serializable (value_representation)
 public:
-    virtual MC_STATUS to_stream( tx_stream& stream ) const override final;
+    virtual MC_STATUS to_stream( tx_stream&      stream,
+                                 TRANSFER_SYNTAX syntax ) const override final;
     virtual MC_STATUS from_stream( rx_stream& stream ) override final
     {
         // TODO: implement
@@ -326,11 +327,24 @@ public:
         return AT;
     }
 
+    virtual std::unique_ptr<value_representation> clone() const override final
+    {
+        return std::unique_ptr<value_representation>( new at( *this ) );
+    }
+
 private:
     MC_STATUS set_native( uint32_t val );
     MC_STATUS set_next_native( uint32_t val );
     MC_STATUS get_native( uint32_t& val ) const;
     MC_STATUS get_next_native( uint32_t& val ) const;
+
+private:
+    at( const at& rhs )
+        : value_representation( rhs ),
+          m_values( rhs.m_values ),
+          m_current_idx( rhs.m_current_idx )
+    {
+    }
 
 private:
     std::deque<uint32_t> m_values;

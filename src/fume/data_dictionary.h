@@ -48,6 +48,9 @@ public:
     MC_STATUS add_standard_attribute( uint32_t tag );
     MC_STATUS add_nonstandard_attribute( uint32_t tag, MC_VR vr );
 
+    MC_STATUS copy_values( const data_dictionary& source,
+                           const unsigned long*   tags );
+
     bool created_empty() const
     {
         return m_created_empty;
@@ -59,6 +62,11 @@ public:
 
     virtual MC_STATUS set_transfer_syntax( TRANSFER_SYNTAX syntax ) = 0;
     virtual MC_STATUS get_transfer_syntax( TRANSFER_SYNTAX& syntax ) const = 0;
+
+    int id() const
+    {
+        return m_id;
+    }
 
 protected:
     typedef std::unique_ptr<value_representation> unique_vr_ptr;
@@ -98,13 +106,15 @@ protected:
     value_representation& operator[]( uint32_t tag );
 
     MC_STATUS write_values( tx_stream&                 stream,
+                            TRANSFER_SYNTAX            syntax,
                             value_dict::const_iterator begin,
                             value_dict::const_iterator end ) const
     {
-        return write_values( stream, m_application_id, begin, end );
+        return write_values( stream, syntax, m_application_id, begin, end );
     }
 
     MC_STATUS write_values( tx_stream&                 stream,
+                            TRANSFER_SYNTAX            syntax,
                             int                        app_id,
                             value_dict::const_iterator begin,
                             value_dict::const_iterator end ) const;

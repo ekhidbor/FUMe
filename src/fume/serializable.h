@@ -16,6 +16,7 @@
 
 // local public
 #include "mcstatus.h"
+#include "mc3msg.h"
 
 namespace fume
 {
@@ -30,7 +31,8 @@ public:
     {
     }
 
-    virtual MC_STATUS to_stream( tx_stream& stream ) const = 0;
+    virtual MC_STATUS to_stream( tx_stream&      stream,
+                                 TRANSFER_SYNTAX syntax ) const = 0;
     virtual MC_STATUS from_stream( rx_stream& stream ) = 0;
 };
 

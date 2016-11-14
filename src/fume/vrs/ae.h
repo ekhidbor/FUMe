@@ -41,10 +41,21 @@ public:
         return AE;
     }
 
+    virtual std::unique_ptr<value_representation> clone() const override final
+    {
+        return std::unique_ptr<value_representation>( new ae( *this ) );
+    }
+
 protected:
     virtual MC_STATUS validate_value( const std::string& val ) const override final
     {
         return validate_ae( val ) ? MC_NORMAL_COMPLETION : MC_INVALID_VALUE_FOR_VR;
+    }
+
+private:
+    ae( const ae& rhs )
+        : string_vr( rhs )
+    {
     }
 };
 

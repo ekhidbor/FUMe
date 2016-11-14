@@ -24,7 +24,7 @@ file_tx_stream::file_tx_stream( const string&     filename,
                                 WriteFileCallback callback,
                                 void*             user_info )
     : m_filename( filename ),
-      m_syntax( IMPLICIT_LITTLE_ENDIAN ),
+      m_bytes_written( 0 ),
       m_callback( callback ),
       m_user_info( user_info ),
       m_first( true )
@@ -35,42 +35,56 @@ file_tx_stream::file_tx_stream( const string&     filename,
 
 MC_STATUS file_tx_stream::write( const void* buffer, size_t buffer_bytes )
 {
-    const MC_STATUS stat = m_callback( const_cast<char*>( m_filename.c_str() ),
-                                       m_user_info,
-                                       // TODO: determine if this is safe
-                                       static_cast<int>( buffer_bytes ),
-                                       const_cast<void*>( buffer ),
-                                       static_cast<int>( m_first ),
-                                       static_cast<int>( false ) );
-    m_first = false;
-    return stat != MC_NORMAL_COMPLETION ? MC_CALLBACK_CANNOT_COMPLY :
-                                          MC_NORMAL_COMPLETION;
+    MC_STATUS ret = MC_CANNOT_COMPLY;
+    if( buffer != nullptr && m_callback != nullptr )
+    {
+        const MC_STATUS stat = m_callback( const_cast<char*>( m_filename.c_str() ),
+                                           m_user_info,
+                                           // TODO: determine if this is safe
+                                           static_cast<int>( buffer_bytes ),
+                                           const_cast<void*>( buffer ),
+                                           static_cast<int>( m_first ),
+                                           static_cast<int>( false ) );
+        m_first = false;
+        if( stat == MC_NORMAL_COMPLETION )
+        {
+            ret = MC_NORMAL_COMPLETION;
+            m_bytes_written += buffer_bytes;
+        }
+        else
+        {
+            ret = MC_CALLBACK_CANNOT_COMPLY;
+        }
+    }
+    else
+    {
+        ret = MC_NULL_POINTER_PARM;
+    }
+
+    return ret;
 }
 
 MC_STATUS file_tx_stream::finalize()
 {
-    const MC_STATUS stat = m_callback( const_cast<char*>( m_filename.c_str() ),
-                                       m_user_info,
-                                       0,
-                                       nullptr,
-                                       static_cast<int>( m_first ),
-                                       static_cast<int>( true ) );
+    MC_STATUS ret = MC_CANNOT_COMPLY;
+    if( m_callback != nullptr )
+    {
+        uint8_t val = 0;
+        const MC_STATUS stat = m_callback( const_cast<char*>( m_filename.c_str() ),
+                                           m_user_info,
+                                           0,
+                                           static_cast<void*>( &val ),
+                                           static_cast<int>( m_first ),
+                                           static_cast<int>( true ) );
+        ret = stat != MC_NORMAL_COMPLETION ? MC_CALLBACK_CANNOT_COMPLY :
+                                             MC_NORMAL_COMPLETION;
+    }
+    else
+    {
+        ret = MC_NULL_POINTER_PARM;
+    }
 
-    return stat != MC_NORMAL_COMPLETION ? MC_CALLBACK_CANNOT_COMPLY :
-                                          MC_NORMAL_COMPLETION;
-}
-
-TRANSFER_SYNTAX file_tx_stream::transfer_syntax() const
-{
-    return m_syntax;
-}
-
-MC_STATUS file_tx_stream::set_transfer_syntax( TRANSFER_SYNTAX syntax )
-{
-    // TODO: validate syntax
-    m_syntax = syntax;
-
-    return MC_NORMAL_COMPLETION;
+    return ret;
 }
 
 }

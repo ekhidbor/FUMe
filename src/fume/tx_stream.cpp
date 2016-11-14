@@ -103,11 +103,13 @@ static const vr_field VR_FIELDS[] =
 };
 
 template<class T>
-static MC_STATUS swap_and_write( tx_stream& stream, T val )
+static MC_STATUS swap_and_write( tx_stream&      stream,
+                                 TRANSFER_SYNTAX syntax,
+                                 T               val )
 {
     MC_STATUS ret = MC_CANNOT_COMPLY;
 
-    switch( stream.transfer_syntax() )
+    switch( syntax )
     {
         case EXPLICIT_BIG_ENDIAN:
         case IMPLICIT_BIG_ENDIAN:
@@ -164,14 +166,14 @@ static MC_STATUS swap_and_write( tx_stream& stream, T val )
     return ret;
 }
 
-MC_STATUS tx_stream::write_vr( MC_VR vr )
+MC_STATUS tx_stream::write_vr( MC_VR vr, TRANSFER_SYNTAX syntax )
 {
     MC_STATUS ret = MC_CANNOT_COMPLY;
 
     if( vr_is_valid( vr ) == true )
     {
         // Don't write transfer syntax if implicit little endian
-        if( transfer_syntax() != IMPLICIT_LITTLE_ENDIAN )
+        if( syntax != IMPLICIT_LITTLE_ENDIAN )
         {
             const vr_field& field( VR_FIELDS[vr] );
             ret = write( field.field, field.size );
@@ -189,17 +191,17 @@ MC_STATUS tx_stream::write_vr( MC_VR vr )
     return ret;
 }
 
-MC_STATUS tx_stream::write_tag( uint32_t tag )
+MC_STATUS tx_stream::write_tag( uint32_t tag, TRANSFER_SYNTAX syntax )
 {
     const uint16_t group = static_cast<uint16_t>( tag >> 16u );
     const uint16_t element = static_cast<uint16_t>( tag & 0xFFFFu );
 
     // Write the group number first
-    MC_STATUS ret = write_val( group );
+    MC_STATUS ret = write_val( group, syntax );
     if( ret == MC_NORMAL_COMPLETION )
     {
         // Then write the element number
-        ret = write_val( element );
+        ret = write_val( element, syntax );
     }
     else
     {
@@ -209,44 +211,44 @@ MC_STATUS tx_stream::write_tag( uint32_t tag )
     return ret;
 }
 
-MC_STATUS tx_stream::write_val( int8_t val )
+MC_STATUS tx_stream::write_val( int8_t val, TRANSFER_SYNTAX syntax )
 {
-    return swap_and_write( *this, val );
+    return swap_and_write( *this, syntax, val );
 }
 
-MC_STATUS tx_stream::write_val( uint8_t val )
+MC_STATUS tx_stream::write_val( uint8_t val, TRANSFER_SYNTAX syntax )
 {
-    return swap_and_write( *this, val );
+    return swap_and_write( *this, syntax, val );
 }
 
-MC_STATUS tx_stream::write_val( int16_t val )
+MC_STATUS tx_stream::write_val( int16_t val, TRANSFER_SYNTAX syntax )
 {
-    return swap_and_write( *this, val );
+    return swap_and_write( *this, syntax, val );
 }
 
-MC_STATUS tx_stream::write_val( uint16_t val )
+MC_STATUS tx_stream::write_val( uint16_t val, TRANSFER_SYNTAX syntax )
 {
-    return swap_and_write( *this, val );
+    return swap_and_write( *this, syntax, val );
 }
 
-MC_STATUS tx_stream::write_val( int32_t val )
+MC_STATUS tx_stream::write_val( int32_t val, TRANSFER_SYNTAX syntax )
 {
-    return swap_and_write( *this, val );
+    return swap_and_write( *this, syntax, val );
 }
 
-MC_STATUS tx_stream::write_val( uint32_t val )
+MC_STATUS tx_stream::write_val( uint32_t val, TRANSFER_SYNTAX syntax )
 {
-    return swap_and_write( *this, val );
+    return swap_and_write( *this, syntax, val );
 }
 
-MC_STATUS tx_stream::write_val( float val )
+MC_STATUS tx_stream::write_val( float val, TRANSFER_SYNTAX syntax )
 {
     // TODO: endian swap
     static_assert( sizeof(float) == 4, "float must be 32-bits" );
     return write( &val, sizeof(val) );
 }
 
-MC_STATUS tx_stream::write_val( double val )
+MC_STATUS tx_stream::write_val( double val, TRANSFER_SYNTAX syntax )
 {
     // TODO: endian swap
     static_assert( sizeof(double) == 8, "double must be 64-bits" );

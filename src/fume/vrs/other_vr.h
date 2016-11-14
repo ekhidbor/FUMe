@@ -45,7 +45,8 @@ public:
 
 // serializable (value_representation)
 public:
-    virtual MC_STATUS to_stream( tx_stream& stream ) const override final;
+    virtual MC_STATUS to_stream( tx_stream&      stream,
+                                 TRANSFER_SYNTAX syntax ) const override final;
     virtual MC_STATUS from_stream( rx_stream& stream ) override final
     {
         // TODO: implement
@@ -270,6 +271,18 @@ public:
         return VR;
     }
 
+    virtual std::unique_ptr<value_representation> clone() const override
+    {
+        return std::unique_ptr<value_representation>( new other_vr( *this ) );
+    }
+
+protected:
+    other_vr( const other_vr& rhs )
+        : value_representation( rhs ),
+          m_values( rhs.m_values )
+    {
+    }
+
 protected:
     template<class Iterator>
     void append( Iterator begin, Iterator end )
@@ -287,17 +300,19 @@ private:
 };
 
 template<class T, MC_VR VR>
-MC_STATUS other_vr<T, VR>::to_stream( tx_stream& stream ) const
+MC_STATUS other_vr<T, VR>::to_stream( tx_stream&      stream,
+                                      TRANSFER_SYNTAX syntax ) const
 {
     MC_STATUS ret =
-        stream.write_val( static_cast<uint32_t>( m_values.size() * sizeof(T) ) );
+        stream.write_val( static_cast<uint32_t>( m_values.size() * sizeof(T) ),
+                          syntax );
     if( ret == MC_NORMAL_COMPLETION && m_values.empty() == false )
     {
         for( typename std::deque<T>::const_iterator itr = m_values.cbegin();
              ret == MC_NORMAL_COMPLETION && itr != m_values.cend();
              ++itr )
         {
-            ret = stream.write_val( *itr );
+            ret = stream.write_val( *itr, syntax );
         }
     }
     else

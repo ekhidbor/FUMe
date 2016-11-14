@@ -16,6 +16,11 @@
 #include "mc3media.h"
 
 // local private
+#include "fume/library_context.h"
+#include "fume/data_dictionary.h"
+
+using fume::g_context;
+using fume::data_dictionary;
 
 MC_STATUS MC_DDH_Copy_Values( int SourceID, int DestID, unsigned long* TagList )
 {
@@ -23,7 +28,23 @@ MC_STATUS MC_DDH_Copy_Values( int SourceID, int DestID, unsigned long* TagList )
 
     try
     {
-        // TODO: implement
+        if( g_context != nullptr )
+        {
+            const data_dictionary* src = g_context->get_object( SourceID );
+            data_dictionary* dst = g_context->get_object( DestID );
+            if( src != nullptr && dst != nullptr )
+            {
+                ret = dst->copy_values( *src, TagList );
+            }
+            else
+            {
+                ret = MC_INVALID_MESSAGE_ID;
+            }
+        }
+        else
+        {
+            ret = MC_LIBRARY_NOT_INITIALIZED;
+        }
     }
     catch( ... )
     {

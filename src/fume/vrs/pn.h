@@ -41,10 +41,21 @@ public:
         return PN;
     }
 
+    virtual std::unique_ptr<value_representation> clone() const override final
+    {
+        return std::unique_ptr<value_representation>( new pn( *this ) );
+    }
+
 protected:
     virtual MC_STATUS validate_value( const std::string& val ) const override final
     {
         return validate_pn( val ) ? MC_NORMAL_COMPLETION : MC_INVALID_VALUE_FOR_VR;
+    }
+
+private:
+    pn( const pn& rhs )
+        : string_vr( rhs )
+    {
     }
 };
 

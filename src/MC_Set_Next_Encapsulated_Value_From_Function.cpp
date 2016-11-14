@@ -56,15 +56,25 @@ MC_STATUS MC_Set_Next_Encapsulated_Value_From_Function
                     ob* element = dynamic_cast<ob*>( dict->at( tag_u32) );
                     if( element != nullptr )
                     {
-                        set_func_parms parms =
+                        TRANSFER_SYNTAX syntax = INVALID_TRANSFER_SYNTAX;
+                        ret = dict->get_transfer_syntax( syntax );
+                        if( ret == MC_NORMAL_COMPLETION )
                         {
-                            YourSetFunction,
-                            UserInfo,
-                            MsgFileItemID,
-                            Tag
-                        };
-                        ret = write_next_encapsulated_value_from_function( *element,
-                                                                           parms );
+                            set_func_parms parms =
+                            {
+                                YourSetFunction,
+                                UserInfo,
+                                MsgFileItemID,
+                                Tag
+                            };
+                            ret = write_next_encapsulated_value_from_function( *element,
+                                                                               syntax,
+                                                                               parms );
+                        }
+                        else
+                        {
+                            // Do nothing. Will return error from get_transfer_syntax
+                        }
                     }
                     else
                     {

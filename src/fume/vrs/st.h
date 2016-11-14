@@ -41,6 +41,11 @@ public:
         return ST;
     }
 
+    virtual std::unique_ptr<value_representation> clone() const override final
+    {
+        return std::unique_ptr<value_representation>( new st( *this ) );
+    }
+
     // TODO: set_next needs to do something different since this is
     // a single-valed VR
 
@@ -48,6 +53,12 @@ protected:
     virtual MC_STATUS validate_value( const std::string& val ) const override final
     {
         return validate_st( val ) ? MC_NORMAL_COMPLETION : MC_INVALID_VALUE_FOR_VR;
+    }
+
+private:
+    st( const st& rhs )
+        : string_vr( rhs )
+    {
     }
 };
 

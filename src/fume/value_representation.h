@@ -13,6 +13,7 @@
 
 // std
 #include <utility>
+#include <memory>
 
 // local public
 #include "mcstatus.h"
@@ -50,7 +51,8 @@ class value_representation : public serializable
 {
 // serializable
 public:
-    virtual MC_STATUS to_stream( tx_stream& stream ) const = 0;
+    virtual MC_STATUS to_stream( tx_stream&      stream,
+                                 TRANSFER_SYNTAX syntax ) const = 0;
     virtual MC_STATUS from_stream( rx_stream& stream ) = 0;
 
 // value_representation -- constructor and destructor
@@ -144,6 +146,13 @@ public:
     virtual bool is_null() const = 0;
 
     virtual MC_VR vr() const = 0;
+
+    virtual std::unique_ptr<value_representation> clone() const = 0;
+
+protected:
+    value_representation( const value_representation& rhs )
+    {
+    }
 };
 
 } // namespace fume

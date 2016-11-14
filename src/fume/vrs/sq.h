@@ -35,7 +35,8 @@ public:
 
 // serializable (value_representation)
 public:
-    virtual MC_STATUS to_stream( tx_stream& stream ) const override final;
+    virtual MC_STATUS to_stream( tx_stream&      stream,
+                                 TRANSFER_SYNTAX syntax ) const override final;
     virtual MC_STATUS from_stream( rx_stream& stream ) override final
     {
         // TODO: implement
@@ -357,6 +358,20 @@ public:
     virtual MC_VR vr() const override final
     {
         return SQ;
+    }
+
+    virtual std::unique_ptr<value_representation> clone() const override
+    {
+        return std::unique_ptr<value_representation>( new sq( *this ) );
+    }
+
+private:
+    sq( const sq& rhs )
+        : value_representation( rhs ),
+          // TODO: Do we ned to do a deep copy?
+          m_items( rhs.m_items ),
+          m_current_idx( rhs.m_current_idx )
+    {
     }
 
 private:

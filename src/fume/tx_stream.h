@@ -17,6 +17,7 @@
 
 // local public
 #include "mcstatus.h"
+#include "mc3msg.h"
 
 namespace fume
 {
@@ -34,21 +35,20 @@ public:
     // returns MC_NORMAL_COMPLETION if buffer_bytes have been successfully
     // written and some other error code otherwise
     virtual MC_STATUS write( const void* buffer, size_t buffer_bytes ) = 0;
+    virtual uint32_t bytes_written() const = 0;
 
-    virtual TRANSFER_SYNTAX transfer_syntax() const = 0;
+    MC_STATUS write_vr( MC_VR vr, TRANSFER_SYNTAX syntax );
 
-    MC_STATUS write_vr( MC_VR vr );
+    MC_STATUS write_tag( uint32_t tag, TRANSFER_SYNTAX syntax );
 
-    MC_STATUS write_tag( uint32_t tag );
-
-    MC_STATUS write_val( int8_t val );
-    MC_STATUS write_val( uint8_t val );
-    MC_STATUS write_val( int16_t val );
-    MC_STATUS write_val( uint16_t val );
-    MC_STATUS write_val( int32_t val );
-    MC_STATUS write_val( uint32_t val );
-    MC_STATUS write_val( float val );
-    MC_STATUS write_val( double val );
+    MC_STATUS write_val( int8_t val, TRANSFER_SYNTAX syntax );
+    MC_STATUS write_val( uint8_t val, TRANSFER_SYNTAX syntax );
+    MC_STATUS write_val( int16_t val, TRANSFER_SYNTAX syntax );
+    MC_STATUS write_val( uint16_t val, TRANSFER_SYNTAX syntax );
+    MC_STATUS write_val( int32_t val, TRANSFER_SYNTAX syntax );
+    MC_STATUS write_val( uint32_t val, TRANSFER_SYNTAX syntax );
+    MC_STATUS write_val( float val, TRANSFER_SYNTAX syntax );
+    MC_STATUS write_val( double val, TRANSFER_SYNTAX syntax );
 
 private:
     tx_stream( const tx_stream& );

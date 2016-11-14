@@ -33,6 +33,7 @@ namespace fume
 {
 
 class data_dictionary;
+class file_object;
 class application;
 
 class library_context
@@ -44,12 +45,20 @@ public:
     int create_file_object( const char* filename,
                             const char* service_name,
                             MC_COMMAND  command );
+    int create_dicomdir_object( const char*        filename,
+                                const char*        fileset,
+                                const file_object* template_file );
     int create_empty_file_object( const char* filename );
 
     MC_STATUS free_file_object( int id );
 
     int create_item_object( const char* item_name );
     MC_STATUS free_item_object( int id );
+
+    int create_record_object( int         file_id,
+                              int         parent_id,
+                              const char* record_type );
+    MC_STATUS free_record_object( int id );
 
     data_dictionary* get_object( int id );
     // create_vr can optionally take in a data_dictionary object for

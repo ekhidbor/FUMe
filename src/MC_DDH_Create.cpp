@@ -16,6 +16,11 @@
 #include "mc3media.h"
 
 // local private
+#include "fume/library_context.h"
+#include "fume/file_object.h"
+
+using fume::g_context;
+using fume::file_object;
 
 MC_STATUS MC_DDH_Create( const char* FilePath,
                          const char* FileSetID,
@@ -26,7 +31,40 @@ MC_STATUS MC_DDH_Create( const char* FilePath,
 
     try
     {
-        // TODO: implement
+        if( g_context   != nullptr &&
+            DirMsgIDPtr != nullptr )
+        {
+            const file_object* template_dict =
+                dynamic_cast<file_object*>( g_context->get_object( TemplateFileID ) );
+            if( TemplateFileID == 0 || template_dict != nullptr )
+            {
+                const int dicomdir_id =
+                    g_context->create_dicomdir_object( FilePath,
+                                                       FileSetID,
+                                                       template_dict );
+                if( dicomdir_id > 0 )
+                {
+                    *DirMsgIDPtr = dicomdir_id;
+                    ret = MC_NORMAL_COMPLETION;
+                }
+                else
+                {
+                    ret = static_cast<MC_STATUS>( -dicomdir_id );
+                }
+            }
+            else
+            {
+                ret = MC_INVALID_MESSAGE_ID;
+            }
+        }
+        else if( g_context == nullptr )
+        {
+            ret = MC_LIBRARY_NOT_INITIALIZED;
+        }
+        else
+        {
+            ret = MC_NULL_POINTER_PARM;
+        }
     }
     catch( ... )
     {

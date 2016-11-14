@@ -21,12 +21,12 @@
 namespace fume
 {
 
-static MC_STATUS write_item_tag( tx_stream& stream )
+static MC_STATUS write_item_tag( tx_stream& stream, TRANSFER_SYNTAX syntax )
 {
-    MC_STATUS ret = stream.write_tag( 0xFFFEE000u );
+    MC_STATUS ret = stream.write_tag( 0xFFFEE000u, syntax );
     if( ret == MC_NORMAL_COMPLETION )
     {
-        ret = stream.write_val( static_cast<uint32_t>( 0xFFFFFFFFu ) );
+        ret = stream.write_val( static_cast<uint32_t>( 0xFFFFFFFFu ), syntax );
     }
     else
     {
@@ -36,12 +36,13 @@ static MC_STATUS write_item_tag( tx_stream& stream )
     return ret;
 }
 
-static MC_STATUS write_item_delimitation( tx_stream& stream )
+static MC_STATUS write_item_delimitation( tx_stream&      stream,
+                                          TRANSFER_SYNTAX syntax )
 {
-    MC_STATUS ret = stream.write_tag( 0xFFFEE00Du );
+    MC_STATUS ret = stream.write_tag( 0xFFFEE00Du, syntax );
     if( ret == MC_NORMAL_COMPLETION )
     {
-        ret = stream.write_val( static_cast<uint32_t>( 0x00000000u ) );
+        ret = stream.write_val( static_cast<uint32_t>( 0x00000000u ), syntax );
     }
     else
     {
@@ -51,15 +52,16 @@ static MC_STATUS write_item_delimitation( tx_stream& stream )
     return ret;
 }
 
-MC_STATUS item_object::to_stream( tx_stream& stream ) const
+MC_STATUS item_object::to_stream( tx_stream&      stream,
+                                  TRANSFER_SYNTAX syntax ) const
 {
-    MC_STATUS ret = write_item_tag( stream );
+    MC_STATUS ret = write_item_tag( stream, syntax );
     if( ret == MC_NORMAL_COMPLETION )
     {
-        ret = write_values( stream, begin(), end() );
+        ret = write_values( stream, syntax, begin(), end() );
         if( ret == MC_NORMAL_COMPLETION )
         {
-            ret = write_item_delimitation( stream );
+            ret = write_item_delimitation( stream, syntax );
         }
         else
         {

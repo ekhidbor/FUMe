@@ -41,16 +41,5 @@ MC_STATUS ob::write( const void* buffer, size_t buffer_bytes )
     return ret;
 }
 
-TRANSFER_SYNTAX ob::transfer_syntax() const
-{
-    return m_syntax;
-}
-
-MC_STATUS ob::set_transfer_syntax( TRANSFER_SYNTAX syntax )
-{
-    m_syntax = syntax;
-    return MC_NORMAL_COMPLETION;
-}
-
 } // namespace vrs
 } // namespace fume
