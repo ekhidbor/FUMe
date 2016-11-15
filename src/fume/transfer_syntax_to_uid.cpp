@@ -17,7 +17,7 @@
 #include "boost/bimap.hpp"
 
 // local privatw
-#include "transfer_syntax_to_uid.h"
+#include "fume/transfer_syntax_to_uid.h"
 
 using std::string;
 using std::pair;
@@ -71,7 +71,7 @@ static const transfer_syntax_map_t::value_type TRANSFER_SYNTAXES[] =
     { JPIP_REFERENCED_DEFLATE,         "1.2.840.10008.1.2.4.95"  }
 };
 
-boost::bimap<TRANSFER_SYNTAX, string> create_transfer_syntax_to_uid_map()
+transfer_syntax_map_t create_transfer_syntax_to_uid_map()
 {
     return boost::bimap<TRANSFER_SYNTAX, string>( begin( TRANSFER_SYNTAXES ),
                                                   end( TRANSFER_SYNTAXES ) );
