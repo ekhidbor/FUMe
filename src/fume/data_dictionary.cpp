@@ -245,19 +245,8 @@ MC_STATUS data_dictionary::copy_values( const data_dictionary& source,
                     // Copy all tags with that group ID
                     const uint32_t tag_start = tag_u32 & 0xFFFF0000u;
                     const uint32_t tag_end   = tag_u32 | 0x0000FFFFu;
-                    const const_value_range& range
-                    (
-                        source.get_value_range( tag_start, tag_end )
-                    );
 
-                    for( value_dict::const_reference source_elem : range )
-                    {
-                        if( source_elem.second != nullptr )
-                        {
-                            m_value_dict[source_elem.first] =
-                                source_elem.second->clone();
-                        }
-                    }
+                    copy_values( source, tag_start, tag_end );
                 }
                 else
                 {
@@ -277,16 +266,25 @@ MC_STATUS data_dictionary::copy_values( const data_dictionary& source,
     else
     {
         // Copy all
-        for( value_dict::const_reference source_elem : source )
-        {
-            if( source_elem.second != nullptr )
-            {
-                m_value_dict[source_elem.first] = source_elem.second->clone();
-            }
-        }
+        copy_values( source, 0x00000000, 0xFFFFFFFF );
     }
 
     return MC_NORMAL_COMPLETION;
+}
+
+void data_dictionary::copy_values( const data_dictionary& source,
+                                   uint32_t               first_tag,
+                                   uint32_t               last_tag )
+{
+    const const_value_range& range( source.get_value_range( first_tag, last_tag ) );
+
+    for( value_dict::const_reference source_elem : range )
+    {
+        if( source_elem.second != nullptr )
+        {
+            m_value_dict[source_elem.first] = source_elem.second->clone();
+        }
+    }
 }
 
 MC_STATUS data_dictionary::add_standard_attribute( uint32_t tag )

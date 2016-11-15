@@ -54,6 +54,10 @@ public:
     MC_STATUS copy_values( const data_dictionary& source,
                            const unsigned long*   tags );
 
+    void copy_values( const data_dictionary& source,
+                      uint32_t               first_tag,
+                      uint32_t               last_tag );
+
     bool created_empty() const
     {
         return m_created_empty;
