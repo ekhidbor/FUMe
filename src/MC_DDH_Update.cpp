@@ -16,6 +16,11 @@
 #include "mc3media.h"
 
 // local private
+#include "fume/library_context.h"
+#include "fume/dicomdir_object.h"
+
+using fume::g_context;
+using fume::dicomdir_object;
 
 MC_STATUS MC_DDH_Update( int DirMsgID )
 {
@@ -23,7 +28,23 @@ MC_STATUS MC_DDH_Update( int DirMsgID )
 
     try
     {
-        // TODO: implement
+        if( g_context != nullptr )
+        {
+            dicomdir_object* dicomdir =
+                dynamic_cast<dicomdir_object*>( g_context->get_object( DirMsgID ) );
+            if( dicomdir != nullptr )
+            {
+                ret = dicomdir->update();
+            }
+            else
+            {
+                ret = MC_INVALID_DICOMDIR_ID;
+            }
+        }
+        else
+        {
+            ret = MC_LIBRARY_NOT_INITIALIZED;
+        }
     }
     catch( ... )
     {

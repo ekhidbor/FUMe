@@ -38,7 +38,7 @@ public:
 
     MC_STATUS write( int               alignment,
                      void*             user_info,
-                     WriteFileCallback callback ) const
+                     WriteFileCallback callback )
     {
         return write( application_id(), alignment, user_info, callback );
     }
@@ -46,7 +46,7 @@ public:
     MC_STATUS write( int               app_id,
                      int               alignment,
                      void*             user_info,
-                     WriteFileCallback callback ) const;
+                     WriteFileCallback callback );
 
     // TODO: Add all variants of this function
     MC_STATUS open( void*            user_info,
@@ -64,9 +64,12 @@ public:
     virtual MC_STATUS get_transfer_syntax( TRANSFER_SYNTAX& syntax ) const override final;
 
 protected:
-    MC_STATUS write_file( tx_stream& stream, int app_id ) const;
+    MC_STATUS write_file( tx_stream& stream, int app_id );
     MC_STATUS write_values( tx_stream& stream, int app_id ) const;
     using data_dictionary::write_values;
+
+private:
+    MC_STATUS update_file_group_length();
 
 private:
     std::string              m_filename;

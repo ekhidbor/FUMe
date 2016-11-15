@@ -16,6 +16,11 @@
 #include "mc3media.h"
 
 // local private
+#include "fume/library_context.h"
+#include "fume/record_object.h"
+
+using fume::g_context;
+using fume::record_object;
 
 MC_STATUS MC_DDH_Get_Record_Type( int RecordID, MC_DIR_RECORD_TYPE* RecType )
 {
@@ -23,7 +28,27 @@ MC_STATUS MC_DDH_Get_Record_Type( int RecordID, MC_DIR_RECORD_TYPE* RecType )
 
     try
     {
-        // TODO: implement
+        if( g_context != nullptr && RecType != nullptr )
+        {
+            const record_object* record =
+                dynamic_cast<record_object*>( g_context->get_object( RecordID ) );
+            if( record != nullptr )
+            {
+                ret = record->get_record_type( *RecType );
+            }
+            else
+            {
+                ret = MC_INVALID_RECORD_ID;
+            }
+        }
+        else if( g_context != nullptr )
+        {
+            ret = MC_LIBRARY_NOT_INITIALIZED;
+        }
+        else
+        {
+            ret = MC_NULL_POINTER_PARM;
+        }
     }
     catch( ... )
     {

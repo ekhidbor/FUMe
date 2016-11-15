@@ -31,7 +31,6 @@
 #include "fume/item_object.h"
 #include "fume/record_object.h"
 #include "fume/vr_factory.h"
-#include "fume/transfer_syntax_to_uid.h"
 
 using std::numeric_limits;
 using std::unordered_map;
@@ -56,6 +55,7 @@ library_context::library_context()
       // Generate IDs greater than 0
     : m_tag_vr_dict( create_default_tag_vr_dict() ),
       m_transfer_syntax_map( create_transfer_syntax_to_uid_map() ),
+      m_record_type_map( create_record_type_to_string_map() ),
       m_rng( static_cast<default_random_engine::result_type>( clock() ) ),
       m_id_gen( 1, numeric_limits<int>::max() )
 {
@@ -136,38 +136,15 @@ int library_context::create_dicomdir_object( const char*        filename,
         // Create empty dicomdir object
         // TODO: figure out how to populate with record type
         data_dictionary_ptr dicomdir_obj( new dicomdir_object( id,
-                                                               filename, 
+                                                               filename,
+                                                               template_file,
                                                                true ) );
 
         // TODO: initialize item object dictionary based on service name/command
 
-        if( template_file != nullptr )
-        {
-            const MC_STATUS stat = dicomdir_obj->copy_values( *template_file,
-                                                              nullptr );
-            if( stat == MC_NORMAL_COMPLETION )
-            {
-                // Insert the item object into the dictionary. Two-step process
-                // (create then swap) to prevent memory leak in case operator[]
-                // throws an exception
-                m_data_dictionaries[id].swap( dicomdir_obj );
+        m_data_dictionaries[id].swap( dicomdir_obj );
 
-                ret = id;
-            }
-            else
-            {
-                ret = -stat;
-            }
-        }
-        else
-        {
-            // Insert the item object into the dictionary. Two-step process
-            // (create then swap) to prevent memory leak in case operator[]
-            // throws an exception
-            m_data_dictionaries[id].swap( dicomdir_obj );
-
-            ret = id;
-        }
+        ret = id;
     }
     else
     {
@@ -224,8 +201,8 @@ int library_context::create_record_object( int         file_id,
     // positive values indicate file IDs returned
     int ret = -MC_CANNOT_COMPLY;
 
-    if( record_type != nullptr )
-    {
+    //if( record_type != nullptr )
+    //{
         lock_guard<mutex> lock(m_mutex);
         const int id = generate_id();
         // generate_id shall maintain uniqueness, but assert here
@@ -236,6 +213,7 @@ int library_context::create_record_object( int         file_id,
         data_dictionary_ptr item_obj( new record_object( file_id, 
                                                          parent_id,
                                                          id,
+                                                         record_type,
                                                          true ) );
 
         // TODO: initialize item object dictionary based on service name/command
@@ -246,11 +224,11 @@ int library_context::create_record_object( int         file_id,
         m_data_dictionaries[id].swap( item_obj );
 
         ret = id;
-    }
-    else
-    {
-        ret = -MC_NULL_POINTER_PARM;
-    }
+    //}
+    //else
+    //{
+    //    ret = -MC_NULL_POINTER_PARM;
+    //}
 
     return ret;
 }
@@ -493,6 +471,74 @@ MC_STATUS library_context::get_enum_from_transfer_syntax
     return ret;
 }
 
+MC_STATUS library_context::get_record_type_from_enum
+(
+    MC_DIR_RECORD_TYPE record_type,
+    char*              val,
+    int                val_length
+) const
+{
+    MC_STATUS ret = MC_CANNOT_COMPLY;
+
+    if( val != nullptr )
+    {
+        record_type_map_t::left_map::const_iterator itr =
+            m_record_type_map.left.find( record_type );
+        if( itr != m_record_type_map.left.end() )
+        {
+            if( static_cast<int>( itr->second.size() ) < val_length )
+            {
+                strncpy( val, itr->second.c_str(), val_length );
+                ret = MC_NORMAL_COMPLETION;
+            }
+            else
+            {
+                ret = MC_BUFFER_TOO_SMALL;
+            }
+        }
+        else
+        {
+            ret = MC_INVALID_TRANSFER_SYNTAX;
+        }
+    }
+    else
+    {
+        ret = MC_NULL_POINTER_PARM;
+    }
+
+    return ret;
+}
+
+MC_STATUS library_context::get_enum_from_record_type
+( 
+    const char*         val,
+    MC_DIR_RECORD_TYPE& record_type
+) const
+{
+    MC_STATUS ret = MC_CANNOT_COMPLY;
+
+    if( val != nullptr )
+    {
+        record_type_map_t::right_map::const_iterator itr =
+            m_record_type_map.right.find( val );
+        if( itr != m_record_type_map.right.end() )
+        {
+            record_type = itr->second;
+            ret = MC_NORMAL_COMPLETION;
+        }
+        else
+        {
+            ret = MC_INVALID_TRANSFER_SYNTAX;
+        }
+    }
+    else
+    {
+        ret = MC_NULL_POINTER_PARM;
+    }
+
+    return ret;
+}
+
 int library_context::generate_id()
 {
     // This function must only be called by a function which performs
@@ -503,7 +549,7 @@ int library_context::generate_id()
     {
         ret = m_id_gen( m_rng );
     }
-    while( m_data_dictionaries.count( ret ) != 0 &&
+    while( m_data_dictionaries.count( ret ) != 0 ||
            m_applications.count( ret )      != 0 );
 
     return ret;

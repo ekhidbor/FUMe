@@ -12,6 +12,7 @@
  */
 
 // std
+#include <unordered_map>
 
 // local public
 #include "mcstatus.h"
@@ -26,7 +27,10 @@ namespace fume
 class dicomdir_object : public file_object
 {
 public:
-    dicomdir_object( int id, const char* filename, bool created_empty );
+    dicomdir_object( int                    id,
+                     const char*            filename,
+                     const data_dictionary* source,
+                     bool                   created_empty );
     virtual ~dicomdir_object()
     {
     }
@@ -41,6 +45,8 @@ public:
     {
         return m_child_record;
     }
+
+    MC_STATUS update();
 
 private:
     int m_child_record;

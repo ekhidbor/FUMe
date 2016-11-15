@@ -24,7 +24,9 @@
 #include "fume/file_object.h"
 #include "fume/tx_stream.h"
 #include "fume/file_tx_stream.h"
+#include "fume/null_tx_stream.h"
 #include "fume/value_representation.h"
+#include "fume/vrs/ob.h"
 #include "fume/library_context.h"
 
 using std::memcpy;
@@ -41,12 +43,21 @@ namespace fume
 // NULL-terminated and therefore should not be treated
 // as a C-style string
 static const char DICOM_PREFIX[] = { 'D', 'I', 'C', 'M' };
+static const char META_INFORMATION_VERSION[] = { 0, 1 };
 
 file_object::file_object( int id, const char* filename, bool created_empty )
     : data_dictionary( id, created_empty ),
       m_filename( filename )
 {
     m_preamble.fill( 0 );
+    (*this)[MC_ATT_FILE_META_INFORMATION_GROUP_LENGTH].set( 0x00000000 );
+    fume::vrs::ob& meta_version
+    (
+        dynamic_cast<fume::vrs::ob&>((*this)[MC_ATT_FILE_META_INFORMATION_VERSION])
+    );
+    // This shoud always succeed
+    meta_version.write( META_INFORMATION_VERSION,
+                        sizeof(META_INFORMATION_VERSION) );
 }
 
 
@@ -138,7 +149,7 @@ MC_STATUS file_object::get_filename( char* filename, int filesize ) const
 MC_STATUS file_object::write( int               app_id,
                               int               alignment,
                               void*             user_info,
-                              WriteFileCallback callback ) const
+                              WriteFileCallback callback )
 {
     MC_STATUS ret = MC_CANNOT_COMPLY;
 
@@ -176,17 +187,25 @@ MC_STATUS file_object::open( void*            user_info,
     return MC_CANNOT_COMPLY;
 }
 
-MC_STATUS file_object::write_file( tx_stream& stream, int app_id ) const
+MC_STATUS file_object::write_file( tx_stream& stream, int app_id )
 {
     // Write the preamble data
-    MC_STATUS ret = stream.write( m_preamble.data(), m_preamble.size() );
+    MC_STATUS ret = update_file_group_length();
     if( ret == MC_NORMAL_COMPLETION )
     {
-        // Write the 4-character prefix
-        ret = stream.write( DICOM_PREFIX, sizeof(DICOM_PREFIX) );
+        stream.write( m_preamble.data(), m_preamble.size() );
         if( ret == MC_NORMAL_COMPLETION )
         {
-            ret = write_values( stream, app_id );
+            // Write the 4-character prefix
+            ret = stream.write( DICOM_PREFIX, sizeof(DICOM_PREFIX) );
+            if( ret == MC_NORMAL_COMPLETION )
+            {
+                ret = write_values( stream, app_id );
+            }
+            else
+            {
+                // Do nothing. Will return error from stream::write
+            }
         }
         else
         {
@@ -195,7 +214,7 @@ MC_STATUS file_object::write_file( tx_stream& stream, int app_id ) const
     }
     else
     {
-        // Do nothing. Will return error from stream::write
+        // Do nothing. WIll return error from update_file_group_length
     }
 
     return ret;
@@ -271,7 +290,7 @@ MC_STATUS file_object::get_transfer_syntax( TRANSFER_SYNTAX& syntax ) const
 MC_STATUS file_object::write_values( tx_stream& stream, int app_id ) const
 {
     // Get iterators for all Group 2 attributes.
-    const const_value_range& group2_range( get_value_range( 0x00000000,
+    const const_value_range& group2_range( get_value_range( 0x00020000u,
                                                             0x0002FFFFu ) );
 
     TRANSFER_SYNTAX syntax = INVALID_TRANSFER_SYNTAX;
@@ -301,6 +320,32 @@ MC_STATUS file_object::write_values( tx_stream& stream, int app_id ) const
     else
     {
         // Do nothing. Will return error from get_transfer_syntax
+    }
+
+    return ret;
+}
+
+MC_STATUS file_object::update_file_group_length()
+{
+    MC_STATUS ret = MC_CANNOT_COMPLY;
+
+    null_tx_stream stream;
+    // Get iterators for all Group 2 attributes except group length
+    const const_value_range& group2_range( get_value_range( 0x00020001,
+                                                            0x0002FFFFu ) );
+
+    ret = write_values( stream,
+                        EXPLICIT_LITTLE_ENDIAN,
+                        -1,
+                        group2_range.begin(),
+                        group2_range.end() );
+    if( ret == MC_NORMAL_COMPLETION )
+    {
+        (*this)[MC_ATT_FILE_META_INFORMATION_GROUP_LENGTH].set( stream.bytes_written() );
+    }
+    else
+    {
+        // Do nothing. Will return error from write_values
     }
 
     return ret;

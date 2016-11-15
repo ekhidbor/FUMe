@@ -117,6 +117,37 @@ int add_record( dicomdir_object& file_obj,
     return record_id;
 }
 
+static const char* get_child_record_type( const record_object& parent )
+{
+    const char* ret = nullptr;
+
+    MC_DIR_RECORD_TYPE parent_type = MC_REC_TYPE_UNKNOWN;
+    if( parent.get_record_type( parent_type ) == MC_NORMAL_COMPLETION )
+    {
+        switch( parent_type )
+        {
+            case MC_REC_TYPE_PATIENT:
+                ret = "STUDY";
+                break;
+            case MC_REC_TYPE_STUDY:
+                ret = "SERIES";
+                break;
+            case MC_REC_TYPE_SERIES:
+                ret = "IMAGE";
+                break;
+            default:
+                ret = nullptr;
+                break;
+        }
+    }
+    else
+    {
+        ret = nullptr;
+    }
+
+    return ret;
+}
+
 MC_STATUS MC_DDH_Add_Record( int ParentID, const char* RecordType, int* RecordID )
 {
     MC_STATUS ret = MC_CANNOT_COMPLY;
@@ -166,6 +197,15 @@ MC_STATUS MC_DDH_Add_Record( int ParentID, const char* RecordType, int* RecordID
                                );
                     if( dicomdir != nullptr )
                     {
+                        if( RecordType == nullptr )
+                        {
+                            RecordType = get_child_record_type( *record );
+                        }
+                        else
+                        {
+                            // Do nothing. RecordType already initialized
+                        }
+
                         const int record_id = add_record( *dicomdir,
                                                           *record,
                                                           RecordType );

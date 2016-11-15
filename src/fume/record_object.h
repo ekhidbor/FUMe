@@ -29,6 +29,7 @@ public:
     record_object( int         dicomdir_file_id,
                    int         parent_id,
                    int         id,
+                   const char* record_type,
                    bool        created_empty );
     virtual ~record_object()
     {
