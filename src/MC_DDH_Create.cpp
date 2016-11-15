@@ -36,6 +36,8 @@ MC_STATUS MC_DDH_Create( const char* FilePath,
         {
             const file_object* template_dict =
                 dynamic_cast<file_object*>( g_context->get_object( TemplateFileID ) );
+            // Create DICOMDIR object if the caller didn't specify a template ID
+            // or they did and it's a valid file object
             if( TemplateFileID == 0 || template_dict != nullptr )
             {
                 const int dicomdir_id =
