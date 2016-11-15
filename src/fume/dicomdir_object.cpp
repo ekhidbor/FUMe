@@ -192,12 +192,12 @@ static MC_TRAVERSAL_STATUS update_root_offsets( int   CurrentRecID,
     if( stat == MC_NORMAL_COMPLETION )
     {
         stat = write_record_offset
-        (
-            context.dicomdir.id(),
-            MC_ATT_OFFSET_OF_THE_LAST_DIRECTORY_RECORD_OF_THE_ROOT_DIRECTORY_ENTITY,
-            CurrentRecID,
-            context.offsets
-        );
+               (
+                   context.dicomdir.id(),
+                   MC_ATT_OFFSET_OF_THE_LAST_DIRECTORY_RECORD_OF_THE_ROOT_DIRECTORY_ENTITY,
+                   CurrentRecID,
+                   context.offsets
+               );
     }
     else
     {
