@@ -33,6 +33,12 @@ namespace fume
 
 typedef unordered_map<int, uint32_t> offset_map_t;
 
+struct root_record_offet_context
+{
+    const dicomdir_object& dicomdir;
+    const offset_map_t&    offsets;
+};
+
 static MC_STATUS write_using_stdio( char* Cbfilename,
                                     void* CbuserInfo,
                                     int   CbdataSize,
@@ -101,6 +107,18 @@ static MC_STATUS write_using_stdio( char* Cbfilename,
     return ret;
 }
 
+static MC_STATUS write_record_offset( int                 parent_id,
+                                      uint32_t            tag,
+                                      int                 record_id_to_write,
+                                      const offset_map_t& offsets )
+{
+    const offset_map_t::const_iterator itr = offsets.find( record_id_to_write );
+    const bool has_record = record_id_to_write > 0 && itr != offsets.cend();
+    const uint32_t offset = has_record ? itr->second : 0u;
+
+    return MC_Set_Value_From_ULongInt( parent_id, tag, offset );
+}
+
 static MC_TRAVERSAL_STATUS update_record_offsets( int   CurrentRecID,
                                                   void* UserData )
 {
@@ -112,28 +130,22 @@ static MC_TRAVERSAL_STATUS update_record_offsets( int   CurrentRecID,
         dynamic_cast<record_object*>( g_context->get_object( CurrentRecID ) );
     if( record != nullptr )
     {
-        const int next_record = record->get_next_record();
-        const int child_record = record->get_child_record();
-
-        const bool has_next_record = next_record > 0 &&
-                                     offset_map.count( next_record ) > 0;
-        const bool has_child_record = child_record > 0 &&
-                                      offset_map.count( child_record ) > 0;
-        const uint32_t next_offset =
-            has_next_record ? offset_map.at( next_record ) : 0u;
-        const uint32_t child_offset =
-            has_child_record ? offset_map.at( child_record ) : 0u;
-
-        MC_STATUS stat =
-            MC_Set_Value_From_ULongInt( CurrentRecID,
-                                        MC_ATT_OFFSET_OF_THE_NEXT_DIRECTORY_RECORD,
-                                        next_offset );
+        MC_STATUS stat = write_record_offset
+                         (
+                             CurrentRecID,
+                             MC_ATT_OFFSET_OF_THE_NEXT_DIRECTORY_RECORD,
+                             record->get_next_record(),
+                             offset_map
+                         );
         if( stat == MC_NORMAL_COMPLETION )
         {
-            stat =
-                MC_Set_Value_From_ULongInt( CurrentRecID,
-                                            MC_ATT_OFFSET_OF_REFERENCED_LOWER_LEVEL_DIRECTORY_ENTITY,
-                                            child_offset );
+            stat = write_record_offset
+                   (
+                       CurrentRecID,
+                       MC_ATT_OFFSET_OF_REFERENCED_LOWER_LEVEL_DIRECTORY_ENTITY,
+                       record->get_child_record(),
+                       offset_map
+                   );
             ret = stat == MC_NORMAL_COMPLETION ? MC_TS_CONTINUE : MC_TS_ERROR;
         }
         else
@@ -149,53 +161,65 @@ static MC_TRAVERSAL_STATUS update_record_offsets( int   CurrentRecID,
     return ret;
 }
 
+static MC_TRAVERSAL_STATUS update_root_offsets( int   CurrentRecID,
+                                                void* UserData )
+{
+    assert( UserData != nullptr );
+
+    const root_record_offet_context& context
+    (
+        *static_cast<root_record_offet_context*>( UserData )
+    );
+    const bool is_first = context.dicomdir.get_child_record() == CurrentRecID;
+
+    MC_STATUS stat = MC_CANNOT_COMPLY;
+    if( is_first == true )
+    {
+        stat = write_record_offset
+               (
+                   context.dicomdir.id(),
+                   MC_ATT_OFFSET_OF_THE_FIRST_DIRECTORY_RECORD_OF_THE_ROOT_DIRECTORY_ENTITY,
+                   CurrentRecID,
+                   context.offsets
+               );
+    }
+    else
+    {
+        // Not first record. Write to last record item but not first
+        stat = MC_NORMAL_COMPLETION;
+    }
+
+    if( stat == MC_NORMAL_COMPLETION )
+    {
+        stat = write_record_offset
+        (
+            context.dicomdir.id(),
+            MC_ATT_OFFSET_OF_THE_LAST_DIRECTORY_RECORD_OF_THE_ROOT_DIRECTORY_ENTITY,
+            CurrentRecID,
+            context.offsets
+        );
+    }
+    else
+    {
+        // Do nothing. Return error
+    }
+
+    // Either traverse the next item or report an error
+    return stat == MC_NORMAL_COMPLETION ? MC_TS_STOP_LOWER : MC_TS_ERROR;
+}
+
 static MC_STATUS update_offset_values( dicomdir_object&    dicomdir,
                                        const offset_map_t& offsets )
 {
-    MC_STATUS ret = MC_NORMAL_COMPLETION;
-
-    bool first = true;
-    int next = dicomdir.get_child_record();
-    while( ret == MC_NORMAL_COMPLETION && next > 0 )
-    {
-        const long offset_tag =
-            first ? MC_ATT_OFFSET_OF_THE_FIRST_DIRECTORY_RECORD_OF_THE_ROOT_DIRECTORY_ENTITY :
-                    MC_ATT_OFFSET_OF_THE_LAST_DIRECTORY_RECORD_OF_THE_ROOT_DIRECTORY_ENTITY;
-
-        if( offsets.count( next ) > 0 )
-        {
-            ret = MC_Set_Value_From_ULongInt( dicomdir.id(),
-                                              offset_tag,
-                                              offsets.at( next ) );
-            if( ret == MC_NORMAL_COMPLETION )
-            {
-                assert( g_context != nullptr );
-                record_object* child =
-                    dynamic_cast<record_object*>( g_context->get_object( next ) );
-                if( child != nullptr )
-                {
-                    next = child->get_next_record();
-                    first = false;
-                }
-                else
-                {
-                    ret = MC_INVALID_RECORD_ID;
-                }
-            }
-            else
-            {
-                // Do nothing. Will return error from MC_Set_Value_From_ULongInt
-            }
-        }
-        else
-        {
-            // Consistency problem
-            ret = MC_SYSTEM_ERROR;
-        }
-    }
+    root_record_offet_context root_context = { dicomdir, offsets };
+    // Update the record offsets pointing to the root records
+    MC_STATUS ret = MC_DDH_Traverse_Records( dicomdir.id(),
+                                             static_cast<void*>( &root_context ),
+                                             update_root_offsets );
 
     if( ret == MC_NORMAL_COMPLETION )
     {
+        // Update the record offsets in the records themselves
         ret = MC_DDH_Traverse_Records( dicomdir.id(),
                                        const_cast<offset_map_t*>( &offsets ),
                                        update_record_offsets );
@@ -280,24 +304,19 @@ MC_STATUS dicomdir_object::update()
     // Update all offset values using the NULL stream.
     // Note we don't use the callback function. There shouldn't
     // be anything in a DICOMDIR which would use a callback
-    fprintf( stderr, "getting offsets\n" );
     MC_STATUS ret = write_file( null_stream, -1 );
     if( ret == MC_NORMAL_COMPLETION )
     {
-        fprintf( stderr, "Offsets obtainted\n" );
         offset_map_t record_offsets;
         ret = get_record_offsets( (*this)[MC_ATT_DIRECTORY_RECORD_SEQUENCE],
                                   record_offsets );
         if( ret == MC_NORMAL_COMPLETION )
         {
-            fprintf( stderr, "Offsets written to map\n" );
             ret = update_offset_values( *this, record_offsets );
             if( ret == MC_NORMAL_COMPLETION )
             {
-                fprintf( stderr, "Offsets updated in DICOMDIR\n" );
                 FILE* f = nullptr;
                 ret = write( 0, static_cast<void*>( &f ), write_using_stdio );
-                fprintf( stderr, "File written\n" );
             }
             else
             {
