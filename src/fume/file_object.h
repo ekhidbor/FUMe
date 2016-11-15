@@ -63,7 +63,7 @@ public:
     virtual MC_STATUS set_transfer_syntax( TRANSFER_SYNTAX syntax ) override final;
     virtual MC_STATUS get_transfer_syntax( TRANSFER_SYNTAX& syntax ) const override final;
 
-private:
+protected:
     MC_STATUS write_file( tx_stream& stream, int app_id ) const;
     MC_STATUS write_values( tx_stream& stream, int app_id ) const;
     using data_dictionary::write_values;

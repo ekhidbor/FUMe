@@ -176,7 +176,7 @@ MC_STATUS data_dictionary::delete_range( uint32_t first_tag, uint32_t last_tag )
     {
         const value_range& range( get_value_range( first_tag, last_tag ) );
 
-        m_value_dict.erase( range.first, range.second );
+        m_value_dict.erase( range.begin(), range.end() );
         ret = MC_NORMAL_COMPLETION;
     }
     else
@@ -190,41 +190,43 @@ MC_STATUS data_dictionary::delete_range( uint32_t first_tag, uint32_t last_tag )
 data_dictionary::const_value_range
 data_dictionary::get_value_range( uint32_t begin_tag, uint32_t end_tag ) const
 {
-    const_value_range ret;
-    ret.first = find_if( m_value_dict.begin(),
-                         m_value_dict.end(),
-                         [begin_tag]( value_dict::const_reference val )
-                         {
-                             return val.first >= begin_tag;
-                         } );
-    ret.second = find_if( ret.first,
-                          m_value_dict.end(),
-                          [end_tag]( value_dict::const_reference val )
-                          {
-                              return val.first > end_tag;
-                          } );
+    value_dict_const_itr itr_begin =
+        find_if( m_value_dict.begin(),
+                 m_value_dict.end(),
+                 [begin_tag]( value_dict::const_reference val )
+                 {
+                     return val.first >= begin_tag;
+                 } );
+    value_dict_const_itr itr_end =
+        find_if( itr_begin,
+                 m_value_dict.end(),
+                 [end_tag]( value_dict::const_reference val )
+                 {
+                     return val.first > end_tag;
+                 } );
 
-    return ret;
+    return const_value_range( itr_begin, itr_end );
 }
 
 data_dictionary::value_range
 data_dictionary::get_value_range( uint32_t begin_tag, uint32_t end_tag )
 {
-    value_range ret;
-    ret.first = find_if( m_value_dict.begin(),
-                         m_value_dict.end(),
-                         [begin_tag]( value_dict::const_reference val )
-                         {
-                             return val.first >= begin_tag;
-                         } );
-    ret.second = find_if( ret.first,
-                          m_value_dict.end(),
-                          [end_tag]( value_dict::const_reference val )
-                          {
-                              return val.first > end_tag;
-                          } );
+    value_dict_itr itr_begin =
+        find_if( m_value_dict.begin(),
+                 m_value_dict.end(),
+                 [begin_tag]( value_dict::const_reference val )
+                 {
+                     return val.first >= begin_tag;
+                 } );
+    value_dict_itr itr_end =
+        find_if( itr_begin,
+                 m_value_dict.end(),
+                 [end_tag]( value_dict::const_reference val )
+                 {
+                     return val.first > end_tag;
+                 } );
 
-    return ret;
+    return value_range( itr_begin, itr_end );
 }
 
 MC_STATUS data_dictionary::copy_values( const data_dictionary& source,
@@ -243,15 +245,17 @@ MC_STATUS data_dictionary::copy_values( const data_dictionary& source,
                     // Copy all tags with that group ID
                     const uint32_t tag_start = tag_u32 & 0xFFFF0000u;
                     const uint32_t tag_end   = tag_u32 | 0x0000FFFFu;
-                    const_value_range range = source.get_value_range( tag_start,
-                                                                      tag_end );
-                    for( value_dict_const_itr itr = range.first;
-                         itr != range.second;
-                         ++itr )
+                    const const_value_range& range
+                    (
+                        source.get_value_range( tag_start, tag_end )
+                    );
+
+                    for( value_dict::const_reference source_elem : range )
                     {
-                        if( itr->second != nullptr )
+                        if( source_elem.second != nullptr )
                         {
-                            m_value_dict[itr->first] = itr->second->clone();
+                            m_value_dict[source_elem.first] =
+                                source_elem.second->clone();
                         }
                     }
                 }
@@ -272,13 +276,12 @@ MC_STATUS data_dictionary::copy_values( const data_dictionary& source,
     }
     else
     {
-        for( value_dict_const_itr itr = source.begin();
-             itr != source.end();
-             ++itr )
+        // Copy all
+        for( value_dict::const_reference source_elem : source )
         {
-            if( itr->second != nullptr )
+            if( source_elem.second != nullptr )
             {
-                m_value_dict[itr->first] = itr->second->clone();
+                m_value_dict[source_elem.first] = source_elem.second->clone();
             }
         }
     }
@@ -507,7 +510,7 @@ MC_STATUS data_dictionary::get_vr_type( uint32_t tag, MC_VR& type ) const
     return ret;
 }
 
-unique_ptr<value_representation> data_dictionary::create_vr( uint32_t tag ) const
+data_dictionary::unique_vr_ptr data_dictionary::create_vr( uint32_t tag ) const
 {
     unique_vr_ptr ret = nullptr;
 

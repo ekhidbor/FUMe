@@ -283,14 +283,14 @@ MC_STATUS file_object::write_values( tx_stream& stream, int app_id ) const
         MC_STATUS ret = write_values( stream,
                                       EXPLICIT_LITTLE_ENDIAN,
                                       app_id,
-                                      group2_range.first,
-                                      group2_range.second );
+                                      group2_range.begin(),
+                                      group2_range.end() );
         if( ret == MC_NORMAL_COMPLETION )
         {
             ret = write_values( stream,
                                 syntax,
                                 app_id,
-                                group2_range.second,
+                                group2_range.end(),
                                 end() );
         }
         else

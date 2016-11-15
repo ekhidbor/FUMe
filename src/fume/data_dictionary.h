@@ -18,6 +18,9 @@
 #include <memory>
 #include <utility>
 
+// boost
+#include "boost/range/iterator_range.hpp"
+
 // local public
 #include "mcstatus.h"
 #include "mc3msg.h"
@@ -69,14 +72,12 @@ public:
     }
 
 protected:
-    typedef std::unique_ptr<value_representation> unique_vr_ptr;
-    typedef std::map<uint32_t, unique_vr_ptr>     value_dict;
-    typedef value_dict::const_iterator            value_dict_const_itr;
-    typedef value_dict::iterator                  value_dict_itr;
-    typedef std::pair<value_dict_const_itr,
-                      value_dict_const_itr>       const_value_range;
-    typedef std::pair<value_dict_itr,
-                      value_dict_itr>             value_range;
+    typedef std::unique_ptr<value_representation>       unique_vr_ptr;
+    typedef std::map<uint32_t, unique_vr_ptr>           value_dict;
+    typedef value_dict::const_iterator                  value_dict_const_itr;
+    typedef value_dict::iterator                        value_dict_itr;
+    typedef boost::iterator_range<value_dict_const_itr> const_value_range;
+    typedef boost::iterator_range<value_dict_itr>       value_range;
 
 protected:
     // Used to implement empty_file, empty_item, and empty_message
@@ -135,7 +136,7 @@ private:
     data_dictionary& operator=( const data_dictionary& );
 
     MC_STATUS get_vr_type( uint32_t tag, MC_VR& type ) const;
-    std::unique_ptr<value_representation> create_vr( uint32_t tag ) const;
+    unique_vr_ptr create_vr( uint32_t tag ) const;
 
 private:
     value_dict          m_value_dict;
