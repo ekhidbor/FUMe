@@ -1,5 +1,5 @@
-CC      = ccache-swig cc
-CXX     = ccache-swig c++
+CC      = ccache-swig cc -Qunused-arguments -fcolor-diagnostics
+CXX     = ccache-swig c++ -Qunused-arguments -fcolor-diagnostics
 RM      ?= rm
 RAGEL   ?= ragel
 
