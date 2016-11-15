@@ -25,7 +25,10 @@ namespace fume
 class null_tx_stream final : public tx_stream
 {
 public:
-    null_tx_stream();
+    null_tx_stream()
+        : m_bytes_written( 0u )
+    {
+    }
     ~null_tx_stream()
     {
     }
