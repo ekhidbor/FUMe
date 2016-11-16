@@ -16,6 +16,7 @@
 #include <mutex>
 #include <random>
 #include <memory>
+#include <string>
 
 // boost
 #include "boost/bimap.hpp"
@@ -30,6 +31,7 @@
 #include "fume/tag_to_vr.h"
 #include "fume/transfer_syntax_to_uid.h"
 #include "fume/record_type_to_string.h"
+#include "fume/configuration_maps.h"
 
 namespace fume
 {
@@ -81,6 +83,9 @@ public:
                            unsigned short&        max_vals,
                            unsigned short&        multiple ) const;
 
+    MC_STATUS get_string_config_value( StringParm          parm,
+                                       const std::string*& value ) const;
+
 public:
 
     int register_application( const char* ae_title );
@@ -120,6 +125,7 @@ private:
     const tag_to_vr_map                m_tag_vr_dict;
     const transfer_syntax_map_t        m_transfer_syntax_map;
     const record_type_map_t            m_record_type_map;
+    config_maps                        m_config_maps;
     std::default_random_engine         m_rng;
     std::uniform_int_distribution<int> m_id_gen;
 

@@ -13,6 +13,7 @@
 #include <cstring>
 #include <cassert>
 #include <algorithm>
+#include <string>
 
 // boost
 #include "boost/numeric/conversion/cast.hpp"
@@ -32,6 +33,7 @@
 using std::memcpy;
 using std::strncpy;
 using std::find_if;
+using std::string;
 
 using boost::numeric_cast;
 using boost::bad_numeric_cast;
@@ -58,6 +60,31 @@ file_object::file_object( int id, const char* filename, bool created_empty )
     // This shoud always succeed
     meta_version.write( META_INFORMATION_VERSION,
                         sizeof(META_INFORMATION_VERSION) );
+
+    const string* implementation_version = nullptr;
+    const string* implementation_uid = nullptr;
+
+    assert( g_context != nullptr );
+    g_context->get_string_config_value( IMPLEMENTATION_CLASS_UID,
+                                        implementation_uid );
+    g_context->get_string_config_value( IMPLEMENTATION_VERSION,
+                                        implementation_version );
+
+    if( implementation_version != nullptr )
+    {
+        (*this)[MC_ATT_IMPLEMENTATION_VERSION_NAME].set
+        (
+            implementation_version->c_str()
+        );
+    }
+
+    if( implementation_uid != nullptr )
+    {
+        (*this)[MC_ATT_IMPLEMENTATION_CLASS_UID].set
+        (
+            implementation_uid->c_str()
+        );
+    }
 }
 
 

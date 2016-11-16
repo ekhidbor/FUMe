@@ -56,6 +56,7 @@ library_context::library_context()
     : m_tag_vr_dict( create_default_tag_vr_dict() ),
       m_transfer_syntax_map( create_transfer_syntax_to_uid_map() ),
       m_record_type_map( create_record_type_to_string_map() ),
+      m_config_maps( create_config_maps() ),
       m_rng( static_cast<default_random_engine::result_type>( clock() ) ),
       m_id_gen( 1, numeric_limits<int>::max() )
 {
@@ -317,6 +318,25 @@ MC_STATUS library_context::get_vr_info( uint32_t               tag,
     else
     {
         ret = MC_INVALID_TAG;
+    }
+
+    return ret;
+}
+
+MC_STATUS library_context::get_string_config_value( StringParm          parm,
+                                                    const std::string*& value ) const
+{
+    MC_STATUS ret = MC_CANNOT_COMPLY;
+
+    string_parm_map_t::const_iterator itr = m_config_maps.strings.find( parm );
+    if( itr != m_config_maps.strings.cend() )
+    {
+        value = &itr->second;
+        ret = MC_NORMAL_COMPLETION;
+    }
+    else
+    {
+        ret = MC_INVALID_PARAMETER_NAME;
     }
 
     return ret;
