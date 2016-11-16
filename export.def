@@ -9,6 +9,7 @@ _MC_DDH_Copy_Values
 _MC_DDH_Create
 _MC_DDH_Delete_Record
 _MC_DDH_Get_First_Lower_Record
+_MC_DDH_Get_Next_Record
 _MC_DDH_Get_Parent_Record
 _MC_DDH_Get_Record_Type
 _MC_DDH_Open
