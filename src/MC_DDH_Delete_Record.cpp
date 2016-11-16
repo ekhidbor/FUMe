@@ -228,6 +228,56 @@ static MC_STATUS adjust_record_references( record_object& record )
     return ret;
 }
 
+static MC_STATUS delete_record( int record_id )
+{
+    MC_STATUS ret = MC_CANNOT_COMPLY;
+
+    record_object* record =
+        dynamic_cast<record_object*>( g_context->get_object( record_id ) );
+    if( record != nullptr )
+    {
+        unordered_set<int> to_delete;
+        ret = get_records_to_delete( record_id, to_delete );
+        if( ret == MC_NORMAL_COMPLETION )
+        {
+            ret = adjust_record_references( *record );
+            if( ret == MC_NORMAL_COMPLETION )
+            {
+                const int dicomdir_id = record->get_dicomdir_file_id();
+                dicomdir_object* dicomdir =
+                    dynamic_cast<dicomdir_object*>
+                    (
+                        g_context->get_object( dicomdir_id )
+                    );
+                if( dicomdir != nullptr )
+                {
+                    ret = remove_and_delete_records( *dicomdir, to_delete );
+                }
+                else
+                {
+                    // The parent file ID is invalid, which shouldn't
+                    // happen
+                    ret = MC_SYSTEM_ERROR;
+                }
+            }
+            else
+            {
+                // Do nothing. Will return error
+            }
+        }
+        else
+        {
+            // Do nothing. Will return error
+        }
+    }
+    else
+    {
+        ret = MC_INVALID_RECORD_ID;
+    }
+
+    return ret;
+}
+
 MC_STATUS MC_DDH_Delete_Record( int RecordID )
 {
     MC_STATUS ret = MC_CANNOT_COMPLY;
@@ -238,40 +288,24 @@ MC_STATUS MC_DDH_Delete_Record( int RecordID )
         {
             record_object* record =
                 dynamic_cast<record_object*>( g_context->get_object( RecordID ) );
+            dicomdir_object* dicomdir =
+                dynamic_cast<dicomdir_object*>( g_context->get_object( RecordID ) );
             if( record != nullptr )
             {
-                unordered_set<int> to_delete;
-                ret = get_records_to_delete( RecordID, to_delete );
-                if( ret == MC_NORMAL_COMPLETION )
+                ret = delete_record( RecordID );
+            }
+            else if( dicomdir != nullptr )
+            {
+                ret = MC_NORMAL_COMPLETION;
+                while( ret == MC_NORMAL_COMPLETION &&
+                       dicomdir->get_child_record() > 0 )
                 {
-                    ret = adjust_record_references( *record );
-                    if( ret == MC_NORMAL_COMPLETION )
-                    {
-                        const int dicomdir_id = record->get_dicomdir_file_id();
-                        dicomdir_object* dicomdir =
-                            dynamic_cast<dicomdir_object*>
-                            (
-                                g_context->get_object( dicomdir_id )
-                            );
-                        if( dicomdir != nullptr )
-                        {
-                            ret = remove_and_delete_records( *dicomdir, to_delete );
-                        }
-                        else
-                        {
-                            // The parent file ID is invalid, which shouldn't
-                            // happen
-                            ret = MC_SYSTEM_ERROR;
-                        }
-                    }
-                    else
-                    {
-                        // Do nothing. Will return error
-                    }
-                }
-                else
-                {
-                    // Do nothing. Will return error
+                    // delete_record will remove the record from the
+                    // dicomdir object and adjust the child record
+                    // pointer, so there is no need to loop through
+                    // the records. Just keep getting the first child
+                    // in the list
+                    ret = delete_record( dicomdir->get_child_record() );
                 }
             }
             else
