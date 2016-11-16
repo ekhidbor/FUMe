@@ -47,7 +47,7 @@ bool validate_ds( const string& val )
 {
     bool ok = false;
 
-    if( val.size() == 16u )
+    if( val.size() <= 16u )
     {
         int cs = 0;
         const char* p = val.c_str();
