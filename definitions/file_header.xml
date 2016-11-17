@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Headers>
+  <Message Name="FILE">
+    <Item Tag="(0002,0000)" Type="1" VM="1"/>
+    <Item Tag="(0002,0001)" Type="1" VM="1"/>
+    <Item Tag="(0002,0002)" Type="1" VM="1"/>
+    <Item Tag="(0002,0003)" Type="1" VM="1"/>
+    <Item Tag="(0002,0010)" Type="1" VM="1"/>
+    <Item Tag="(0002,0012)" Type="1" VM="1"/>
+    <Item Tag="(0002,0013)" Type="3" VM="1"/>
+    <Item Tag="(0002,0016)" Type="3" VM="1"/>
+    <Item Tag="(0002,0017)" Type="3" VM="1"/>
+    <Item Tag="(0002,0018)" Type="3" VM="1"/>
+    <Item Tag="(0002,0100)" Type="3" VM="1"/>
+    <Item Tag="(0002,0102)" Type="1C" VM="1"/>
+  </Message>
+</Headers>

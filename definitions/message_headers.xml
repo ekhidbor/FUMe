@@ -1,0 +1,236 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Headers>
+  <Header Name="C-STORE-RQ">
+    <Item Tag="(0000,0000)" Type="1" VM="1"/>
+    <Item Tag="(0000,0002)" Type="1" VM="1"/>
+    <Item Tag="(0000,0100)" Type="1" VM="1"/>
+    <Item Tag="(0000,0110)" Type="1" VM="1"/>
+    <Item Tag="(0000,0700)" Type="1" VM="1">
+      <ValidVal Name="LOW">0002H</ValidVal>
+      <ValidVal Name="MEDIUM">0000H</ValidVal>
+      <ValidVal Name="HIGH">0001H</ValidVal>
+    </Item>
+    <Item Tag="(0000,0800)" Type="1" VM="1"/>
+    <Item Tag="(0000,1000)" Type="1" VM="1"/>
+    <Item Tag="(0000,1030)" Type="1" VM="1"/>
+    <Item Tag="(0000,1031)" Type="1" VM="1"/>
+  </Header>
+  <Header Name="C-STORE-RSP">
+    <Item Tag="(0000,0000)" Type="1" VM="1"/>
+    <Item Tag="(0000,0002)" Type="1" VM="1"/>
+    <Item Tag="(0000,0100)" Type="1" VM="1"/>
+    <Item Tag="(0000,0120)" Type="1" VM="1"/>
+    <Item Tag="(0000,0800)" Type="1" VM="1"/>
+    <Item Tag="(0000,0900)" Type="1" VM="1"/>
+    <Item Tag="(0000,1000)" Type="1" VM="1"/>
+  </Header>
+  <Header Name="C-FIND-RQ">
+    <Item Tag="(0000,0000)" Type="1" VM="1"/>
+    <Item Tag="(0000,0002)" Type="1" VM="1"/>
+    <Item Tag="(0000,0100)" Type="1" VM="1"/>
+    <Item Tag="(0000,0110)" Type="1" VM="1"/>
+    <Item Tag="(0000,0700)" Type="1" VM="1">
+      <ValidVal Name="LOW">0002H</ValidVal>
+      <ValidVal Name="MEDIUM">0000H</ValidVal>
+      <ValidVal Name="HIGH">0001H</ValidVal>
+    </Item>
+    <Item Tag="(0000,0800)" Type="1" VM="1"/>
+  </Header>
+  <Header Name="C-FIND-RSP">
+    <Item Tag="(0000,0000)" Type="1" VM="1"/>
+    <Item Tag="(0000,0002)" Type="1" VM="1"/>
+    <Item Tag="(0000,0100)" Type="1" VM="1"/>
+    <Item Tag="(0000,0120)" Type="1" VM="1"/>
+    <Item Tag="(0000,0800)" Type="1" VM="1"/>
+    <Item Tag="(0000,0900)" Type="1" VM="1"/>
+  </Header>
+  <Header Name="C-CANCEL-FIND-RQ">
+    <Item Tag="(0000,0000)" Type="1" VM="1"/>
+    <Item Tag="(0000,0100)" Type="1" VM="1"/>
+    <Item Tag="(0000,0120)" Type="1" VM="1"/>
+    <Item Tag="(0000,0800)" Type="1" VM="1"/>
+  </Header>
+  <Header Name="C-GET-RQ">
+    <Item Tag="(0000,0000)" Type="1" VM="1"/>
+    <Item Tag="(0000,0002)" Type="1" VM="1"/>
+    <Item Tag="(0000,0100)" Type="1" VM="1"/>
+    <Item Tag="(0000,0110)" Type="1" VM="1"/>
+    <Item Tag="(0000,0700)" Type="1" VM="1">
+      <ValidVal Name="LOW">0002H</ValidVal>
+      <ValidVal Name="MEDIUM">0000H</ValidVal>
+      <ValidVal Name="HIGH">0001H</ValidVal>
+    </Item>
+    <Item Tag="(0000,0800)" Type="1" VM="1"/>
+  </Header>
+  <Header Name="C-GET-RSP">
+    <Item Tag="(0000,0000)" Type="1" VM="1"/>
+    <Item Tag="(0000,0002)" Type="1" VM="1"/>
+    <Item Tag="(0000,0100)" Type="1" VM="1"/>
+    <Item Tag="(0000,0120)" Type="1" VM="1"/>
+    <Item Tag="(0000,0800)" Type="1" VM="1"/>
+    <Item Tag="(0000,0900)" Type="1" VM="1"/>
+    <Item Tag="(0000,1020)" Type="1" VM="1"/>
+    <Item Tag="(0000,1021)" Type="1" VM="1"/>
+    <Item Tag="(0000,1022)" Type="1" VM="1"/>
+    <Item Tag="(0000,1023)" Type="1" VM="1"/>
+  </Header>
+  <Header Name="C-CANCEL-GET-RQ">
+    <Item Tag="(0000,0000)" Type="1" VM="1"/>
+    <Item Tag="(0000,0100)" Type="1" VM="1"/>
+    <Item Tag="(0000,0120)" Type="1" VM="1"/>
+    <Item Tag="(0000,0800)" Type="1" VM="1"/>
+  </Header>
+  <Header Name="C-MOVE-RQ">
+    <Item Tag="(0000,0000)" Type="1" VM="1"/>
+    <Item Tag="(0000,0002)" Type="1" VM="1"/>
+    <Item Tag="(0000,0100)" Type="1" VM="1"/>
+    <Item Tag="(0000,0110)" Type="1" VM="1"/>
+    <Item Tag="(0000,0700)" Type="1" VM="1">
+      <ValidVal Name="LOW">0002H</ValidVal>
+      <ValidVal Name="MEDIUM">0000H</ValidVal>
+      <ValidVal Name="HIGH">0001H</ValidVal>
+    </Item>
+    <Item Tag="(0000,0800)" Type="1" VM="1"/>
+    <Item Tag="(0000,0600)" Type="1" VM="1"/>
+  </Header>
+  <Header Name="C-MOVE-RSP">
+    <Item Tag="(0000,0000)" Type="1" VM="1"/>
+    <Item Tag="(0000,0002)" Type="1" VM="1"/>
+    <Item Tag="(0000,0100)" Type="1" VM="1"/>
+    <Item Tag="(0000,0120)" Type="1" VM="1"/>
+    <Item Tag="(0000,0800)" Type="1" VM="1"/>
+    <Item Tag="(0000,0900)" Type="1" VM="1"/>
+    <Item Tag="(0000,1020)" Type="1" VM="1"/>
+    <Item Tag="(0000,1021)" Type="1" VM="1"/>
+    <Item Tag="(0000,1022)" Type="1" VM="1"/>
+    <Item Tag="(0000,1023)" Type="1" VM="1"/>
+  </Header>
+  <Header Name="C-CANCEL-MOVE-RQ">
+    <Item Tag="(0000,0000)" Type="1" VM="1"/>
+    <Item Tag="(0000,0100)" Type="1" VM="1"/>
+    <Item Tag="(0000,0120)" Type="1" VM="1"/>
+    <Item Tag="(0000,0800)" Type="1" VM="1"/>
+  </Header>
+  <Header Name="C-ECHO-RQ">
+    <Item Tag="(0000,0000)" Type="1" VM="1"/>
+    <Item Tag="(0000,0002)" Type="1" VM="1"/>
+    <Item Tag="(0000,0100)" Type="1" VM="1"/>
+    <Item Tag="(0000,0110)" Type="1" VM="1"/>
+    <Item Tag="(0000,0800)" Type="1" VM="1"/>
+  </Header>
+  <Header Name="C-ECHO-RSP">
+    <Item Tag="(0000,0000)" Type="1" VM="1"/>
+    <Item Tag="(0000,0002)" Type="1" VM="1"/>
+    <Item Tag="(0000,0100)" Type="1" VM="1"/>
+    <Item Tag="(0000,0120)" Type="1" VM="1"/>
+    <Item Tag="(0000,0800)" Type="1" VM="1"/>
+    <Item Tag="(0000,0900)" Type="1" VM="1"/>
+  </Header>
+  <Header Name="N-EVENT-REPORT-RQ">
+    <Item Tag="(0000,0000)" Type="1" VM="1"/>
+    <Item Tag="(0000,0002)" Type="1" VM="1"/>
+    <Item Tag="(0000,0100)" Type="1" VM="1"/>
+    <Item Tag="(0000,0110)" Type="1" VM="1"/>
+    <Item Tag="(0000,0800)" Type="1" VM="1"/>
+    <Item Tag="(0000,1000)" Type="1" VM="1"/>
+    <Item Tag="(0000,1002)" Type="1" VM="1"/>
+  </Header>
+  <Header Name="N-EVENT-REPORT-RSP">
+    <Item Tag="(0000,0000)" Type="1" VM="1"/>
+    <Item Tag="(0000,0002)" Type="1" VM="1"/>
+    <Item Tag="(0000,0100)" Type="1" VM="1"/>
+    <Item Tag="(0000,0120)" Type="1" VM="1"/>
+    <Item Tag="(0000,0800)" Type="1" VM="1"/>
+    <Item Tag="(0000,0900)" Type="1" VM="1"/>
+    <Item Tag="(0000,1000)" Type="1" VM="1"/>
+    <Item Tag="(0000,1002)" Type="1" VM="1"/>
+  </Header>
+  <Header Name="N-GET-RQ">
+    <Item Tag="(0000,0000)" Type="1" VM="1"/>
+    <Item Tag="(0000,0003)" Type="1" VM="1"/>
+    <Item Tag="(0000,0100)" Type="1" VM="1"/>
+    <Item Tag="(0000,0110)" Type="1" VM="1"/>
+    <Item Tag="(0000,0800)" Type="1" VM="1"/>
+    <Item Tag="(0000,1001)" Type="1" VM="1"/>
+    <Item Tag="(0000,1005)" Type="1" VM="1-n"/>
+  </Header>
+  <Header Name="N-GET-RSP">
+    <Item Tag="(0000,0000)" Type="1" VM="1"/>
+    <Item Tag="(0000,0002)" Type="1" VM="1"/>
+    <Item Tag="(0000,0100)" Type="1" VM="1"/>
+    <Item Tag="(0000,0120)" Type="1" VM="1"/>
+    <Item Tag="(0000,0800)" Type="1" VM="1"/>
+    <Item Tag="(0000,0900)" Type="1" VM="1"/>
+    <Item Tag="(0000,1000)" Type="1" VM="1"/>
+  </Header>
+  <Header Name="N-SET-RQ">
+    <Item Tag="(0000,0000)" Type="1" VM="1"/>
+    <Item Tag="(0000,0003)" Type="1" VM="1"/>
+    <Item Tag="(0000,0100)" Type="1" VM="1"/>
+    <Item Tag="(0000,0110)" Type="1" VM="1"/>
+    <Item Tag="(0000,0800)" Type="1" VM="1"/>
+    <Item Tag="(0000,1001)" Type="1" VM="1"/>
+  </Header>
+  <Header Name="N-SET-RSP">
+    <Item Tag="(0000,0000)" Type="1" VM="1"/>
+    <Item Tag="(0000,0002)" Type="1" VM="1"/>
+    <Item Tag="(0000,0100)" Type="1" VM="1"/>
+    <Item Tag="(0000,0120)" Type="1" VM="1"/>
+    <Item Tag="(0000,0800)" Type="1" VM="1"/>
+    <Item Tag="(0000,0900)" Type="1" VM="1"/>
+    <Item Tag="(0000,1000)" Type="1" VM="1"/>
+  </Header>
+  <Header Name="N-ACTION-RQ">
+    <Item Tag="(0000,0000)" Type="1" VM="1"/>
+    <Item Tag="(0000,0003)" Type="1" VM="1"/>
+    <Item Tag="(0000,0100)" Type="1" VM="1"/>
+    <Item Tag="(0000,0110)" Type="1" VM="1"/>
+    <Item Tag="(0000,0800)" Type="1" VM="1"/>
+    <Item Tag="(0000,1001)" Type="1" VM="1"/>
+    <Item Tag="(0000,1008)" Type="1" VM="1"/>
+  </Header>
+  <Header Name="N-ACTION-RSP">
+    <Item Tag="(0000,0000)" Type="1" VM="1"/>
+    <Item Tag="(0000,0002)" Type="1" VM="1"/>
+    <Item Tag="(0000,0100)" Type="1" VM="1"/>
+    <Item Tag="(0000,0120)" Type="1" VM="1"/>
+    <Item Tag="(0000,0800)" Type="1" VM="1"/>
+    <Item Tag="(0000,0900)" Type="1" VM="1"/>
+    <Item Tag="(0000,1000)" Type="1" VM="1"/>
+    <Item Tag="(0000,1008)" Type="1" VM="1"/>
+  </Header>
+  <Header Name="N-CREATE-RQ">
+    <Item Tag="(0000,0000)" Type="1" VM="1"/>
+    <Item Tag="(0000,0002)" Type="1" VM="1"/>
+    <Item Tag="(0000,0100)" Type="1" VM="1"/>
+    <Item Tag="(0000,0110)" Type="1" VM="1"/>
+    <Item Tag="(0000,0800)" Type="1" VM="1"/>
+    <Item Tag="(0000,1000)" Type="1" VM="1"/>
+  </Header>
+  <Header Name="N-CREATE-RSP">
+    <Item Tag="(0000,0000)" Type="1" VM="1"/>
+    <Item Tag="(0000,0002)" Type="1" VM="1"/>
+    <Item Tag="(0000,0100)" Type="1" VM="1"/>
+    <Item Tag="(0000,0120)" Type="1" VM="1"/>
+    <Item Tag="(0000,0800)" Type="1" VM="1"/>
+    <Item Tag="(0000,0900)" Type="1" VM="1"/>
+    <Item Tag="(0000,1000)" Type="1" VM="1"/>
+  </Header>
+  <Header Name="N-DELETE-RQ">
+    <Item Tag="(0000,0000)" Type="1" VM="1"/>
+    <Item Tag="(0000,0003)" Type="1" VM="1"/>
+    <Item Tag="(0000,0100)" Type="1" VM="1"/>
+    <Item Tag="(0000,0110)" Type="1" VM="1"/>
+    <Item Tag="(0000,0800)" Type="1" VM="1"/>
+    <Item Tag="(0000,1001)" Type="1" VM="1"/>
+  </Header>
+  <Header Name="N-DELETE-RSP">
+    <Item Tag="(0000,0000)" Type="1" VM="1"/>
+    <Item Tag="(0000,0002)" Type="1" VM="1"/>
+    <Item Tag="(0000,0100)" Type="1" VM="1"/>
+    <Item Tag="(0000,0120)" Type="1" VM="1"/>
+    <Item Tag="(0000,0800)" Type="1" VM="1"/>
+    <Item Tag="(0000,0900)" Type="1" VM="1"/>
+    <Item Tag="(0000,1000)" Type="1" VM="1"/>
+  </Header>
+</Headers>
