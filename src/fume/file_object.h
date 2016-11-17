@@ -69,6 +69,7 @@ protected:
     using data_dictionary::write_values;
 
 private:
+    MC_STATUS fill_group_2_attributes();
     MC_STATUS update_file_group_length();
 
 private:

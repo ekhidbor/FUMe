@@ -38,6 +38,8 @@ using std::string;
 using boost::numeric_cast;
 using boost::bad_numeric_cast;
 
+using fume::vrs::ob;
+
 namespace fume
 {
 
@@ -52,39 +54,6 @@ file_object::file_object( int id, const char* filename, bool created_empty )
       m_filename( filename )
 {
     m_preamble.fill( 0 );
-    (*this)[MC_ATT_FILE_META_INFORMATION_GROUP_LENGTH].set( 0x00000000 );
-    fume::vrs::ob& meta_version
-    (
-        dynamic_cast<fume::vrs::ob&>((*this)[MC_ATT_FILE_META_INFORMATION_VERSION])
-    );
-    // This shoud always succeed
-    meta_version.write( META_INFORMATION_VERSION,
-                        sizeof(META_INFORMATION_VERSION) );
-
-    const string* implementation_version = nullptr;
-    const string* implementation_uid = nullptr;
-
-    assert( g_context != nullptr );
-    g_context->get_string_config_value( IMPLEMENTATION_CLASS_UID,
-                                        implementation_uid );
-    g_context->get_string_config_value( IMPLEMENTATION_VERSION,
-                                        implementation_version );
-
-    if( implementation_version != nullptr )
-    {
-        (*this)[MC_ATT_IMPLEMENTATION_VERSION_NAME].set
-        (
-            implementation_version->c_str()
-        );
-    }
-
-    if( implementation_uid != nullptr )
-    {
-        (*this)[MC_ATT_IMPLEMENTATION_CLASS_UID].set
-        (
-            implementation_uid->c_str()
-        );
-    }
 }
 
 
@@ -207,6 +176,51 @@ MC_STATUS file_object::write( int               app_id,
     return ret;
 }
 
+MC_STATUS file_object::fill_group_2_attributes()
+{
+    // This function should always succeed. If it does not then there is a
+    // library error
+    ob& meta_version
+    (
+        dynamic_cast<ob&>((*this)[MC_ATT_FILE_META_INFORMATION_VERSION])
+    );
+
+    if( meta_version.is_null() == true )
+    {
+        meta_version.write( META_INFORMATION_VERSION,
+                            sizeof(META_INFORMATION_VERSION) );
+    }
+
+    const string* implementation_version = nullptr;
+    const string* implementation_uid = nullptr;
+
+    assert( g_context != nullptr );
+    g_context->get_string_config_value( IMPLEMENTATION_CLASS_UID,
+                                        implementation_uid );
+    g_context->get_string_config_value( IMPLEMENTATION_VERSION,
+                                        implementation_version );
+
+    if( has_tag( MC_ATT_IMPLEMENTATION_VERSION_NAME ) == false &&
+        implementation_version != nullptr )
+    {
+        (*this)[MC_ATT_IMPLEMENTATION_VERSION_NAME].set
+        (
+            implementation_version->c_str()
+        );
+    }
+
+    if( has_tag( MC_ATT_IMPLEMENTATION_CLASS_UID ) == false &&
+        implementation_uid != nullptr )
+    {
+        (*this)[MC_ATT_IMPLEMENTATION_CLASS_UID].set
+        (
+            implementation_uid->c_str()
+        );
+    }
+
+    return update_file_group_length();
+}
+
 MC_STATUS file_object::open( void*            user_info,
                              ReadFileCallback callback )
 {
@@ -216,8 +230,8 @@ MC_STATUS file_object::open( void*            user_info,
 
 MC_STATUS file_object::write_file( tx_stream& stream, int app_id )
 {
-    // Write the preamble data
-    MC_STATUS ret = update_file_group_length();
+    // Fill in required Group 2 attribute data
+    MC_STATUS ret = fill_group_2_attributes();
     if( ret == MC_NORMAL_COMPLETION )
     {
         stream.write( m_preamble.data(), m_preamble.size() );
@@ -368,7 +382,10 @@ MC_STATUS file_object::update_file_group_length()
                         group2_range.end() );
     if( ret == MC_NORMAL_COMPLETION )
     {
-        (*this)[MC_ATT_FILE_META_INFORMATION_GROUP_LENGTH].set( stream.bytes_written() );
+        (*this)[MC_ATT_FILE_META_INFORMATION_GROUP_LENGTH].set
+        (
+            stream.bytes_written()
+        );
     }
     else
     {
