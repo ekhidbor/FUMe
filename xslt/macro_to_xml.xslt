@@ -44,7 +44,7 @@
              the messages which get transferred. This simplifies a bunch of
              things
         -->
-        <xsl:apply-templates select="//db:table[dcm:ends-with(normalize-space(db:caption), 'Macro Attributes')]/db:tbody"/>
+        <xsl:apply-templates select="//db:table[dcm:ends-with(normalize-space(db:caption), 'Macro Attributes') and not(contains(db:caption, 'Example'))]/db:tbody"/>
         <xsl:apply-templates select="//db:table[dcm:ends-with(normalize-space(db:caption), 'Macro Attributes Description')]/db:tbody"/>
         <xsl:apply-templates select="//db:table[dcm:ends-with(normalize-space(db:caption), 'Module Attributes')]/db:tbody"/>
     </Macros>
