@@ -61,7 +61,9 @@
              we don't need to check that -->
         <xsl:when test="db:td[1]/db:para/db:emphasis/db:xref">
             <xsl:variable as="xs:string" name="link_id" select="db:td[1]/db:para/db:emphasis/db:xref/@linkend"/>
-            <Include ID="{$link_id}" />
+            <xsl:if test="contains($link_id, 'table')">
+                <Include ID="{$link_id}" />
+            </xsl:if>
         </xsl:when>
         <!-- For "Item" rows, the first column has a colspan of 1. We
              also set the indentation for Item elements because some

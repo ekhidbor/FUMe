@@ -34,9 +34,12 @@
  </xsl:template>
 
  <xsl:template match="Include">
-    <xsl:variable as="xs:string" name="my_link_id" select="ancestor::Module/@ID | ancestor::Macro/@ID"/>
+    <xsl:variable as="xs:string" name="my_link_id" select="ancestor::Macro/@ID"/>
     <xsl:variable as="xs:string" name="link_id" select="@ID"/>
     <xsl:if test="$my_link_id != $link_id">
+        <xsl:if test="count(//Macro[@ID = string($link_id)]/*) = 0">
+            <xsl:value-of select="error('No Matching Macro Node')" />
+        </xsl:if>
         <xsl:apply-templates select="//Macro[@ID = string($link_id)]/*"/>
     </xsl:if>
     <xsl:if test="$my_link_id = $link_id">

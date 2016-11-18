@@ -39,13 +39,18 @@
 <xsl:template match="/">
     <Macros>
         <!-- Tables -->
-        <xsl:apply-templates select="//db:table/db:tbody"/>
+        <!-- To simplify things we don't differentiate between "Modules" and
+             "Macros" since they're both portions of the IODs which are actually
+             the messages which get transferred. This simplifies a bunch of
+             things
+        -->
+        <xsl:apply-templates select="//db:table[dcm:ends-with(normalize-space(db:caption), 'Macro Attributes')]/db:tbody"/>
+        <xsl:apply-templates select="//db:table[dcm:ends-with(normalize-space(db:caption), 'Macro Attributes Description')]/db:tbody"/>
+        <xsl:apply-templates select="//db:table[dcm:ends-with(normalize-space(db:caption), 'Module Attributes')]/db:tbody"/>
     </Macros>
 </xsl:template>
 
 <xsl:template match="db:tbody">
-    <!-- Macro Tables all have a caption which ends with "Macro Attributes" -->
-    <xsl:if test="dcm:ends-with(normalize-space(../db:caption), 'Macro Attributes')">
     <!-- Some tables don't have the fourth column, indicating that such information
          should be obtained from PS3.4. So filter out those tables (for now)-->
     <xsl:if test="db:tr/db:td[4]/db:para">
@@ -54,7 +59,6 @@
         <Macro ID="{../@xml:id}" Name="{../db:caption}">
             <xsl:apply-templates select="db:tr[dcm:indentation(.) = 0]"/>
         </Macro>
-    </xsl:if>
     </xsl:if>
 </xsl:template>
 
