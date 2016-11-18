@@ -100,7 +100,7 @@
 </xsl:template>
 
 <!-- Generate enumerated values -->
-<xsl:template match="db:variablelist[@spacing='compact']">
+<xsl:template match="db:variablelist">
     <xsl:apply-templates select="db:varlistentry/db:term"/>
 </xsl:template>
 
