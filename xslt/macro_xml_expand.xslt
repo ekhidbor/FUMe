@@ -43,9 +43,7 @@
         <xsl:apply-templates select="//Macro[@ID = string($link_id)]/*"/>
     </xsl:if>
     <xsl:if test="$my_link_id = $link_id">
-        <xsl:copy>
-            <xsl:apply-templates select="node()|@*"/>
-        </xsl:copy>
+        <SelfReference ID="{$my_link_id}" />
     </xsl:if>
 </xsl:template>
 
