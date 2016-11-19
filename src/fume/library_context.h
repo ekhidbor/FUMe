@@ -172,11 +172,6 @@ MC_STATUS library_context::free_dictionary_object( int       id,
 
 extern std::unique_ptr<library_context> g_context;
 
-inline bool vr_is_valid( MC_VR vr )
-{
-    return vr >= AE && vr <= OL;
-}
-
 }
 
 #endif

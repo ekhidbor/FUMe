@@ -21,6 +21,7 @@
 // local private
 #include "fume/tx_stream.h"
 #include "fume/library_context.h"
+#include "fume/vr_field.h"
 
 using boost::endian::native_to_big;
 using boost::endian::native_to_big_inplace;
@@ -28,79 +29,6 @@ using boost::endian::native_to_little_inplace;
 
 namespace fume
 {
-
-typedef char vr_field_val[4];
-struct vr_field
-{
-    unsigned int size;
-    vr_field_val field;
-};
-
-static const vr_field VR_FIELDS[] =
-{
-    // AE
-    { 2u, { 'A', 'E', '\0', '\0' } },
-    // AS
-    { 2u, { 'A', 'S', '\0', '\0' } },
-    // CS,
-    { 2u, { 'C', 'S', '\0', '\0' } },
-    // DA,
-    { 2u, { 'D', 'A', '\0', '\0' } },
-    // DS,
-    { 2u, { 'D', 'S', '\0', '\0' } },
-    // DT,
-    { 2u, { 'D', 'T', '\0', '\0' } },
-    // IS,
-    { 2u, { 'I', 'S', '\0', '\0' } },
-    // LO,
-    { 2u, { 'L', 'O', '\0', '\0' } },
-    // LT,
-    { 2u, { 'L', 'T', '\0', '\0' } },
-    // PN,
-    { 2u, { 'P', 'N', '\0', '\0' } },
-    // SH,
-    { 2u, { 'S', 'H', '\0', '\0' } },
-    // ST,
-    { 2u, { 'S', 'T', '\0', '\0' } },
-    // TM,
-    { 2u, { 'T', 'M', '\0', '\0' } },
-    // UC,
-    { 4u, { 'U', 'C', '\0', '\0' } },
-    // UR,
-    { 4u, { 'U', 'R', '\0', '\0' } },
-    // UT,
-    { 4u, { 'U', 'T', '\0', '\0' } },
-    // UI,
-    { 2u, { 'U', 'I', '\0', '\0' } },
-    // SS,
-    { 2u, { 'S', 'S', '\0', '\0' } },
-    // US,
-    { 2u, { 'U', 'S', '\0', '\0' } },
-    // AT,
-    { 2u, { 'A', 'T', '\0', '\0' } },
-    // SL,
-    { 2u, { 'S', 'L', '\0', '\0' } },
-    // UL,
-    { 2u, { 'U', 'L', '\0', '\0' } },
-    // FL,
-    { 2u, { 'F', 'L', '\0', '\0' } },
-    // FD,
-    { 2u, { 'F', 'D', '\0', '\0' } },
-    // UNKNOWN_VR,
-    { 4u, { 'U', 'N', '\0', '\0' } },
-    // OB,
-    { 4u, { 'O', 'B', '\0', '\0' } },
-    // OW,
-    { 4u, { 'O', 'W', '\0', '\0' } },
-    // OD,
-    { 4u, { 'O', 'D', '\0', '\0' } },
-    // OF,
-    { 4u, { 'O', 'F', '\0', '\0' } },
-    // SQ,
-    { 4u, { 'S', 'Q', '\0', '\0' } },
-    // OL
-    { 4u, { 'O', 'L', '\0', '\0' } }
-};
 
 template<class T>
 static MC_STATUS swap_and_write( tx_stream&      stream,
@@ -168,15 +96,33 @@ static MC_STATUS swap_and_write( tx_stream&      stream,
 
 MC_STATUS tx_stream::write_vr( MC_VR vr, TRANSFER_SYNTAX syntax )
 {
-    MC_STATUS ret = MC_CANNOT_COMPLY;
+    vr_value_t vr_value;
 
-    if( vr_is_valid( vr ) == true )
+    MC_STATUS ret = get_vr_field_value( vr, vr_value );
+    if( ret == MC_NORMAL_COMPLETION )
     {
         // Don't write transfer syntax if implicit little endian
         if( syntax != IMPLICIT_LITTLE_ENDIAN )
         {
-            const vr_field& field( VR_FIELDS[vr] );
-            ret = write( field.field, field.size );
+            uint8_t vr_size = 0;
+            ret = get_vr_field_size( vr, vr_size );
+            if( ret == MC_NORMAL_COMPLETION )
+            {
+                ret = write( vr_value.data(), vr_value.size() );
+                if( vr_size > vr_value.size() )
+                {
+                    uint16_t extra = 0;
+                    write_val( extra, syntax );
+                }
+                else
+                {
+                    // Do nothing
+                }
+            }
+            else
+            {
+                // Do nothing. Will return error
+            }
         }
         else
         {
@@ -185,7 +131,7 @@ MC_STATUS tx_stream::write_vr( MC_VR vr, TRANSFER_SYNTAX syntax )
     }
     else
     {
-        ret = MC_INVALID_VR_CODE;
+        // Do nothing. Will return error
     }
 
     return ret;

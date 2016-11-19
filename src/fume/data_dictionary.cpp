@@ -27,6 +27,7 @@
 #include "fume/tx_stream.h"
 #include "fume/callback_io.h"
 #include "fume/vr_factory.h"
+#include "fume/vr_field.h"
 
 using std::numeric_limits;
 using std::for_each;
