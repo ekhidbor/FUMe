@@ -17,8 +17,10 @@
 
 // local private
 #include "fume/library_context.h"
+#include "fume/transfer_syntax_to_uid.h"
 
 using fume::g_context;
+using fume::get_transfer_syntax_from_enum;
 
 MC_STATUS MC_Get_Transfer_Syntax_From_Enum( TRANSFER_SYNTAX SyntaxType,
                                             char*           Uid,
@@ -30,9 +32,9 @@ MC_STATUS MC_Get_Transfer_Syntax_From_Enum( TRANSFER_SYNTAX SyntaxType,
     {
         if( g_context != nullptr )
         {
-            ret = g_context->get_transfer_syntax_from_enum( SyntaxType,
-                                                            Uid,
-                                                            UidLength );
+            ret = get_transfer_syntax_from_enum( SyntaxType,
+                                                 Uid,
+                                                 UidLength );
         }
         else
         {

@@ -12,11 +12,12 @@
 // std
 #include <utility>
 #include <iterator>
+#include <string>
 
 // boost
 #include "boost/bimap.hpp"
 
-// local privatw
+// local private
 #include "fume/transfer_syntax_to_uid.h"
 
 using std::string;
@@ -27,6 +28,8 @@ using boost::bimap;
 
 namespace fume
 {
+
+typedef bimap<TRANSFER_SYNTAX, string> transfer_syntax_map_t;
 
 static const transfer_syntax_map_t::value_type TRANSFER_SYNTAXES[] =
 {
@@ -71,10 +74,73 @@ static const transfer_syntax_map_t::value_type TRANSFER_SYNTAXES[] =
     { JPIP_REFERENCED_DEFLATE,         "1.2.840.10008.1.2.4.95"  }
 };
 
-transfer_syntax_map_t create_transfer_syntax_to_uid_map()
+static const transfer_syntax_map_t& transfer_syntax_map()
 {
-    return boost::bimap<TRANSFER_SYNTAX, string>( begin( TRANSFER_SYNTAXES ),
-                                                  end( TRANSFER_SYNTAXES ) );
+    static bimap<TRANSFER_SYNTAX, string> ret( begin( TRANSFER_SYNTAXES ),
+                                               end( TRANSFER_SYNTAXES ) );
+    return ret;
+}
+
+MC_STATUS get_transfer_syntax_from_enum( TRANSFER_SYNTAX syntax,
+                                         char*           uid,
+                                         int             uid_length )
+{
+    MC_STATUS ret = MC_CANNOT_COMPLY;
+
+    if( uid != nullptr )
+    {
+        transfer_syntax_map_t::left_map::const_iterator itr =
+            transfer_syntax_map().left.find( syntax );
+        if( itr != transfer_syntax_map().left.end() )
+        {
+            if( static_cast<int>( itr->second.size() ) < uid_length )
+            {
+                strncpy( uid, itr->second.c_str(), uid_length );
+                ret = MC_NORMAL_COMPLETION;
+            }
+            else
+            {
+                ret = MC_BUFFER_TOO_SMALL;
+            }
+        }
+        else
+        {
+            ret = MC_INVALID_TRANSFER_SYNTAX;
+        }
+    }
+    else
+    {
+        ret = MC_NULL_POINTER_PARM;
+    }
+
+    return ret;
+}
+
+MC_STATUS get_enum_from_transfer_syntax( const char*      uid,
+                                         TRANSFER_SYNTAX& syntax )
+{
+    MC_STATUS ret = MC_CANNOT_COMPLY;
+
+    if( uid != nullptr )
+    {
+        transfer_syntax_map_t::right_map::const_iterator itr =
+            transfer_syntax_map().right.find( uid );
+        if( itr != transfer_syntax_map().right.end() )
+        {
+            syntax = itr->second;
+            ret = MC_NORMAL_COMPLETION;
+        }
+        else
+        {
+            ret = MC_INVALID_TRANSFER_SYNTAX;
+        }
+    }
+    else
+    {
+        ret = MC_NULL_POINTER_PARM;
+    }
+
+    return ret;
 }
 
 } // namespace fume

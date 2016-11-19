@@ -12,19 +12,20 @@
  */
 
 // std
-#include <string>
-
-// boost
-#include "boost/bimap.hpp"
 
 // local public
+#include "mcstatus.h"
 #include "mc3msg.h"
 
 namespace fume
 {
 
-typedef boost::bimap<TRANSFER_SYNTAX, std::string> transfer_syntax_map_t;
-transfer_syntax_map_t create_transfer_syntax_to_uid_map();
+MC_STATUS get_transfer_syntax_from_enum( TRANSFER_SYNTAX syntax,
+                                         char*           uid,
+                                         int             uid_length );
+
+MC_STATUS get_enum_from_transfer_syntax( const char*      uid,
+                                         TRANSFER_SYNTAX& syntax );
 
 } // namespace fume
 

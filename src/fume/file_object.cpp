@@ -29,6 +29,7 @@
 #include "fume/value_representation.h"
 #include "fume/vrs/ob.h"
 #include "fume/library_context.h"
+#include "fume/transfer_syntax_to_uid.h"
 
 using std::memcpy;
 using std::strncpy;
@@ -269,11 +270,8 @@ void file_object::empty_file()
 
 MC_STATUS file_object::set_transfer_syntax( TRANSFER_SYNTAX syntax )
 {
-    // Should not be possible
-    assert( g_context != nullptr );
-
     char syntax_uid[65] = { '\0' };
-    MC_STATUS ret = g_context->get_transfer_syntax_from_enum
+    MC_STATUS ret = get_transfer_syntax_from_enum
                     (
                         syntax,
                         syntax_uid,
@@ -294,9 +292,6 @@ MC_STATUS file_object::set_transfer_syntax( TRANSFER_SYNTAX syntax )
 
 MC_STATUS file_object::get_transfer_syntax( TRANSFER_SYNTAX& syntax ) const
 {
-    // Should not be possible
-    assert( g_context != nullptr );
-
     char syntax_uid[65] = { '\0' };
 
     get_string_parms syntax_uid_parms =
@@ -313,7 +308,7 @@ MC_STATUS file_object::get_transfer_syntax( TRANSFER_SYNTAX& syntax ) const
         ret = syntax_vr->get( syntax_uid_parms );
         if( ret == MC_NORMAL_COMPLETION )
         {
-            ret = g_context->get_enum_from_transfer_syntax( syntax_uid, syntax );
+            ret = get_enum_from_transfer_syntax( syntax_uid, syntax );
         }
         else
         {

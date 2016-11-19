@@ -16,10 +16,10 @@
 #include "diction.h"
 
 // local private
-#include "fume/library_context.h"
 #include "fume/record_object.h"
 #include "fume/tx_stream.h"
 #include "fume/value_representation.h"
+#include "fume/record_type_to_string.h"
 
 namespace fume
 {
@@ -71,8 +71,7 @@ MC_STATUS record_object::get_record_type( MC_DIR_RECORD_TYPE& type ) const
         ret = record_type_val->get( parms );
         if( ret == MC_NORMAL_COMPLETION )
         {
-            assert( g_context != nullptr );
-            ret = g_context->get_enum_from_record_type( record_type_str, type );
+            ret = get_enum_from_record_type( record_type_str, type );
         }
         else
         {

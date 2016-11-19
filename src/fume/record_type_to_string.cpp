@@ -12,6 +12,7 @@
 // std
 #include <utility>
 #include <iterator>
+#include <string>
 
 // boost
 #include "boost/bimap.hpp"
@@ -27,6 +28,8 @@ using boost::bimap;
 
 namespace fume
 {
+
+typedef bimap<MC_DIR_RECORD_TYPE, string> record_type_map_t;
 
 static const record_type_map_t::value_type RECORD_IDS[] =
 {
@@ -64,9 +67,73 @@ static const record_type_map_t::value_type RECORD_IDS[] =
     { MC_REC_TYPE_UNKNOWN,          "UNKNOWN"          }
 };
 
-record_type_map_t create_record_type_to_string_map()
+static const record_type_map_t& record_type_map()
 {
-    return record_type_map_t( begin( RECORD_IDS ), end( RECORD_IDS ) );
+    static const record_type_map_t ret( begin( RECORD_IDS ), end( RECORD_IDS ) );
+
+    return ret;
+}
+
+MC_STATUS get_record_type_from_enum( MC_DIR_RECORD_TYPE record_type,
+                                     char*              val,
+                                     int                val_length )
+{
+    MC_STATUS ret = MC_CANNOT_COMPLY;
+
+    if( val != nullptr )
+    {
+        record_type_map_t::left_map::const_iterator itr =
+            record_type_map().left.find( record_type );
+        if( itr != record_type_map().left.end() )
+        {
+            if( static_cast<int>( itr->second.size() ) < val_length )
+            {
+                strncpy( val, itr->second.c_str(), val_length );
+                ret = MC_NORMAL_COMPLETION;
+            }
+            else
+            {
+                ret = MC_BUFFER_TOO_SMALL;
+            }
+        }
+        else
+        {
+            ret = MC_INVALID_TRANSFER_SYNTAX;
+        }
+    }
+    else
+    {
+        ret = MC_NULL_POINTER_PARM;
+    }
+
+    return ret;
+}
+
+MC_STATUS get_enum_from_record_type( const char*         val,
+                                     MC_DIR_RECORD_TYPE& record_type )
+{
+    MC_STATUS ret = MC_CANNOT_COMPLY;
+
+    if( val != nullptr )
+    {
+        record_type_map_t::right_map::const_iterator itr =
+            record_type_map().right.find( val );
+        if( itr != record_type_map().right.end() )
+        {
+            record_type = itr->second;
+            ret = MC_NORMAL_COMPLETION;
+        }
+        else
+        {
+            ret = MC_INVALID_TRANSFER_SYNTAX;
+        }
+    }
+    else
+    {
+        ret = MC_NULL_POINTER_PARM;
+    }
+
+    return ret;
 }
 
 } // namespace fume

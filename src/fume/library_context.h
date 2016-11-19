@@ -29,8 +29,6 @@
 // local private
 #include "fume/value_representation.h"
 #include "fume/tag_to_vr.h"
-#include "fume/transfer_syntax_to_uid.h"
-#include "fume/record_type_to_string.h"
 #include "fume/configuration_maps.h"
 
 namespace fume
@@ -93,20 +91,6 @@ public:
 
     application* get_application( int id );
 
-    MC_STATUS get_transfer_syntax_from_enum( TRANSFER_SYNTAX syntax,
-                                             char*           uid,
-                                             int             uid_length ) const;
-
-    MC_STATUS get_enum_from_transfer_syntax( const char*      uid,
-                                             TRANSFER_SYNTAX& syntax ) const;
-
-    MC_STATUS get_record_type_from_enum( MC_DIR_RECORD_TYPE record_type,
-                                         char*              val,
-                                         int                val_length ) const;
-
-    MC_STATUS get_enum_from_record_type( const char*         val,
-                                         MC_DIR_RECORD_TYPE& record_type ) const;
-
 private:
     typedef std::unique_ptr<data_dictionary> data_dictionary_ptr;
     typedef std::unique_ptr<application> application_ptr;
@@ -123,8 +107,6 @@ private:
     data_dictionary_map                m_data_dictionaries;
     application_map                    m_applications;
     const tag_to_vr_map                m_tag_vr_dict;
-    const transfer_syntax_map_t        m_transfer_syntax_map;
-    const record_type_map_t            m_record_type_map;
     config_maps                        m_config_maps;
     std::default_random_engine         m_rng;
     std::uniform_int_distribution<int> m_id_gen;

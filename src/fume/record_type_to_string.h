@@ -12,19 +12,22 @@
  */
 
 // std
-#include <string>
 
 // boost
-#include "boost/bimap.hpp"
 
 // local public
 #include "mc3media.h"
+#include "mcstatus.h"
 
 namespace fume
 {
 
-typedef boost::bimap<MC_DIR_RECORD_TYPE, std::string> record_type_map_t;
-record_type_map_t create_record_type_to_string_map();
+MC_STATUS get_record_type_from_enum( MC_DIR_RECORD_TYPE record_type,
+                                     char*              val,
+                                     int                val_length );
+
+MC_STATUS get_enum_from_record_type( const char*         val,
+                                     MC_DIR_RECORD_TYPE& record_type );
 
 } // namespace fume
 
