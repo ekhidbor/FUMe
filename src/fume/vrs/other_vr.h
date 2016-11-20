@@ -23,6 +23,7 @@
 // local private
 #include "fume/value_representation.h"
 #include "fume/tx_stream.h"
+#include "fume/rx_stream.h"
 
 namespace fume
 {
@@ -47,11 +48,8 @@ public:
 public:
     virtual MC_STATUS to_stream( tx_stream&      stream,
                                  TRANSFER_SYNTAX syntax ) const override final;
-    virtual MC_STATUS from_stream( rx_stream& stream ) override final
-    {
-        // TODO: implement
-        return MC_CANNOT_COMPLY;
-    }
+    virtual MC_STATUS from_stream( rx_stream&      stream,
+                                   TRANSFER_SYNTAX syntax ) override final;
 
 // value_representation -- modifiers
 public:
@@ -298,6 +296,43 @@ protected:
 private:
     std::deque<T> m_values;
 };
+
+template<class T, MC_VR VR>
+MC_STATUS other_vr<T, VR>::from_stream( rx_stream&      stream,
+                                        TRANSFER_SYNTAX syntax )
+{
+    uint32_t value_length = 0;
+    std::deque<T> tmp_values;
+
+    MC_STATUS ret = stream.read_val( value_length, syntax );
+
+    if( ret == MC_NORMAL_COMPLETION )
+    {
+        if( ((value_length % sizeof(T)) == 0) && (value_length % 2) == 0 )
+        {
+            const uint32_t num_items = value_length / sizeof(T);
+            for( uint32_t i = 0; i < num_items && ret == MC_NORMAL_COMPLETION; ++i )
+            {
+                T val;
+                ret = stream.read_val( val, syntax );
+
+                tmp_values.push_back( val );
+            }
+
+            if( ret == MC_NORMAL_COMPLETION )
+            {
+                // Only update values if everything succeeded
+                m_values.swap( tmp_values );
+            }
+        }
+        else
+        {
+            ret = MC_INVALID_LENGTH_FOR_VR;
+        }
+    }
+
+    return ret;
+}
 
 template<class T, MC_VR VR>
 MC_STATUS other_vr<T, VR>::to_stream( tx_stream&      stream,

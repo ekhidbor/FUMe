@@ -25,9 +25,8 @@ namespace fume
 
 typedef std::array<char, 2u> vr_value_t;
 
-MC_STATUS get_vr_field_size( MC_VR vr, uint8_t& field_size );
-MC_STATUS get_vr_field_value( MC_VR vr, vr_value_t& value );
-MC_STATUS get_vr_code( const vr_value_t value, MC_VR& vr );
+MC_STATUS get_vr_field_value( MC_VR vr, vr_value_t& value, uint8_t& field_size );
+MC_STATUS get_vr_code( const vr_value_t& value, MC_VR& vr, uint8_t& field_size );
 
 inline bool vr_is_valid( MC_VR vr )
 {

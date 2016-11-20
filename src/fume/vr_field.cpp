@@ -148,7 +148,7 @@ static const vr_size_map_t& vr_size_map()
     return ret;
 }
 
-MC_STATUS get_vr_field_size( MC_VR vr, uint8_t& field_size )
+static MC_STATUS get_vr_field_size( MC_VR vr, uint8_t& field_size )
 {
     MC_STATUS ret = MC_CANNOT_COMPLY;
 
@@ -166,7 +166,7 @@ MC_STATUS get_vr_field_size( MC_VR vr, uint8_t& field_size )
     return ret;
 }
 
-MC_STATUS get_vr_field_value( MC_VR vr, vr_value_t& value )
+MC_STATUS get_vr_field_value( MC_VR vr, vr_value_t& value, uint8_t& field_size )
 {
     MC_STATUS ret = MC_CANNOT_COMPLY;
 
@@ -175,7 +175,7 @@ MC_STATUS get_vr_field_value( MC_VR vr, vr_value_t& value )
     if( itr != vr_value_map().left.end() )
     {
         copy( itr->second.cbegin(), itr->second.cend(), value.begin() );
-        ret = MC_NORMAL_COMPLETION;
+        ret = get_vr_field_size( vr, field_size );
     }
     else
     {
@@ -185,7 +185,7 @@ MC_STATUS get_vr_field_value( MC_VR vr, vr_value_t& value )
     return ret;
 }
 
-MC_STATUS get_vr_code( const vr_value_t value, MC_VR& vr )
+MC_STATUS get_vr_code( const vr_value_t& value, MC_VR& vr, uint8_t& field_size )
 {
     MC_STATUS ret = MC_CANNOT_COMPLY;
 
@@ -194,7 +194,7 @@ MC_STATUS get_vr_code( const vr_value_t value, MC_VR& vr )
     if( itr != vr_value_map().right.end() )
     {
         vr = static_cast<MC_VR>( itr->second );
-        ret = MC_NORMAL_COMPLETION;
+        ret = get_vr_field_size( vr, field_size );
     }
     else
     {

@@ -18,6 +18,7 @@
 // local private
 #include "fume/vrs/at.h"
 #include "fume/tx_stream.h"
+#include "fume/rx_stream.h"
 
 using std::min;
 using std::deque;
@@ -28,6 +29,56 @@ namespace fume
 {
 namespace vrs
 {
+
+MC_STATUS at::from_stream( rx_stream& stream, TRANSFER_SYNTAX syntax )
+{
+    MC_STATUS ret = MC_CANNOT_COMPLY;
+    uint32_t value_length = 0;
+    deque<uint32_t> tmp_values;
+
+    if( syntax == IMPLICIT_LITTLE_ENDIAN )
+    {
+        ret = stream.read_val( value_length, syntax );
+    }
+    else
+    {
+        uint16_t value_length_16u;
+        ret = stream.read_val( value_length_16u, syntax );
+        value_length = value_length_16u;
+    }
+
+    if( ret == MC_NORMAL_COMPLETION )
+    {
+        if( value_length % sizeof(uint32_t) == 0 )
+        {
+            const uint32_t num_items = value_length / sizeof(uint32_t);
+            for( uint32_t i = 0; i < num_items && ret == MC_NORMAL_COMPLETION; ++i )
+            {
+                uint32_t val = 0;
+                ret = stream.read_val( val, syntax );
+
+                tmp_values.push_back( val );
+            }
+
+            if( ret == MC_NORMAL_COMPLETION )
+            {
+                // Only update values if everything succeeded
+                m_values.swap( tmp_values );
+                m_current_idx = 0;
+            }
+        }
+        else
+        {
+            ret = MC_INVALID_LENGTH_FOR_VR;
+        }
+    }
+    else
+    {
+        // Do nothing. Will return error
+    }
+
+    return ret;
+}
 
 MC_STATUS at::to_stream( tx_stream& stream, TRANSFER_SYNTAX syntax ) const
 {

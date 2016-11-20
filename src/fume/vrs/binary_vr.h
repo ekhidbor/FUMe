@@ -25,6 +25,7 @@
 #include "fume/value_representation.h"
 #include "fume/value_conversion.h"
 #include "fume/tx_stream.h"
+#include "fume/rx_stream.h"
 
 namespace fume
 {
@@ -52,11 +53,8 @@ public:
 public:
     virtual MC_STATUS to_stream( tx_stream&      stream,
                                  TRANSFER_SYNTAX syntax ) const override final;
-    virtual MC_STATUS from_stream( rx_stream& stream ) override final
-    {
-        // TODO: implement
-        return MC_CANNOT_COMPLY;
-    }
+    virtual MC_STATUS from_stream( rx_stream&      stream,
+                                   TRANSFER_SYNTAX syntax ) override final;
 
 // value_representation -- modifiers
 public:
@@ -415,6 +413,58 @@ private:
     // Used for get_next and delete_current
     mutable size_t m_current_idx;
 };
+
+template<class T, MC_VR VR>
+MC_STATUS binary_vr<T, VR>::from_stream( rx_stream&      stream,
+                                         TRANSFER_SYNTAX syntax )
+{
+    MC_STATUS ret = MC_CANNOT_COMPLY;
+    uint32_t value_length = 0;
+    std::deque<T> tmp_values;
+
+    if( syntax == IMPLICIT_LITTLE_ENDIAN )
+    {
+        ret = stream.read_val( value_length, syntax );
+    }
+    else
+    {
+        uint16_t value_length_16u;
+        ret = stream.read_val( value_length_16u, syntax );
+        value_length = value_length_16u;
+    }
+
+    if( ret == MC_NORMAL_COMPLETION )
+    {
+        if( value_length % sizeof(T) == 0 )
+        {
+            const uint32_t num_items = value_length / sizeof(T);
+            for( uint32_t i = 0; i < num_items && ret == MC_NORMAL_COMPLETION; ++i )
+            {
+                T val;
+                ret = stream.read_val( val, syntax );
+
+                tmp_values.push_back( val );
+            }
+
+            if( ret == MC_NORMAL_COMPLETION )
+            {
+                // Only update values if everything succeeded
+                m_values.swap( tmp_values );
+                m_current_idx = 0;
+            }
+        }
+        else
+        {
+            ret = MC_INVALID_LENGTH_FOR_VR;
+        }
+    }
+    else
+    {
+        // Do nothing. Will return error
+    }
+
+    return ret;
+}
 
 template<class T, MC_VR VR>
 MC_STATUS binary_vr<T, VR>::to_stream( tx_stream&      stream,

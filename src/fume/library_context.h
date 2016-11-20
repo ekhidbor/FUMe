@@ -55,6 +55,7 @@ public:
     MC_STATUS free_file_object( int id );
 
     int create_item_object( const char* item_name );
+    int create_empty_item_object();
     MC_STATUS free_item_object( int id );
 
     int create_record_object( int         file_id,

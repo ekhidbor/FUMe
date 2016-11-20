@@ -19,12 +19,14 @@
 #include "boost/numeric/conversion/cast.hpp"
 
 // local public
+#include "diction.h"
 
 // local private
 #include "fume/data_dictionary.h"
 #include "fume/library_context.h"
 #include "fume/value_representation.h"
 #include "fume/tx_stream.h"
+#include "fume/rx_stream.h"
 #include "fume/callback_io.h"
 #include "fume/vr_factory.h"
 #include "fume/vr_field.h"
@@ -39,6 +41,40 @@ using boost::bad_numeric_cast;
 
 namespace fume
 {
+
+static MC_STATUS create_vr_from_stream
+(
+    rx_stream&                        stream,
+    TRANSFER_SYNTAX                   syntax,
+    uint32_t                          tag,
+    unique_ptr<value_representation>& element
+)
+{
+    MC_STATUS ret = MC_NORMAL_COMPLETION;
+
+    if( syntax != IMPLICIT_LITTLE_ENDIAN )
+    {
+        MC_VR vr = UNKNOWN_VR;
+        ret = stream.read_vr( vr, syntax );
+        if( ret == MC_NORMAL_COMPLETION )
+        {
+            element = create_vr( vr, 1, 1, 1 );
+            ret = MC_NORMAL_COMPLETION;
+        }
+        else
+        {
+            // Do nothing. Will return error
+        }
+    }
+    else
+    {
+        assert( g_context != nullptr );
+        element = g_context->create_vr( tag, nullptr );
+        ret = MC_NORMAL_COMPLETION;
+    }
+
+    return ret;
+}
 
 data_dictionary::data_dictionary( int id, bool created_empty )
     : m_id( id ),
@@ -376,6 +412,77 @@ MC_STATUS data_dictionary::set_callbacks( int application_id )
     else
     {
         ret = MC_INVALID_APPLICATION_ID;
+    }
+
+    return ret;
+}
+
+MC_STATUS data_dictionary::read_values( rx_stream&      stream,
+                                        TRANSFER_SYNTAX syntax,
+                                        uint32_t        size )
+{
+    const uint32_t start_offset = stream.bytes_read();
+    MC_STATUS ret = MC_NORMAL_COMPLETION;
+
+    value_dict tmp_value_dict;
+
+    while( ret == MC_NORMAL_COMPLETION &&
+           ((stream.bytes_read() - start_offset) + 1) < size )
+    {
+        uint32_t tag = 0;
+        MC_STATUS ret = stream.read_tag( tag, syntax );
+        if( ret == MC_NORMAL_COMPLETION )
+        {
+            if( tag != MC_ATT_ITEM_DELIMITATION_ITEM     &&
+                tag != MC_ATT_ITEM                       &&
+                tag != MC_ATT_SEQUENCE_DELIMITATION_ITEM )
+            {
+                unique_vr_ptr element;
+                ret = create_vr_from_stream( stream, syntax, tag, element );
+                if( ret == MC_NORMAL_COMPLETION && element != nullptr )
+                {
+                    ret = element->from_stream( stream, syntax );
+                    if( ret == MC_NORMAL_COMPLETION )
+                    {
+                        tmp_value_dict[tag].swap( element );
+                    }
+                    else
+                    {
+                        // Do nothing. Will return error
+                    }
+                }
+                else if( element == nullptr )
+                {
+                    ret = MC_INVALID_TAG;
+                }
+                else
+                {
+                    // Do nothing. Will return error
+                }
+            }
+            // If we've reached an item delimiter
+            else if( tag == MC_ATT_ITEM )
+            {
+                // Read the length (which should be zero, but we aren't going
+                // to check)
+                uint32_t delim_length = 0;
+                ret = stream.read_val( delim_length, syntax );
+            }
+            // We received something we shouln't have
+            else
+            {
+                ret = MC_UNEXPECTED_EOD;
+            }
+        }
+    }
+
+    // Upon success, copy the values into the dictionary
+    if( ret == MC_NORMAL_COMPLETION )
+    {
+        for( value_dict::reference val : tmp_value_dict )
+        {
+            m_value_dict[val.first].swap( val.second );
+        }
     }
 
     return ret;

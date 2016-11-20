@@ -49,12 +49,6 @@ struct get_func_parms
 
 class value_representation : public serializable
 {
-// serializable
-public:
-    virtual MC_STATUS to_stream( tx_stream&      stream,
-                                 TRANSFER_SYNTAX syntax ) const = 0;
-    virtual MC_STATUS from_stream( rx_stream& stream ) = 0;
-
 // value_representation -- constructor and destructor
 public:
     value_representation( unsigned int min_vals,

@@ -22,6 +22,7 @@
 // local private
 #include "fume/vrs/string_vr.h"
 #include "fume/tx_stream.h"
+#include "fume/rx_stream.h"
 
 using std::accumulate;
 using std::min;
@@ -77,6 +78,68 @@ string_vr::string_vr( unsigned int min_vals,
       m_current_idx( 0 ),
       m_pad( pad )
 {
+}
+
+MC_STATUS string_vr::from_stream( rx_stream&      stream,
+                                  TRANSFER_SYNTAX syntax )
+{
+    MC_STATUS ret = MC_CANNOT_COMPLY;
+    uint32_t value_length = 0;
+
+    deque<string> tmp_values;
+
+    // UC, UR, UT are 32-bit length
+    const MC_VR this_vr = vr();
+    if( this_vr == UC ||
+        this_vr == UR ||
+        this_vr == UT ||
+        syntax == IMPLICIT_LITTLE_ENDIAN )
+    {
+        ret = stream.read_val( value_length, syntax );
+    }
+    else
+    {
+        uint16_t value_length_16u;
+        ret = stream.read_val( value_length_16u, syntax );
+        value_length = value_length_16u;
+    }
+
+    for( uint32_t i = 0; i < value_length && ret == MC_NORMAL_COMPLETION; ++i )
+    {
+        string cur_string;
+        char cur = '\0';
+
+        ret = stream.read_val( cur, syntax );
+        if( ret == MC_NORMAL_COMPLETION )
+        {
+            if( cur == '\\' )
+            {
+                tmp_values.push_back( cur_string );
+                cur_string.clear();
+            }
+            else if( cur != '\0' )
+            {
+                cur_string.push_back( cur );
+            }
+            else
+            {
+                // Discard NULL characters
+            }
+        }
+        else
+        {
+            // Do nothing. Will terminate loop and return error
+        }
+    }
+
+    if( ret == MC_NORMAL_COMPLETION )
+    {
+        // Only Update our values list if everything succeeded
+        m_values.swap( tmp_values );
+        m_current_idx = 0;
+    }
+
+    return ret;
 }
 
 MC_STATUS string_vr::to_stream( tx_stream& stream, TRANSFER_SYNTAX syntax ) const

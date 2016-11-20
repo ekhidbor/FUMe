@@ -158,38 +158,39 @@ MC_STATUS library_context::free_file_object( int id )
     return free_dictionary_object<file_object>( id, MC_INVALID_FILE_ID );
 }
 
-int library_context::create_item_object( const char* item_name )
+int library_context::create_empty_item_object()
 {
     // NOTE: error codes from this function are NEGATIVE because the
     // positive values indicate file IDs returned
     int ret = -MC_CANNOT_COMPLY;
 
-    if( item_name != nullptr )
-    {
-        lock_guard<mutex> lock(m_mutex);
-        const int id = generate_id();
-        // generate_id shall maintain uniqueness, but assert here
-        assert( m_data_dictionaries.count( id ) == 0 );
+    lock_guard<mutex> lock(m_mutex);
+    const int id = generate_id();
+    // generate_id shall maintain uniqueness, but assert here
+    assert( m_data_dictionaries.count( id ) == 0 );
 
-        // Create file object out of lock scope
-        // TODO: don't create empty
-        data_dictionary_ptr item_obj( new item_object( id, true ) );
+    // Create file object out of lock scope
+    // TODO: don't create empty
+    data_dictionary_ptr item_obj( new item_object( id, true ) );
 
-        // TODO: initialize item object dictionary based on item name
+    // TODO: initialize item object dictionary based on item name
 
-        // Insert the file object into the dictionary. Two-step process
-        // (create then swap) to prevent memory leak in case operator[]
-        // throws an exception
-        m_data_dictionaries[id].swap( item_obj );
+    // Insert the file object into the dictionary. Two-step process
+    // (create then swap) to prevent memory leak in case operator[]
+    // throws an exception
+    m_data_dictionaries[id].swap( item_obj );
 
-        ret = id;
-    }
-    else
-    {
-        ret = -MC_NULL_POINTER_PARM;
-    }
+    ret = id;
 
     return ret;
+}
+
+int library_context::create_item_object( const char* item_name )
+{
+    // TODO: initialize item object dictionary based on item name
+    // TODO: don't create empty
+    return item_name != nullptr ? create_empty_item_object() :
+                                  -MC_NULL_POINTER_PARM;
 }
 
 int library_context::create_record_object( int         file_id,

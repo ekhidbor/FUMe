@@ -19,19 +19,19 @@
 #include "mc3msg.h"
 
 // local private
-#include "fume/tx_stream.h"
+#include "fume/rx_stream.h"
 #include "fume/vr_field.h"
 
-using boost::endian::native_to_big_inplace;
-using boost::endian::native_to_little_inplace;
+using boost::endian::big_to_native_inplace;
+using boost::endian::little_to_native_inplace;
 
 namespace fume
 {
 
 template<class T>
-static MC_STATUS swap_and_write( tx_stream&      stream,
-                                 TRANSFER_SYNTAX syntax,
-                                 T               val )
+static MC_STATUS read_and_swap( rx_stream&      stream,
+                                TRANSFER_SYNTAX syntax,
+                                T&              val )
 {
     MC_STATUS ret = MC_CANNOT_COMPLY;
 
@@ -39,8 +39,11 @@ static MC_STATUS swap_and_write( tx_stream&      stream,
     {
         case EXPLICIT_BIG_ENDIAN:
         case IMPLICIT_BIG_ENDIAN:
-            native_to_big_inplace( val );
-            ret = stream.write( &val, sizeof(val) );
+            ret = stream.read( &val, sizeof(val) );
+            if( ret == MC_NORMAL_COMPLETION )
+            {
+                big_to_native_inplace( val );
+            }
             break;
         // All the encapsulated transfer syntaxes are
         // in little endian
@@ -80,8 +83,11 @@ static MC_STATUS swap_and_write( tx_stream&      stream,
         case MPEG4_AVC_H264_BDC_HP_LEVEL_4_1:
         case JPIP_REFERENCED:
         case JPIP_REFERENCED_DEFLATE:
-            native_to_little_inplace( val );
-            ret = stream.write( &val, sizeof(val) );
+            ret = stream.read( &val, sizeof(val) );
+            if( ret == MC_NORMAL_COMPLETION )
+            {
+                little_to_native_inplace( val );
+            }
             break;
         case INVALID_TRANSFER_SYNTAX:
         default:
@@ -92,61 +98,68 @@ static MC_STATUS swap_and_write( tx_stream&      stream,
     return ret;
 }
 
-MC_STATUS tx_stream::write_vr( MC_VR vr, TRANSFER_SYNTAX syntax )
+MC_STATUS rx_stream::read_vr( MC_VR& vr, TRANSFER_SYNTAX syntax )
 {
     MC_STATUS ret = MC_CANNOT_COMPLY;
 
-    if( vr_is_valid( vr ) == true )
+    // Don't read transfer syntax if implicit little endian
+    if( syntax != IMPLICIT_LITTLE_ENDIAN )
     {
-        // Don't write transfer syntax if implicit little endian
-        if( syntax != IMPLICIT_LITTLE_ENDIAN )
+        vr_value_t vr_value;
+        ret = read( vr_value.data(), vr_value.size() );
+        if( ret == MC_NORMAL_COMPLETION )
         {
-            vr_value_t vr_value;
+            MC_VR tmp_vr = UNKNOWN_VR;
             uint8_t vr_size = 0;
-
-            ret = get_vr_field_value( vr, vr_value, vr_size );
+            ret = get_vr_code( vr_value, tmp_vr, vr_size );
             if( ret == MC_NORMAL_COMPLETION )
             {
-                ret = write( vr_value.data(), vr_value.size() );
                 if( vr_size > vr_value.size() )
                 {
                     uint16_t extra = 0;
-                    ret = write_val( extra, syntax );
+                    ret = read_val( extra, syntax );
                 }
                 else
                 {
-                    // Do nothing
+                    // Do nothing. 2-byte VR field
                 }
             }
             else
             {
-                // Do nothing. Will return error
+                // Do nothing. WIll return get_vr_code error
             }
         }
         else
         {
-            ret = MC_NORMAL_COMPLETION;
+            // Do nothing. Will return read error
         }
     }
     else
     {
-        ret = MC_INVALID_VR_CODE;
+        // Indicate error since this functino shouldn't be called for
+        // implicit transfer syntaxes
+        ret = MC_INVALID_TRANSFER_SYNTAX;
     }
 
     return ret;
 }
 
-MC_STATUS tx_stream::write_tag( uint32_t tag, TRANSFER_SYNTAX syntax )
+MC_STATUS rx_stream::read_tag( uint32_t& tag, TRANSFER_SYNTAX syntax )
 {
-    const uint16_t group = static_cast<uint16_t>( tag >> 16u );
-    const uint16_t element = static_cast<uint16_t>( tag & 0xFFFFu );
+    uint16_t group = 0;
+    uint16_t element = 0;
 
-    // Write the group number first
-    MC_STATUS ret = write_val( group, syntax );
+    // Read the group number first
+    MC_STATUS ret = read_val( group, syntax );
     if( ret == MC_NORMAL_COMPLETION )
     {
-        // Then write the element number
-        ret = write_val( element, syntax );
+        // Then read the element number
+        ret = read_val( element, syntax );
+        if( ret == MC_NORMAL_COMPLETION )
+        {
+            tag = (static_cast<uint32_t>( group ) << 16u) |
+                  static_cast<uint32_t>( element );
+        }
     }
     else
     {
@@ -156,50 +169,56 @@ MC_STATUS tx_stream::write_tag( uint32_t tag, TRANSFER_SYNTAX syntax )
     return ret;
 }
 
-MC_STATUS tx_stream::write_val( int8_t val, TRANSFER_SYNTAX syntax )
+MC_STATUS rx_stream::read_val( int8_t& val, TRANSFER_SYNTAX syntax )
 {
-    return swap_and_write( *this, syntax, val );
+    // Single byte -- no need to try byte swap
+    return read( &val, sizeof(val) );
 }
 
-MC_STATUS tx_stream::write_val( uint8_t val, TRANSFER_SYNTAX syntax )
+MC_STATUS rx_stream::read_val( uint8_t& val, TRANSFER_SYNTAX syntax )
 {
-    // Single byte - no need to endian swap
-    return write( &val, sizeof(val) );
+    // Single byte -- no need to try byte swap
+    return read( &val, sizeof(val) );
 }
 
-MC_STATUS tx_stream::write_val( int16_t val, TRANSFER_SYNTAX syntax )
+MC_STATUS rx_stream::read_val( char& val, TRANSFER_SYNTAX syntax )
 {
-    // Single byte - no need to endian swap
-    return write( &val, sizeof(val) );
+    // Single byte -- no need to try byte swap
+    return read( &val, sizeof(val) );
 }
 
-MC_STATUS tx_stream::write_val( uint16_t val, TRANSFER_SYNTAX syntax )
+MC_STATUS rx_stream::read_val( int16_t& val, TRANSFER_SYNTAX syntax )
 {
-    return swap_and_write( *this, syntax, val );
+    return read_and_swap( *this, syntax, val );
 }
 
-MC_STATUS tx_stream::write_val( int32_t val, TRANSFER_SYNTAX syntax )
+MC_STATUS rx_stream::read_val( uint16_t& val, TRANSFER_SYNTAX syntax )
 {
-    return swap_and_write( *this, syntax, val );
+    return read_and_swap( *this, syntax, val );
 }
 
-MC_STATUS tx_stream::write_val( uint32_t val, TRANSFER_SYNTAX syntax )
+MC_STATUS rx_stream::read_val( int32_t& val, TRANSFER_SYNTAX syntax )
 {
-    return swap_and_write( *this, syntax, val );
+    return read_and_swap( *this, syntax, val );
 }
 
-MC_STATUS tx_stream::write_val( float val, TRANSFER_SYNTAX syntax )
+MC_STATUS rx_stream::read_val( uint32_t& val, TRANSFER_SYNTAX syntax )
+{
+    return read_and_swap( *this, syntax, val );
+}
+
+MC_STATUS rx_stream::read_val( float& val, TRANSFER_SYNTAX syntax )
 {
     // TODO: endian swap
     static_assert( sizeof(float) == 4, "float must be 32-bits" );
-    return write( &val, sizeof(val) );
+    return read( &val, sizeof(val) );
 }
 
-MC_STATUS tx_stream::write_val( double val, TRANSFER_SYNTAX syntax )
+MC_STATUS rx_stream::read_val( double& val, TRANSFER_SYNTAX syntax )
 {
     // TODO: endian swap
     static_assert( sizeof(double) == 8, "double must be 64-bits" );
-    return write( &val, sizeof(val) );
+    return read( &val, sizeof(val) );
 }
 
 }

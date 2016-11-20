@@ -13,33 +13,25 @@
 
 // local public
 #include "mcstatus.h"
+#include "diction.h"
 
 // local private
 #include "fume/item_object.h"
 #include "fume/tx_stream.h"
+#include "fume/rx_stream.h"
 
 namespace fume
 {
 
-static MC_STATUS write_item_tag( tx_stream& stream, TRANSFER_SYNTAX syntax )
+static MC_STATUS write_item_size( tx_stream& stream, TRANSFER_SYNTAX syntax )
 {
-    MC_STATUS ret = stream.write_tag( 0xFFFEE000u, syntax );
-    if( ret == MC_NORMAL_COMPLETION )
-    {
-        ret = stream.write_val( static_cast<uint32_t>( 0xFFFFFFFFu ), syntax );
-    }
-    else
-    {
-        // Do nothing. Will return error from write_vr
-    }
-
-    return ret;
+    return stream.write_val( static_cast<uint32_t>( 0xFFFFFFFFu ), syntax );
 }
 
 static MC_STATUS write_item_delimitation( tx_stream&      stream,
                                           TRANSFER_SYNTAX syntax )
 {
-    MC_STATUS ret = stream.write_tag( 0xFFFEE00Du, syntax );
+    MC_STATUS ret = stream.write_tag( MC_ATT_ITEM_DELIMITATION_ITEM, syntax );
     if( ret == MC_NORMAL_COMPLETION )
     {
         ret = stream.write_val( static_cast<uint32_t>( 0x00000000u ), syntax );
@@ -52,10 +44,27 @@ static MC_STATUS write_item_delimitation( tx_stream&      stream,
     return ret;
 }
 
+MC_STATUS item_object::from_stream( rx_stream&      stream,
+                                    TRANSFER_SYNTAX syntax )
+{
+    uint32_t value_size = 0;
+    MC_STATUS ret = stream.read_val( value_size, syntax );
+    if( ret == MC_NORMAL_COMPLETION )
+    {
+        ret = read_values( stream, syntax, value_size );
+    }
+    else
+    {
+        // Do nothing. Will return error
+    }
+
+    return ret;
+}
+
 MC_STATUS item_object::to_stream( tx_stream&      stream,
                                   TRANSFER_SYNTAX syntax ) const
 {
-    MC_STATUS ret = write_item_tag( stream, syntax );
+    MC_STATUS ret = write_item_size( stream, syntax );
     if( ret == MC_NORMAL_COMPLETION )
     {
         ret = write_values( stream, syntax, begin(), end() );

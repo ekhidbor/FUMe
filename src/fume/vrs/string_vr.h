@@ -43,11 +43,8 @@ public:
 public:
     virtual MC_STATUS to_stream( tx_stream&      stream,
                                  TRANSFER_SYNTAX syntax ) const override final;
-    virtual MC_STATUS from_stream( rx_stream& stream ) override final
-    {
-        // TODO: implement
-        return MC_CANNOT_COMPLY;
-    }
+    virtual MC_STATUS from_stream( rx_stream&      stream,
+                                   TRANSFER_SYNTAX syntax ) override final;
 
 // value_representation -- modifiers
 public:

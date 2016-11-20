@@ -30,6 +30,7 @@ namespace fume
 
 class value_representation;
 class tx_stream;
+class rx_stream;
 
 class data_dictionary
 {
@@ -109,6 +110,10 @@ protected:
 
     // Will always attempt to create a value_representation
     value_representation& operator[]( uint32_t tag );
+
+    MC_STATUS read_values( rx_stream&      stream,
+                           TRANSFER_SYNTAX syntax,
+                           uint32_t        size );
 
     MC_STATUS write_values( tx_stream&                 stream,
                             TRANSFER_SYNTAX            syntax,
