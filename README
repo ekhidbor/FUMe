@@ -28,12 +28,14 @@ it should be pretty easy to update FUMe when new versions of the
 standard are released.
 
 FUMe is very much a work in progress. Currently writing files using
-the Explicit Little Endian Transfer Syntax is supported. Message
-validation, network support, DICOMDIR support all need to be done.
-No formal compatability testing with the reference implementation
-has been done. The code is sprinkled pretty liberally with TODOs.
-No one in their right mind would use this for a production anything,
-yet. Hopefully someday.
+the Little Endian Transfer Syntaxes are supported, as is generation
+of DICOMDIR files using the MC_DDH_* interface. If all you needed
+to do was to be able to generate DICOM files, this library might
+actually suit your needs. Message validation, network support, and
+reading files all need to be done. No formal compatability testing
+with the reference implementation has been done. The code is sprinkled
+pretty liberally with TODOs. No one in their right mind would use
+this for a production anything, yet. Hopefully someday.
 
 FUMe is not a medical device, and no one in their right mind would
 use it in one. Hopefully someday it's at that level of quality and
