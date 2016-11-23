@@ -45,13 +45,13 @@ static MC_STATUS get_next_value( int            msg,
     {
         if( g_context != nullptr )
         {
-            const data_dictionary* dict = g_context->get_object( msg );
+            data_dictionary* dict = g_context->get_object( msg );
             if( dict != nullptr )
             {
                 const uint32_t tag_u32 = numeric_cast<uint32_t>( tag );
                 if( dict->has_tag( tag_u32) == true )
                 {
-                    const value_representation* element = dict->at( tag_u32 );
+                    value_representation* element = dict->at( tag_u32 );
                     if( element != nullptr )
                     {
                         ret = element->get_next( value );

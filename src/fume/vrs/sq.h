@@ -12,11 +12,12 @@
  */
 
 // std
-#include <deque>
+#include <limits>
 
 // local private
 #include "fume/value_representation.h"
 #include "fume/value_conversion.h"
+#include "fume/vrs/vr_value_list.h"
 
 namespace fume
 {
@@ -36,7 +37,7 @@ public:
 // serializable (value_representation)
 public:
     virtual MC_STATUS to_stream( tx_stream&      stream,
-                                 TRANSFER_SYNTAX syntax ) const override final;
+                                 TRANSFER_SYNTAX syntax ) override final;
     virtual MC_STATUS from_stream( rx_stream&      stream,
                                    TRANSFER_SYNTAX syntax ) override final;
 
@@ -104,22 +105,13 @@ public:
                                                    return set( dst_val );
                                                } );
     }
-    virtual MC_STATUS set( const set_buf_parms& val ) override final
-    {
-        return MC_INCOMPATIBLE_VR;
-    }
-    virtual MC_STATUS set( const set_func_parms& val ) override final
-    {
-        return MC_INCOMPATIBLE_VR;
-    }
 
     // Sets the value of the data element to NULL (ie. zero length).
     // NOTE: the specification for this function is that items are /not/
     // freed
     virtual MC_STATUS set_null() override final
     {
-        m_items.clear();
-        m_current_idx = 0;
+        m_items.set_null();
         return MC_NORMAL_COMPLETION;
     }
 
@@ -160,10 +152,6 @@ public:
                                                    return set_next( dst_val );
                                                } );
     }
-    virtual MC_STATUS set_next( const MC_UChar* val ) override final
-    {
-        return MC_INCOMPATIBLE_VR;
-    }
     virtual MC_STATUS set_next( unsigned int val ) override final
     {
         return cast_and_call_setter<int>( val, [this]( int dst_val )
@@ -185,171 +173,155 @@ public:
                                                    return set_next( dst_val );
                                                } );
     }
-    virtual MC_STATUS set_next( const set_buf_parms& val ) override final
-    {
-        return MC_INCOMPATIBLE_VR;
-    }
-
-    // For string value representations, sets the next value of
-    // the data element to NULL (ie zero length string)
-    virtual MC_STATUS set_next_null() override final
-    {
-        return MC_INCOMPATIBLE_VR;
-    }
 
     // Removes the "current" value
-    virtual MC_STATUS delete_current() override final;
+    virtual MC_STATUS delete_current() override final
+    {
+        return m_items.delete_current();
+    }
 
 // value_representation -- accessors
 public:
-    virtual MC_STATUS get( int& val ) const override final;
+    virtual MC_STATUS get( int& val ) override final;
 
-    virtual MC_STATUS get( double& val ) const override final
+    virtual MC_STATUS get( double& val ) override final
     {
         return cast_and_call_getter<int>( val, [this]( int& src_val )
                                                {
                                                    return get( src_val );
                                                } );
     }
-    virtual MC_STATUS get( float& val ) const override final
+    virtual MC_STATUS get( float& val ) override final
     {
         return cast_and_call_getter<int>( val, [this]( int& src_val )
                                                {
                                                    return get( src_val );
                                                } );
     }
-    virtual MC_STATUS get( short& val ) const override final
+    virtual MC_STATUS get( short& val ) override final
     {
         return cast_and_call_getter<int>( val, [this]( int& src_val )
                                                {
                                                    return get( src_val );
                                                } );
     }
-    virtual MC_STATUS get( long& val ) const override final
+    virtual MC_STATUS get( long& val ) override final
     {
         return cast_and_call_getter<int>( val, [this]( int& src_val )
                                                {
                                                    return get( src_val );
                                                } );
     }
-    virtual MC_STATUS get( get_string_parms& val ) const override final
+    virtual MC_STATUS get( get_string_parms& val ) override final
     {
         return cast_and_call_getter<int>( val, [this]( int& src_val )
                                                {
                                                    return get( src_val );
                                                } );
     }
-    virtual MC_STATUS get( get_ustring_parms& val ) const override final
+    virtual MC_STATUS get( get_ustring_parms& val ) override final
     {
         return MC_INCOMPATIBLE_VR;
     }
-    virtual MC_STATUS get( unsigned int& val ) const override final
+    virtual MC_STATUS get( unsigned int& val ) override final
     {
         return cast_and_call_getter<int>( val, [this]( int& src_val )
                                                {
                                                    return get( src_val );
                                                } );
     }
-    virtual MC_STATUS get( unsigned short& val ) const override final
+    virtual MC_STATUS get( unsigned short& val ) override final
     {
         return cast_and_call_getter<int>( val, [this]( int& src_val )
                                                {
                                                    return get( src_val );
                                                } );
     }
-    virtual MC_STATUS get( unsigned long& val ) const override final
+    virtual MC_STATUS get( unsigned long& val ) override final
     {
         return cast_and_call_getter<int>( val, [this]( int& src_val )
                                                {
                                                    return get( src_val );
                                                } );
     }
-    virtual MC_STATUS get( get_buf_parms& val ) const override final
+    virtual MC_STATUS get( get_buf_parms& val ) override final
     {
         return MC_INCOMPATIBLE_VR;
     }
-    virtual MC_STATUS get( const get_func_parms& val ) const override final
+    virtual MC_STATUS get( const get_func_parms& val ) override final
     {
         return MC_INCOMPATIBLE_VR;
     }
 
-    virtual MC_STATUS get_next( int& val ) const override final;
+    virtual MC_STATUS get_next( int& val ) override final;
 
-    virtual MC_STATUS get_next( double& val ) const override final
+    virtual MC_STATUS get_next( double& val ) override final
     {
         return cast_and_call_getter<int>( val, [this]( int& src_val )
                                                {
                                                    return get_next( src_val );
                                                } );
     }
-    virtual MC_STATUS get_next( float& val ) const override final
+    virtual MC_STATUS get_next( float& val ) override final
     {
         return cast_and_call_getter<int>( val, [this]( int& src_val )
                                                {
                                                    return get_next( src_val );
                                                } );
     }
-    virtual MC_STATUS get_next( short& val ) const override final
+    virtual MC_STATUS get_next( short& val ) override final
     {
         return cast_and_call_getter<int>( val, [this]( int& src_val )
                                                {
                                                    return get_next( src_val );
                                                } );
     }
-    virtual MC_STATUS get_next( long& val ) const override final
+    virtual MC_STATUS get_next( long& val ) override final
     {
         return cast_and_call_getter<int>( val, [this]( int& src_val )
                                                {
                                                    return get_next( src_val );
                                                } );
     }
-    virtual MC_STATUS get_next( get_string_parms& val ) const override final
+    virtual MC_STATUS get_next( get_string_parms& val ) override final
     {
         return cast_and_call_getter<int>( val, [this]( int& src_val )
                                                {
                                                    return get_next( src_val );
                                                } );
     }
-    virtual MC_STATUS get_next( get_ustring_parms& val ) const override final
-    {
-        return MC_INCOMPATIBLE_VR;
-    }
-    virtual MC_STATUS get_next( unsigned int& val ) const override final
+    virtual MC_STATUS get_next( unsigned int& val ) override final
     {
         return cast_and_call_getter<int>( val, [this]( int& src_val )
                                                {
                                                    return get_next( src_val );
                                                } );
     }
-    virtual MC_STATUS get_next( unsigned short& val ) const override final
+    virtual MC_STATUS get_next( unsigned short& val ) override final
     {
         return cast_and_call_getter<int>( val, [this]( int& src_val )
                                                {
                                                    return get_next( src_val );
                                                } );
     }
-    virtual MC_STATUS get_next( unsigned long& val ) const override final
+    virtual MC_STATUS get_next( unsigned long& val ) override final
     {
         return cast_and_call_getter<int>( val, [this]( int& src_val )
                                                {
                                                    return get_next( src_val );
                                                } );
-    }
-    virtual MC_STATUS get_next( get_buf_parms& val ) const override final
-    {
-        return MC_INCOMPATIBLE_VR;
     }
 
     // Returns the number of elements
     virtual int count() const override final
     {
-        return static_cast<int>( m_items.size() );
+        return static_cast<int>( m_items.count() );
     }
 
     // Indicates whether or not the element is null
     virtual bool is_null() const override final
     {
-        return m_items.empty();
+        return m_items.is_null();
     }
 
     virtual MC_VR vr() const override final
@@ -366,16 +338,15 @@ private:
     sq( const sq& rhs )
         : value_representation( rhs ),
           // TODO: Do we ned to do a deep copy?
-          m_items( rhs.m_items ),
-          m_current_idx( rhs.m_current_idx )
+          m_items( rhs.m_items )
     {
     }
 
 private:
-    std::deque<int> m_items;
+  typedef vr_value_list<int, std::numeric_limits<uint32_t>::max() - 1> value_list_t;
 
-    // Used for get_next and delete_current
-    mutable size_t m_current_idx;
+private:
+    value_list_t m_items;
 };
 
 } // namespace vrs

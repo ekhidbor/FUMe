@@ -33,7 +33,7 @@ file_tx_stream::file_tx_stream( const string&     filename,
     assert( m_callback != nullptr );
 }
 
-MC_STATUS file_tx_stream::write( const void* buffer, size_t buffer_bytes )
+MC_STATUS file_tx_stream::write( const void* buffer, uint32_t buffer_bytes )
 {
     MC_STATUS ret = MC_CANNOT_COMPLY;
     if( buffer != nullptr && m_callback != nullptr )

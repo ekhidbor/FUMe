@@ -17,6 +17,7 @@
 #include <unordered_map>
 #include <memory>
 #include <utility>
+#include <functional>
 
 // boost
 #include "boost/range/iterator_range.hpp"
@@ -69,7 +70,7 @@ public:
     MC_STATUS set_callbacks( int application_id );
 
     virtual MC_STATUS set_transfer_syntax( TRANSFER_SYNTAX syntax ) = 0;
-    virtual MC_STATUS get_transfer_syntax( TRANSFER_SYNTAX& syntax ) const = 0;
+    virtual MC_STATUS get_transfer_syntax( TRANSFER_SYNTAX& syntax ) = 0;
 
     int id() const
     {
@@ -111,14 +112,24 @@ protected:
     // Will always attempt to create a value_representation
     value_representation& operator[]( uint32_t tag );
 
+    MC_STATUS read_values_from_item( rx_stream&      stream,
+                                     TRANSFER_SYNTAX syntax,
+                                     int             app_id,
+                                     uint32_t        size );
+
     MC_STATUS read_values( rx_stream&      stream,
                            TRANSFER_SYNTAX syntax,
-                           uint32_t        size );
+                           int             app_id );
+
+    MC_STATUS read_values_upto( rx_stream&      stream,
+                                TRANSFER_SYNTAX syntax,
+                                int             app_id,
+                                uint32_t        end_tag );
 
     MC_STATUS write_values( tx_stream&                 stream,
                             TRANSFER_SYNTAX            syntax,
                             value_dict::const_iterator begin,
-                            value_dict::const_iterator end ) const
+                            value_dict::const_iterator end )
     {
         return write_values( stream, syntax, m_application_id, begin, end );
     }
@@ -127,7 +138,7 @@ protected:
                             TRANSFER_SYNTAX            syntax,
                             int                        app_id,
                             value_dict::const_iterator begin,
-                            value_dict::const_iterator end ) const;
+                            value_dict::const_iterator end );
 
     const_value_range get_value_range( uint32_t begin_tag, uint32_t end_tag ) const;
     value_range get_value_range( uint32_t begin_tag, uint32_t end_tag );
@@ -144,8 +155,8 @@ private:
     data_dictionary( const data_dictionary& );
     data_dictionary& operator=( const data_dictionary& );
 
-    MC_STATUS get_vr_type( uint32_t tag, MC_VR& type ) const;
-    unique_vr_ptr create_vr( uint32_t tag ) const;
+    MC_STATUS get_vr_type( uint32_t tag, MC_VR& type );
+    unique_vr_ptr create_vr( uint32_t tag );
 
 private:
     value_dict          m_value_dict;

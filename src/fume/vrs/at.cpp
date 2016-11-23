@@ -11,8 +11,6 @@
 
 // std
 #include <cassert>
-#include <algorithm>
-#include <numeric>
 #include <limits>
 
 // local private
@@ -20,10 +18,7 @@
 #include "fume/tx_stream.h"
 #include "fume/rx_stream.h"
 
-using std::min;
-using std::deque;
 using std::numeric_limits;
-using std::move;
 
 namespace fume
 {
@@ -34,7 +29,7 @@ MC_STATUS at::from_stream( rx_stream& stream, TRANSFER_SYNTAX syntax )
 {
     MC_STATUS ret = MC_CANNOT_COMPLY;
     uint32_t value_length = 0;
-    deque<uint32_t> tmp_values;
+    value_list_t tmp_values;
 
     if( syntax == IMPLICIT_LITTLE_ENDIAN )
     {
@@ -57,14 +52,16 @@ MC_STATUS at::from_stream( rx_stream& stream, TRANSFER_SYNTAX syntax )
                 uint32_t val = 0;
                 ret = stream.read_val( val, syntax );
 
-                tmp_values.push_back( val );
+                if( ret == MC_NORMAL_COMPLETION )
+                {
+                    ret = tmp_values.set_next( val );
+                }
             }
 
             if( ret == MC_NORMAL_COMPLETION )
             {
                 // Only update values if everything succeeded
                 m_values.swap( tmp_values );
-                m_current_idx = 0;
             }
         }
         else
@@ -80,14 +77,15 @@ MC_STATUS at::from_stream( rx_stream& stream, TRANSFER_SYNTAX syntax )
     return ret;
 }
 
-MC_STATUS at::to_stream( tx_stream& stream, TRANSFER_SYNTAX syntax ) const
+MC_STATUS at::to_stream( tx_stream& stream, TRANSFER_SYNTAX syntax )
 {
-    const uint32_t value_size = m_values.size() * sizeof(uint32_t);
+    const uint32_t value_size = m_values.size();
     MC_STATUS ret = MC_CANNOT_COMPLY;
 
     if( syntax != IMPLICIT_LITTLE_ENDIAN )
     {
-        // TODO: proper length validation
+        // vr_value_list ensures size stays under this limit
+        assert( value_size < numeric_limits<uint16_t>::max() );
         ret = stream.write_val( static_cast<uint16_t>( value_size ), syntax );
     }
     else
@@ -95,9 +93,9 @@ MC_STATUS at::to_stream( tx_stream& stream, TRANSFER_SYNTAX syntax ) const
         ret = stream.write_val( value_size, syntax );
     }
 
-    if( ret == MC_NORMAL_COMPLETION && m_values.empty() == false )
+    if( ret == MC_NORMAL_COMPLETION && m_values.is_null() == false )
     {
-        for( typename deque<uint32_t>::const_iterator itr = m_values.cbegin();
+        for( typename value_list_t::const_iterator itr = m_values.cbegin();
              ret == MC_NORMAL_COMPLETION && itr != m_values.cend();
              ++itr )
         {
@@ -108,110 +106,6 @@ MC_STATUS at::to_stream( tx_stream& stream, TRANSFER_SYNTAX syntax ) const
     {
         // Do nothing. Will return error if write_val failed or
         // MC_NORMAL_COMPLETION if zero length value
-    }
-
-    return ret;
-}
-
-MC_STATUS at::set_native( uint32_t val )
-{
-    m_values.clear();
-    m_current_idx = 0;
-    m_values.push_back( val );
-
-    return MC_NORMAL_COMPLETION;
-}
-
-MC_STATUS at::set_next_native( uint32_t val )
-{
-    MC_STATUS ret = MC_CANNOT_COMPLY;
-
-    if( m_values.size() < numeric_limits<uint16_t>::max() )
-    {
-        m_current_idx = 0;
-        m_values.push_back( val );
-
-        ret = MC_NORMAL_COMPLETION;
-    }
-    else
-    {
-        ret = MC_TOO_MANY_VALUES;
-    }
-
-    return ret;
-}
-
-MC_STATUS at::get_native( uint32_t& val ) const
-{
-    MC_STATUS ret = MC_CANNOT_COMPLY;
-
-    if( m_values.empty() == false )
-    {
-        m_current_idx = 0;
-        val = m_values[m_current_idx];
-        ret = MC_NORMAL_COMPLETION;
-    }
-    else
-    {
-        ret = MC_NULL_VALUE;
-    }
-
-    return ret;
-}
-
-MC_STATUS at::get_next_native( uint32_t& val ) const
-{
-    MC_STATUS ret = MC_CANNOT_COMPLY;
-
-    if( m_values.empty() == false )
-    {
-        m_current_idx = min( m_values.size(), m_current_idx + 1 );
-        if( m_current_idx < m_values.size() )
-        {
-            val = m_values[m_current_idx];
-            ret = MC_NORMAL_COMPLETION;
-        }
-        else
-        {
-            ret = MC_NO_MORE_VALUES;
-        }
-    }
-    else
-    {
-        ret = MC_NULL_VALUE;
-    }
-
-    return ret;
-}
-
-MC_STATUS at::delete_current()
-{
-    MC_STATUS ret = MC_CANNOT_COMPLY;
-
-    if( m_values.empty() == false )
-    {
-        if( m_current_idx < m_values.size() )
-        {
-            m_values.erase( m_values.cbegin() + m_current_idx );
-            // Adjust the index to continue to be valid if we removed
-            // the last element of a multi-element list
-            if( m_current_idx > 0 && m_current_idx >= m_values.size() )
-            {
-                --m_current_idx;
-            }
-            else
-            {
-                // Do nothing. Index is still valid
-            }
-        }
-        else
-        {
-            ret = MC_NO_MORE_VALUES;
-        }
-    }
-    else
-    {
-        ret = MC_NULL_VALUE;
     }
 
     return ret;

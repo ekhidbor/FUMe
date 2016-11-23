@@ -12,6 +12,8 @@
 // std
 #include <cassert>
 #include <vector>
+#include <limits>
+#include <algorithm>
 
 // local public
 #include "mcstatus.h"
@@ -22,11 +24,13 @@
 #include "boost/numeric/conversion/cast.hpp"
 
 // local private
-#include "fume/callback_io.h"
+#include "fume/source_callback_io.h"
 #include "fume/tx_stream.h"
 #include "fume/library_context.h"
 
 using std::vector;
+using std::numeric_limits;
+using std::min;
 
 using boost::numeric_cast;
 using boost::bad_numeric_cast;
@@ -34,40 +38,37 @@ using boost::bad_numeric_cast;
 namespace fume
 {
 
-static MC_STATUS get_buffer_from_function( const set_func_parms& parms,
-                                           vector<uint8_t>&      buffer );
-static bool is_encapsulated( TRANSFER_SYNTAX syntax );
-
-class callback_io
+class callback_io_tx
 {
 public:
-    callback_io( const callback_parms_t& callback,
-                 int                     message_id,
-                 uint32_t                tag )
+    callback_io_tx( const callback_parms_t& callback,
+                    int                     message_id,
+                    uint32_t                tag )
         : m_callback( callback ),
           m_message_id( message_id ),
           m_tag( tag ),
-          m_done( false ),
           m_first( true )
     {
     }
 
     MC_STATUS get_value_length( uint32_t& length );
-    MC_STATUS get_value_data( const void*& data, size_t& data_length );
+    MC_STATUS get_value_data( const void*& data,
+                              size_t&      data_length,
+                              bool&        is_last );
 
-    bool is_done() const
-    {
-        return m_done;
-    }
 private:
     const callback_parms_t& m_callback;
     int                     m_message_id;
     uint32_t                m_tag;
-    bool                    m_done;
     bool                    m_first;
 };
 
-MC_STATUS callback_io::get_value_length( uint32_t& length )
+static MC_STATUS get_buffer_from_function( const set_func_parms& parms,
+                                           vector<uint8_t>&      buffer );
+
+static bool is_encapsulated( TRANSFER_SYNTAX syntax );
+
+MC_STATUS callback_io_tx::get_value_length( uint32_t& length )
 {
     // Caller should have checked this
     assert( m_callback.first != nullptr );
@@ -110,7 +111,9 @@ MC_STATUS callback_io::get_value_length( uint32_t& length )
     return ret;
 }
 
-MC_STATUS callback_io::get_value_data( const void*& data, size_t& data_length )
+MC_STATUS callback_io_tx::get_value_data( const void*& data,
+                                          size_t&      data_length,
+                                          bool&        is_last )
 {
     // Caller should have checked this
     assert( m_callback.first != nullptr );
@@ -136,6 +139,10 @@ MC_STATUS callback_io::get_value_data( const void*& data, size_t& data_length )
     {
         ret = MC_CALLBACK_DATA_SIZE_UNEVEN;
     }
+    else if( buffer == nullptr )
+    {
+        ret = MC_CALLBACK_PARM_ERROR;
+    }
     else
     {
         // Callback success
@@ -143,7 +150,7 @@ MC_STATUS callback_io::get_value_data( const void*& data, size_t& data_length )
         {
             data_length = numeric_cast<size_t>( size );
             data = buffer;
-            m_done = last != 0;
+            is_last = last != 0;
             m_first = false;
             ret = MC_NORMAL_COMPLETION;
         }
@@ -156,14 +163,13 @@ MC_STATUS callback_io::get_value_data( const void*& data, size_t& data_length )
     return ret;
 }
 
-
 MC_STATUS write_vr_data_from_callback( tx_stream&              stream,
                                        TRANSFER_SYNTAX         syntax,
                                        int                     message_id,
                                        uint32_t                tag,
                                        const callback_parms_t& callback )
 {
-    callback_io io( callback, message_id, tag );
+    callback_io_tx io( callback, message_id, tag );
 
     uint32_t vr_length = 0;
     MC_STATUS ret = io.get_value_length( vr_length );
@@ -181,13 +187,14 @@ MC_STATUS write_vr_data_from_callback( tx_stream&              stream,
                 (tag_vr == OB || tag_vr == OW ||
                  tag_vr == OL || tag_vr == OD || tag_vr == OF) );
 
+        bool is_done = false;
         ret = stream.write_val( vr_length, syntax );
-        while( ret == MC_NORMAL_COMPLETION && io.is_done() == false )
+        while( ret == MC_NORMAL_COMPLETION && is_done == false )
         {
             const void* data = nullptr;
             size_t data_length = 0;
 
-            ret = io.get_value_data( data, data_length );
+            ret = io.get_value_data( data, data_length, is_done );
             if( ret == MC_NORMAL_COMPLETION )
             {
                 // Write the block of data

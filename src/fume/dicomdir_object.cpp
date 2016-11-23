@@ -228,8 +228,8 @@ static MC_STATUS update_offset_values( dicomdir_object&    dicomdir,
     return ret;
 }
 
-static MC_STATUS get_record_offsets( const value_representation& record_sequence,
-                                     offset_map_t&               record_offsets )
+static MC_STATUS get_record_offsets( value_representation& record_sequence,
+                                     offset_map_t&         record_offsets )
 {
     MC_STATUS ret = MC_CANNOT_COMPLY;
     offset_map_t tmp_offsets;

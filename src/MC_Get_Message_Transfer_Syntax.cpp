@@ -31,7 +31,7 @@ MC_STATUS MC_Get_Message_Transfer_Syntax( int              MessageID,
     {
         if( g_context != nullptr && TransferSyntax != nullptr )
         {
-            const data_dictionary* dict = g_context->get_object( MessageID );
+            data_dictionary* dict = g_context->get_object( MessageID );
             if( dict != nullptr )
             {
                 ret = dict->get_transfer_syntax( *TransferSyntax );

@@ -21,7 +21,7 @@
 // local private
 #include "fume/library_context.h"
 #include "fume/data_dictionary.h"
-#include "fume/callback_io.h"
+#include "fume/source_callback_io.h"
 #include "fume/vrs/ob.h"
 
 using boost::numeric_cast;

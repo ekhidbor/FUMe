@@ -22,7 +22,7 @@ namespace fume
 namespace vrs
 {
 
-MC_STATUS ob::write( const void* buffer, size_t buffer_bytes )
+MC_STATUS ob::write( const void* buffer, uint32_t buffer_bytes )
 {
     MC_STATUS ret = MC_CANNOT_COMPLY;
 

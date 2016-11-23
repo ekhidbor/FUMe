@@ -24,8 +24,8 @@
 namespace fume
 {
 
-static bool get_conditional_pixel_data_vr( const data_dictionary& dict,
-                                           MC_VR&                 tag_vr )
+static bool get_conditional_pixel_data_vr( data_dictionary& dict,
+                                           MC_VR&           tag_vr )
 {
     bool ret = false;
 
@@ -42,7 +42,7 @@ static bool get_conditional_pixel_data_vr( const data_dictionary& dict,
                  syntax == DEFLATED_EXPLICIT_LITTLE_ENDIAN )
         {
             int bits_allocated = 0;
-            const value_representation* vr = dict.at( MC_ATT_BITS_ALLOCATED );
+            value_representation* vr = dict.at( MC_ATT_BITS_ALLOCATED );
             if( vr != nullptr &&
                 vr->get( bits_allocated ) == MC_NORMAL_COMPLETION )
             {
@@ -73,8 +73,8 @@ static bool get_conditional_pixel_data_vr( const data_dictionary& dict,
     return ret;
 }
 
-static bool get_conditional_waveform_data_vr( const data_dictionary& dict,
-                                              MC_VR&                 tag_vr )
+static bool get_conditional_waveform_data_vr( data_dictionary& dict,
+                                              MC_VR&           tag_vr )
 {
     bool ret = false;
 
@@ -90,7 +90,7 @@ static bool get_conditional_waveform_data_vr( const data_dictionary& dict,
         else
         {
             int bits_allocated = 0;
-            const value_representation* vr =
+            value_representation* vr =
                 dict.at( MC_ATT_WAVEFORM_BITS_ALLOCATED );
             if( vr != nullptr &&
                 vr->get( bits_allocated ) == MC_NORMAL_COMPLETION )
@@ -114,8 +114,8 @@ static bool get_conditional_waveform_data_vr( const data_dictionary& dict,
     return ret;
 }
 
-static bool get_conditional_dark_current_vr( const data_dictionary& dict,
-                                             MC_VR&                 tag_vr )
+static bool get_conditional_dark_current_vr( data_dictionary& dict,
+                                             MC_VR&           tag_vr )
 {
     bool ret = false;
 
@@ -131,7 +131,7 @@ static bool get_conditional_dark_current_vr( const data_dictionary& dict,
         else
         {
             int bits_allocated = 0;
-            const value_representation* vr = dict.at( MC_ATT_BITS_ALLOCATED );
+            value_representation* vr = dict.at( MC_ATT_BITS_ALLOCATED );
             if( vr != nullptr &&
                 vr->get( bits_allocated ) == MC_NORMAL_COMPLETION )
             {
@@ -154,8 +154,8 @@ static bool get_conditional_dark_current_vr( const data_dictionary& dict,
     return ret;
 }
 
-static bool get_conditional_overlay_vr( const data_dictionary& dict,
-                                        MC_VR&                 tag_vr )
+static bool get_conditional_overlay_vr( data_dictionary& dict,
+                                        MC_VR&           tag_vr )
 {
     bool ret = false;
 
@@ -173,9 +173,9 @@ static bool get_conditional_overlay_vr( const data_dictionary& dict,
     return ret;
 }
 
-bool get_conditional_tag_vr( uint32_t               tag,
-                             const data_dictionary& dict,
-                             MC_VR&                 tag_vr )
+bool get_conditional_tag_vr( uint32_t         tag,
+                             data_dictionary& dict,
+                             MC_VR&           tag_vr )
 {
     bool ret = false;
 

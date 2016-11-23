@@ -68,19 +68,19 @@ public:
     // dictionary-specific VR specializations (eg. pixel data)
 
     std::unique_ptr<value_representation>
-    create_vr( uint32_t               tag,
-               const data_dictionary* dict ) const;
+    create_vr( uint32_t         tag,
+               data_dictionary* dict ) const;
 
-    MC_STATUS get_vr_type( uint32_t               tag,
-                           const data_dictionary* dict,
-                           MC_VR&                 type ) const;
+    MC_STATUS get_vr_type( uint32_t         tag,
+                           data_dictionary* dict,
+                           MC_VR&           type ) const;
 
-    MC_STATUS get_vr_info( uint32_t               tag,
-                           const data_dictionary* dict,
-                           MC_VR&                 type,
-                           unsigned short&        min_vals,
-                           unsigned short&        max_vals,
-                           unsigned short&        multiple ) const;
+    MC_STATUS get_vr_info( uint32_t         tag,
+                           data_dictionary* dict,
+                           MC_VR&           type,
+                           unsigned short&  min_vals,
+                           unsigned short&  max_vals,
+                           unsigned short&  multiple ) const;
 
     MC_STATUS get_string_config_value( StringParm          parm,
                                        const std::string*& value ) const;

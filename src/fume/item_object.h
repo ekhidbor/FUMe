@@ -44,7 +44,7 @@ public:
     {
         return MC_INVALID_MESSAGE_ID;
     }
-    virtual MC_STATUS get_transfer_syntax( TRANSFER_SYNTAX& syntax ) const override final
+    virtual MC_STATUS get_transfer_syntax( TRANSFER_SYNTAX& syntax ) override final
     {
         return MC_INVALID_MESSAGE_ID;
     }
@@ -52,7 +52,7 @@ public:
 // serializable
 public:
     virtual MC_STATUS to_stream( tx_stream&      stream,
-                                 TRANSFER_SYNTAX syntax ) const override;
+                                 TRANSFER_SYNTAX syntax ) override;
     virtual MC_STATUS from_stream( rx_stream&      stream,
                                    TRANSFER_SYNTAX syntax ) override;
 

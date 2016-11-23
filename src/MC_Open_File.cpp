@@ -15,39 +15,40 @@
 #include "mcstatus.h"
 #include "mc3media.h"
 
-// local private
+/// local private
 #include "fume/library_context.h"
-#include "fume/record_object.h"
+#include "fume/file_object.h"
 
 using fume::g_context;
-using fume::record_object;
+using fume::file_object;
 
-MC_STATUS MC_DDH_Get_Record_Type( int RecordID, MC_DIR_RECORD_TYPE* RecType )
+MC_STATUS MC_Open_File( int              ApplicationID,
+                        int              FileID,
+                        void*            UserInfo,
+                        ReadFileCallback YourFromMediaFunction )
 {
     MC_STATUS ret = MC_CANNOT_COMPLY;
 
     try
     {
-        if( g_context != nullptr && RecType != nullptr )
+        if( g_context != nullptr )
         {
-            record_object* record =
-                dynamic_cast<record_object*>( g_context->get_object( RecordID ) );
-            if( record != nullptr )
+            file_object* file =
+                dynamic_cast<file_object*>( g_context->get_object( FileID ) );
+            if( file != nullptr )
             {
-                ret = record->get_record_type( *RecType );
+                ret = file->open( ApplicationID,
+                                  UserInfo,
+                                  YourFromMediaFunction );
             }
             else
             {
-                ret = MC_INVALID_RECORD_ID;
+                ret = MC_INVALID_FILE_ID;
             }
-        }
-        else if( g_context != nullptr )
-        {
-            ret = MC_LIBRARY_NOT_INITIALIZED;
         }
         else
         {
-            ret = MC_NULL_POINTER_PARM;
+            ret = MC_LIBRARY_NOT_INITIALIZED;
         }
     }
     catch( ... )

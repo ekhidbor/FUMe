@@ -34,8 +34,8 @@ public:
 
     // returns MC_NORMAL_COMPLETION if buffer_bytes have been successfully
     // written and some other error code otherwise
-    virtual MC_STATUS write( const void* buffer, size_t buffer_bytes ) = 0;
-    virtual uint32_t bytes_written() const = 0;
+    virtual MC_STATUS write( const void* buffer, uint32_t buffer_bytes ) = 0;
+    virtual uint64_t bytes_written() const = 0;
 
     MC_STATUS write_vr( MC_VR vr, TRANSFER_SYNTAX syntax );
 

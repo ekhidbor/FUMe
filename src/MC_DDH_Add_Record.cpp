@@ -117,7 +117,7 @@ int add_record( dicomdir_object& file_obj,
     return record_id;
 }
 
-static const char* get_child_record_type( const record_object& parent )
+static const char* get_child_record_type( record_object& parent )
 {
     const char* ret = nullptr;
 

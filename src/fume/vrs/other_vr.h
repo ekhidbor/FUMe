@@ -13,9 +13,10 @@
 
 // std
 #include <cstdint>
-#include <deque>
+#include <cassert>
 #include <vector>
 #include <algorithm>
+#include <memory>
 
 // local public
 #include "mc3msg.h"
@@ -24,6 +25,9 @@
 #include "fume/value_representation.h"
 #include "fume/tx_stream.h"
 #include "fume/rx_stream.h"
+#include "fume/seekable_stream.h"
+#include "fume/memory_stream.h"
+#include "fume/sink_callback_io.h"
 
 namespace fume
 {
@@ -36,7 +40,8 @@ class other_vr : public value_representation
 {
 public:
     other_vr()
-        : value_representation( 1u, 1u, 1u )
+        : value_representation( 1u, 1u, 1u ),
+          m_stream( new memory_stream() )
     {
     }
     virtual ~other_vr()
@@ -47,221 +52,34 @@ public:
 // serializable (value_representation)
 public:
     virtual MC_STATUS to_stream( tx_stream&      stream,
-                                 TRANSFER_SYNTAX syntax ) const override final;
+                                 TRANSFER_SYNTAX syntax ) override final;
     virtual MC_STATUS from_stream( rx_stream&      stream,
                                    TRANSFER_SYNTAX syntax ) override final;
 
 // value_representation -- modifiers
 public:
-    virtual MC_STATUS set( int val ) override final
-    {
-        return MC_INCOMPATIBLE_VR;
-    }
-    virtual MC_STATUS set( float val ) override final
-    {
-        return MC_INCOMPATIBLE_VR;
-    }
-    virtual MC_STATUS set( double val ) override final
-    {
-        return MC_INCOMPATIBLE_VR;
-    }
-    virtual MC_STATUS set( short val ) override final
-    {
-        return MC_INCOMPATIBLE_VR;
-    }
-    virtual MC_STATUS set( long val ) override final
-    {
-        return MC_INCOMPATIBLE_VR;
-    }
-    virtual MC_STATUS set( unsigned int val ) override final
-    {
-        return MC_INCOMPATIBLE_VR;
-    }
-    virtual MC_STATUS set( unsigned short val ) override final
-    {
-        return MC_INCOMPATIBLE_VR;
-    }
-    virtual MC_STATUS set( unsigned long val ) override final
-    {
-        return MC_INCOMPATIBLE_VR;
-    }
-    virtual MC_STATUS set( const char* val ) override final
-    {
-        return MC_INCOMPATIBLE_VR;
-    }
-    virtual MC_STATUS set( const MC_UChar* val ) override final
-    {
-        return MC_INCOMPATIBLE_VR;
-    }
-    virtual MC_STATUS set( const set_buf_parms& val ) override final
-    {
-        return MC_INCOMPATIBLE_VR;
-    }
     virtual MC_STATUS set( const set_func_parms& val ) override final;
 
     // Sets the value of the data element to NULL (ie. zero length)
     virtual MC_STATUS set_null() override final
     {
-        m_values.clear();
-        return MC_NORMAL_COMPLETION;
-    }
-
-    virtual MC_STATUS set_next( int val ) override final
-    {
-        return MC_INCOMPATIBLE_VR;
-    }
-    virtual MC_STATUS set_next( float val ) override final
-    {
-        return MC_INCOMPATIBLE_VR;
-    }
-    virtual MC_STATUS set_next( double val ) override final
-    {
-        return MC_INCOMPATIBLE_VR;
-    }
-    virtual MC_STATUS set_next( short val ) override final
-    {
-        return MC_INCOMPATIBLE_VR;
-    }
-    virtual MC_STATUS set_next( long val ) override final
-    {
-        return MC_INCOMPATIBLE_VR;
-    }
-    virtual MC_STATUS set_next( unsigned int val ) override final
-    {
-        return MC_INCOMPATIBLE_VR;
-    }
-    virtual MC_STATUS set_next( unsigned short val ) override final
-    {
-        return MC_INCOMPATIBLE_VR;
-    }
-    virtual MC_STATUS set_next( unsigned long val ) override final
-    {
-        return MC_INCOMPATIBLE_VR;
-    }
-    virtual MC_STATUS set_next( const char* val ) override final
-    {
-        return MC_INCOMPATIBLE_VR;
-    }
-    virtual MC_STATUS set_next( const MC_UChar* val ) override final
-    {
-        return MC_INCOMPATIBLE_VR;
-    }
-    virtual MC_STATUS set_next( const set_buf_parms& val ) override final
-    {
-        return MC_INCOMPATIBLE_VR;
-    }
-    virtual MC_STATUS set_next_null() override final
-    {
-        return MC_INCOMPATIBLE_VR;
-    }
-    virtual MC_STATUS delete_current() override final
-    {
-        return MC_INCOMPATIBLE_VR;
+        return m_stream->clear();
     }
 
 // value_representation -- accessors
 public:
-    virtual MC_STATUS get( int& val ) const override final
-    {
-        return MC_INCOMPATIBLE_VR;
-    }
-    virtual MC_STATUS get( float& val ) const override final
-    {
-        return MC_INCOMPATIBLE_VR;
-    }
-    virtual MC_STATUS get( double& val ) const override final
-    {
-        return MC_INCOMPATIBLE_VR;
-    }
-    virtual MC_STATUS get( short& val ) const override final
-    {
-        return MC_INCOMPATIBLE_VR;
-    }
-    virtual MC_STATUS get( long& val ) const override final
-    {
-        return MC_INCOMPATIBLE_VR;
-    }
-    virtual MC_STATUS get( unsigned int& val ) const override final
-    {
-        return MC_INCOMPATIBLE_VR;
-    }
-    virtual MC_STATUS get( unsigned short& val ) const override final
-    {
-        return MC_INCOMPATIBLE_VR;
-    }
-    virtual MC_STATUS get( unsigned long& val ) const override final
-    {
-        return MC_INCOMPATIBLE_VR;
-    }
-    virtual MC_STATUS get( get_string_parms& val ) const override final
-    {
-        return MC_INCOMPATIBLE_VR;
-    }
-    virtual MC_STATUS get( get_ustring_parms& val ) const override final
-    {
-        return MC_INCOMPATIBLE_VR;
-    }
-    virtual MC_STATUS get( get_buf_parms& val ) const override final
-    {
-        return MC_INCOMPATIBLE_VR;
-    }
-    virtual MC_STATUS get( const get_func_parms& val ) const override final;
-
-    virtual MC_STATUS get_next( int& val ) const override final
-    {
-        return MC_INCOMPATIBLE_VR;
-    }
-    virtual MC_STATUS get_next( float& val ) const override final
-    {
-        return MC_INCOMPATIBLE_VR;
-    }
-    virtual MC_STATUS get_next( double& val ) const override final
-    {
-        return MC_INCOMPATIBLE_VR;
-    }
-    virtual MC_STATUS get_next( short& val ) const override final
-    {
-        return MC_INCOMPATIBLE_VR;
-    }
-    virtual MC_STATUS get_next( long& val ) const override final
-    {
-        return MC_INCOMPATIBLE_VR;
-    }
-    virtual MC_STATUS get_next( unsigned int& val ) const override final
-    {
-        return MC_INCOMPATIBLE_VR;
-    }
-    virtual MC_STATUS get_next( unsigned short& val ) const override final
-    {
-        return MC_INCOMPATIBLE_VR;
-    }
-    virtual MC_STATUS get_next( unsigned long& val ) const override final
-    {
-        return MC_INCOMPATIBLE_VR;
-    }
-    virtual MC_STATUS get_next( get_string_parms& val ) const override final
-    {
-        return MC_INCOMPATIBLE_VR;
-    }
-    virtual MC_STATUS get_next( get_ustring_parms& val ) const override final
-    {
-        return MC_INCOMPATIBLE_VR;
-    }
-    virtual MC_STATUS get_next( get_buf_parms& val ) const override final
-    {
-        return MC_INCOMPATIBLE_VR;
-    }
+    virtual MC_STATUS get( const get_func_parms& val ) override final;
 
     // Returns the number of elements
     virtual int count() const override final
     {
-        return static_cast<int>( m_values.empty() == false );
+        return static_cast<int>( m_stream->bytes_written() != 0 );
     }
 
     // Indicates whether or not the element is null
     virtual bool is_null() const override final
     {
-        return m_values.empty();
+        return m_stream->bytes_written() == 0;
     }
 
     virtual MC_VR vr() const override final
@@ -271,30 +89,14 @@ public:
 
     virtual std::unique_ptr<value_representation> clone() const override
     {
-        return std::unique_ptr<value_representation>( new other_vr( *this ) );
-    }
+        std::unique_ptr<other_vr> ret( new other_vr() );
+        ret->m_stream = m_stream->clone();
 
-protected:
-    other_vr( const other_vr& rhs )
-        : value_representation( rhs ),
-          m_values( rhs.m_values )
-    {
-    }
-
-protected:
-    template<class Iterator>
-    void append( Iterator begin, Iterator end )
-    {
-        m_values.insert( m_values.cend(), begin, end );
-    }
-
-    size_t data_size() const
-    {
-        return m_values.size();
+        return std::move( ret );
     }
 
 private:
-    std::deque<T> m_values;
+    std::unique_ptr<seekable_stream> m_stream;
 };
 
 template<class T, MC_VR VR>
@@ -302,7 +104,7 @@ MC_STATUS other_vr<T, VR>::from_stream( rx_stream&      stream,
                                         TRANSFER_SYNTAX syntax )
 {
     uint32_t value_length = 0;
-    std::deque<T> tmp_values;
+    std::unique_ptr<seekable_stream> tmp_stream( new memory_stream() );
 
     MC_STATUS ret = stream.read_val( value_length, syntax );
 
@@ -315,14 +117,27 @@ MC_STATUS other_vr<T, VR>::from_stream( rx_stream&      stream,
             {
                 T val;
                 ret = stream.read_val( val, syntax );
-
-                tmp_values.push_back( val );
+                if( ret == MC_NORMAL_COMPLETION )
+                {
+                    // Always write values to the local stream in explicit
+                    // little endian. Big Endian is retired, so it's the most
+                    // likely endianness we're going to be writing
+                    ret = tmp_stream->write_val( val, EXPLICIT_LITTLE_ENDIAN );
+                }
+                else
+                {
+                    // Do nothing. Will return error
+                }
             }
 
             if( ret == MC_NORMAL_COMPLETION )
             {
                 // Only update values if everything succeeded
-                m_values.swap( tmp_values );
+                m_stream.swap( tmp_stream );
+            }
+            else
+            {
+                // Leave current data unchanged
             }
         }
         else
@@ -336,18 +151,32 @@ MC_STATUS other_vr<T, VR>::from_stream( rx_stream&      stream,
 
 template<class T, MC_VR VR>
 MC_STATUS other_vr<T, VR>::to_stream( tx_stream&      stream,
-                                      TRANSFER_SYNTAX syntax ) const
+                                      TRANSFER_SYNTAX syntax )
 {
-    MC_STATUS ret =
-        stream.write_val( static_cast<uint32_t>( m_values.size() * sizeof(T) ),
-                          syntax );
-    if( ret == MC_NORMAL_COMPLETION && m_values.empty() == false )
+    // TODO: ensure this in the callback setter
+    const uint32_t data_length = static_cast<uint32_t>( m_stream->bytes_written() );
+    MC_STATUS ret = stream.write_val( data_length, syntax );
+    if( ret == MC_NORMAL_COMPLETION && data_length > 0u )
     {
-        for( typename std::deque<T>::const_iterator itr = m_values.cbegin();
-             ret == MC_NORMAL_COMPLETION && itr != m_values.cend();
-             ++itr )
+        // from_stream and set both verify data size is a multiple of the
+        // datatype size
+        assert( (data_length % sizeof(T)) == 0 );
+        const uint32_t num_elems = data_length / sizeof(T);
+        ret = m_stream->rewind_read();
+        for( uint32_t i = 0;
+             ret == MC_NORMAL_COMPLETION && i < num_elems;
+             ++i )
         {
-            ret = stream.write_val( *itr, syntax );
+            T val;
+            ret = m_stream->read_val( val, EXPLICIT_LITTLE_ENDIAN );
+            if( ret == MC_NORMAL_COMPLETION )
+            {
+                ret = stream.write_val( val, syntax );
+            }
+            else
+            {
+                // Do nothing. Will return error
+            }
         }
     }
     else
@@ -363,11 +192,10 @@ template<class T, MC_VR VR>
 MC_STATUS other_vr<T, VR>::set( const set_func_parms& val )
 {
     MC_STATUS ret = MC_CANNOT_COMPLY;
+    std::unique_ptr<seekable_stream> tmp_stream( new memory_stream() );
 
     if( val.callback != nullptr )
     {
-        m_values.clear();
-
         bool first = true;
         MC_STATUS call_ret = MC_NORMAL_COMPLETION;
         int user_last = 0;
@@ -394,11 +222,23 @@ MC_STATUS other_vr<T, VR>::set( const set_func_parms& val )
                 const size_t num_elems =
                     static_cast<size_t>( user_size ) / sizeof(T);
                 const T* begin = static_cast<T*>( user_buf );
-                const T* end = begin + num_elems;
 
-                m_values.insert( m_values.cend(), begin, end );
+                for( size_t i = 0;
+                     ret == MC_NORMAL_COMPLETION && i < num_elems;
+                     ++i )
+                {
+                    ret = tmp_stream->write_val( begin[i],
+                                                 EXPLICIT_LITTLE_ENDIAN );
+                }
 
-                ret = MC_NORMAL_COMPLETION;
+                if( ret == MC_NORMAL_COMPLETION )
+                {
+                    m_stream.swap( tmp_stream );
+                }
+                else
+                {
+                    // Leave the current value unmodified
+                }
             }
             else if( call_ret != MC_NORMAL_COMPLETION )
             {
@@ -426,40 +266,48 @@ MC_STATUS other_vr<T, VR>::set( const set_func_parms& val )
 }
 
 template<class T, MC_VR VR>
-MC_STATUS other_vr<T, VR>::get( const get_func_parms& val ) const
+MC_STATUS other_vr<T, VR>::get( const get_func_parms& val )
 {
     MC_STATUS ret = MC_CANNOT_COMPLY;
 
     if( val.callback != nullptr )
     {
-        constexpr size_t MAX_ELEMS = 256u;
-        std::vector<T> buf;
+        // Only encapsulated values can exceed 32-bits in length
+        uint32_t remaining_bytes =
+            static_cast<uint32_t>( m_stream->bytes_written() -
+                                   m_stream->bytes_read() );
 
-        typename std::deque<T>::const_iterator begin = m_values.cbegin();
-        typename std::deque<T>::const_iterator end = std::min( begin + MAX_ELEMS,
-                                                               m_values.cend() );
+        bool first = true;
 
         MC_STATUS call_ret = MC_NORMAL_COMPLETION;
-        while( call_ret == MC_NORMAL_COMPLETION && begin != m_values.cend() )
+        ret = m_stream->rewind_read();
+        while( call_ret == MC_NORMAL_COMPLETION && 
+               ret == MC_NORMAL_COMPLETION &&
+               remaining_bytes > 0 )
         {
-            bool first = begin == m_values.cbegin();
-            bool last  = end   == m_values.cend();
+            assert( (remaining_bytes % sizeof(T)) == 0 );
 
-            buf.clear();
-            buf.insert( buf.cend(), begin, end );
+            const uint32_t remaining_elems = remaining_bytes / sizeof(T);
 
-            const int buf_size = static_cast<int>( buf.size() * sizeof(T) );
+            T val;
+            ret = m_stream->read_val( val, EXPLICIT_LITTLE_ENDIAN );
 
-            call_ret = val.callback( val.message_id,
-                                     val.tag,
-                                     val.callback_parm,
-                                     buf_size,
-                                     static_cast<void*>( buf.data() ),
-                                     static_cast<int>( first ),
-                                     static_cast<int>( last ) );
-
-            begin = end;
-            end = std::min( begin + MAX_ELEMS, m_values.cend() );
+            if( ret == MC_NORMAL_COMPLETION )
+            {
+                const bool last = remaining_elems == 1;
+                call_ret = val.callback( val.message_id,
+                                         val.tag,
+                                         val.callback_parm,
+                                         sizeof(val),
+                                         static_cast<void*>( &val ),
+                                         static_cast<int>( first ),
+                                         static_cast<int>( last ) );
+                first = false;
+            }
+            else
+            {
+                // Do nothing. Will return error
+            }
         }
 
         if( call_ret != MC_NORMAL_COMPLETION )
@@ -468,7 +316,7 @@ MC_STATUS other_vr<T, VR>::get( const get_func_parms& val ) const
         }
         else
         {
-            ret = MC_NORMAL_COMPLETION;
+            // Do nothing. Will return error code or success
         }
     }
     else

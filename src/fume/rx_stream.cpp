@@ -29,9 +29,8 @@ namespace fume
 {
 
 template<class T>
-static MC_STATUS read_and_swap( rx_stream&      stream,
-                                TRANSFER_SYNTAX syntax,
-                                T&              val )
+static MC_STATUS wire_to_host( TRANSFER_SYNTAX syntax,
+                               T&              val )
 {
     MC_STATUS ret = MC_CANNOT_COMPLY;
 
@@ -39,11 +38,8 @@ static MC_STATUS read_and_swap( rx_stream&      stream,
     {
         case EXPLICIT_BIG_ENDIAN:
         case IMPLICIT_BIG_ENDIAN:
-            ret = stream.read( &val, sizeof(val) );
-            if( ret == MC_NORMAL_COMPLETION )
-            {
-                big_to_native_inplace( val );
-            }
+            big_to_native_inplace( val );
+            ret = MC_NORMAL_COMPLETION;
             break;
         // All the encapsulated transfer syntaxes are
         // in little endian
@@ -83,16 +79,31 @@ static MC_STATUS read_and_swap( rx_stream&      stream,
         case MPEG4_AVC_H264_BDC_HP_LEVEL_4_1:
         case JPIP_REFERENCED:
         case JPIP_REFERENCED_DEFLATE:
-            ret = stream.read( &val, sizeof(val) );
-            if( ret == MC_NORMAL_COMPLETION )
-            {
-                little_to_native_inplace( val );
-            }
-            break;
+            little_to_native_inplace( val );
+            ret = MC_NORMAL_COMPLETION;
         case INVALID_TRANSFER_SYNTAX:
         default:
             ret = MC_INVALID_TRANSFER_SYNTAX;
             break;
+    }
+
+    return ret;
+}
+
+template<class T>
+static MC_STATUS read_and_swap( rx_stream&      stream,
+                                TRANSFER_SYNTAX syntax,
+                                T&              val )
+{
+    MC_STATUS ret = stream.read( &val, sizeof(val) );
+
+    if( ret == MC_NORMAL_COMPLETION )
+    {
+        ret = wire_to_host( syntax, val );
+    }
+    else
+    {
+        // Do nothing. Will return error
     }
 
     return ret;
@@ -146,19 +157,64 @@ MC_STATUS rx_stream::read_vr( MC_VR& vr, TRANSFER_SYNTAX syntax )
 
 MC_STATUS rx_stream::read_tag( uint32_t& tag, TRANSFER_SYNTAX syntax )
 {
-    uint16_t group = 0;
-    uint16_t element = 0;
+    uint16_t vals[2] = { 0 };
 
     // Read the group number first
-    MC_STATUS ret = read_val( group, syntax );
+    MC_STATUS ret = read( vals, sizeof(vals) );
     if( ret == MC_NORMAL_COMPLETION )
     {
-        // Then read the element number
-        ret = read_val( element, syntax );
+        ret = wire_to_host( syntax, vals[0] );
         if( ret == MC_NORMAL_COMPLETION )
         {
-            tag = (static_cast<uint32_t>( group ) << 16u) |
-                  static_cast<uint32_t>( element );
+            ret = wire_to_host( syntax, vals[1] );
+            if( ret == MC_NORMAL_COMPLETION )
+            {
+                tag = (static_cast<uint32_t>( vals[0] ) << 16u) |
+                      static_cast<uint32_t>( vals[1] );
+            }
+            else
+            {
+                // Do nothing. Will return error
+            }
+        }
+        else
+        {
+            // Do nothing. Will return error
+        }
+    }
+    else
+    {
+        // Do nothing. Will return error from write_val
+    }
+
+    return ret;
+}
+
+MC_STATUS rx_stream::peek_tag( uint32_t& tag, TRANSFER_SYNTAX syntax )
+{
+    uint16_t vals[2] = { 0 };
+
+    // Read the group number first
+    MC_STATUS ret = peek( vals, sizeof(vals) );
+    if( ret == MC_NORMAL_COMPLETION )
+    {
+        ret = wire_to_host( syntax, vals[0] );
+        if( ret == MC_NORMAL_COMPLETION )
+        {
+            ret = wire_to_host( syntax, vals[1] );
+            if( ret == MC_NORMAL_COMPLETION )
+            {
+                tag = (static_cast<uint32_t>( vals[0] ) << 16u) |
+                      static_cast<uint32_t>( vals[1] );
+            }
+            else
+            {
+                // Do nothing. Will return error
+            }
+        }
+        else
+        {
+            // Do nothing. Will return error
         }
     }
     else

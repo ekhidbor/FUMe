@@ -12,14 +12,13 @@
  */
 
 // std
-#include <cassert>
-#include <deque>
 #include <string>
 #include <utility>
 
 // local private
 #include "fume/value_representation.h"
 #include "fume/value_conversion.h"
+#include "fume/vrs/vr_value_list.h"
 
 namespace fume
 {
@@ -42,223 +41,65 @@ public:
 // serializable (value_representation)
 public:
     virtual MC_STATUS to_stream( tx_stream&      stream,
-                                 TRANSFER_SYNTAX syntax ) const override final;
+                                 TRANSFER_SYNTAX syntax ) override final;
     virtual MC_STATUS from_stream( rx_stream&      stream,
                                    TRANSFER_SYNTAX syntax ) override final;
 
 // value_representation -- modifiers
 public:
-    virtual MC_STATUS set( const char* val ) override;
-
-    virtual MC_STATUS set( double val ) override
+    using value_representation::set;
+    virtual MC_STATUS set( const char* val ) override
     {
-        return MC_INCOMPATIBLE_VR;
-    }
-    virtual MC_STATUS set( float val ) override
-    {
-        return MC_INCOMPATIBLE_VR;
-    }
-    virtual MC_STATUS set( int val ) override
-    {
-        return MC_INCOMPATIBLE_VR;
-    }
-    virtual MC_STATUS set( short val ) override
-    {
-        return MC_INCOMPATIBLE_VR;
-    }
-    virtual MC_STATUS set( long val ) override
-    {
-        return MC_INCOMPATIBLE_VR;
-    }
-
-    virtual MC_STATUS set( const MC_UChar* val ) override final
-    {
-        return MC_INCOMPATIBLE_VR;
-    }
-    virtual MC_STATUS set( unsigned int val ) override
-    {
-        return MC_INCOMPATIBLE_VR;
-    }
-    virtual MC_STATUS set( unsigned short val ) override
-    {
-        return MC_INCOMPATIBLE_VR;
-    }
-    virtual MC_STATUS set( unsigned long val ) override
-    {
-        return MC_INCOMPATIBLE_VR;
-    }
-    virtual MC_STATUS set( const set_buf_parms& val ) override final
-    {
-        return MC_INCOMPATIBLE_VR;
-    }
-    virtual MC_STATUS set( const set_func_parms& val ) override final
-    {
-        return MC_INCOMPATIBLE_VR;
+        return val != nullptr ? set( std::string( val ) ) :
+                                MC_NULL_POINTER_PARM;
     }
 
     // Sets the value of the data element to NULL (ie. zero length)
     virtual MC_STATUS set_null() override final
     {
-        m_values.clear();
+        m_values.set_null();
         return MC_NORMAL_COMPLETION;
     }
 
-    virtual MC_STATUS set_next( const char* val ) override final;
-
-    virtual MC_STATUS set_next( double val ) override
+    using value_representation::set_next;
+    virtual MC_STATUS set_next( const char* val ) override final
     {
-        return MC_INCOMPATIBLE_VR;
-    }
-    virtual MC_STATUS set_next( float val ) override
-    {
-        return MC_INCOMPATIBLE_VR;
-    }
-    virtual MC_STATUS set_next( int val ) override
-    {
-        return MC_INCOMPATIBLE_VR;
-    }
-    virtual MC_STATUS set_next( short val ) override
-    {
-        return MC_INCOMPATIBLE_VR;
-    }
-    virtual MC_STATUS set_next( long val ) override
-    {
-        return MC_INCOMPATIBLE_VR;
-    }
-    virtual MC_STATUS set_next( const MC_UChar* val ) override final
-    {
-        return MC_INCOMPATIBLE_VR;
-    }
-    virtual MC_STATUS set_next( unsigned int val ) override
-    {
-        return MC_INCOMPATIBLE_VR;
-    }
-    virtual MC_STATUS set_next( unsigned short val ) override
-    {
-        return MC_INCOMPATIBLE_VR;
-    }
-    virtual MC_STATUS set_next( unsigned long val ) override
-    {
-        return MC_INCOMPATIBLE_VR;
-    }
-    virtual MC_STATUS set_next( const set_buf_parms& val ) override final
-    {
-        return MC_INCOMPATIBLE_VR;
+        return val != nullptr ? set_next( std::string( val ) ) :
+                                MC_NULL_POINTER_PARM;
     }
 
     // For string value representations, sets the next value of
     // the data element to NULL (ie zero length string)
     virtual MC_STATUS set_next_null() override final
     {
-        m_values.push_back( std::string() );
-        return MC_NORMAL_COMPLETION;
+        return m_values.set_next( std::string() );
     }
 
     // Removes the "current" value
-    virtual MC_STATUS delete_current() override final;
+    virtual MC_STATUS delete_current() override final
+    {
+        return m_values.delete_current();
+    }
 
 // value_representation -- accessors
 public:
-    virtual MC_STATUS get( get_string_parms& val ) const override final;
+    using value_representation::get;
+    virtual MC_STATUS get( get_string_parms& val ) override final;
 
-    virtual MC_STATUS get( double& val ) const override
-    {
-        return MC_INCOMPATIBLE_VR;
-    }
-    virtual MC_STATUS get( float& val ) const override
-    {
-        return MC_INCOMPATIBLE_VR;
-    }
-    virtual MC_STATUS get( int& val ) const override
-    {
-        return MC_INCOMPATIBLE_VR;
-    }
-    virtual MC_STATUS get( short& val ) const override
-    {
-        return MC_INCOMPATIBLE_VR;
-    }
-    virtual MC_STATUS get( long& val ) const override
-    {
-        return MC_INCOMPATIBLE_VR;
-    }
-    virtual MC_STATUS get( get_ustring_parms& val ) const override final
-    {
-        return MC_INCOMPATIBLE_VR;
-    }
-    virtual MC_STATUS get( unsigned int& val ) const override
-    {
-        return MC_INCOMPATIBLE_VR;
-    }
-    virtual MC_STATUS get( unsigned short& val ) const override
-    {
-        return MC_INCOMPATIBLE_VR;
-    }
-    virtual MC_STATUS get( unsigned long& val ) const override
-    {
-        return MC_INCOMPATIBLE_VR;
-    }
-    virtual MC_STATUS get( get_buf_parms& val ) const override final
-    {
-        return MC_INCOMPATIBLE_VR;
-    }
-    virtual MC_STATUS get( const get_func_parms& val ) const override final
-    {
-        return MC_INCOMPATIBLE_VR;
-    }
-
-    virtual MC_STATUS get_next( get_string_parms& val ) const override final;
-
-    virtual MC_STATUS get_next( double& val ) const override
-    {
-        return MC_INCOMPATIBLE_VR;
-    }
-    virtual MC_STATUS get_next( float& val ) const override
-    {
-        return MC_INCOMPATIBLE_VR;
-    }
-    virtual MC_STATUS get_next( int& val ) const override
-    {
-        return MC_INCOMPATIBLE_VR;
-    }
-    virtual MC_STATUS get_next( short& val ) const override
-    {
-        return MC_INCOMPATIBLE_VR;
-    }
-    virtual MC_STATUS get_next( long& val ) const override
-    {
-        return MC_INCOMPATIBLE_VR;
-    }
-    virtual MC_STATUS get_next( get_ustring_parms& val ) const override final
-    {
-        return MC_INCOMPATIBLE_VR;
-    }
-    virtual MC_STATUS get_next( unsigned int& val ) const override
-    {
-        return MC_INCOMPATIBLE_VR;
-    }
-    virtual MC_STATUS get_next( unsigned short& val ) const override
-    {
-        return MC_INCOMPATIBLE_VR;
-    }
-    virtual MC_STATUS get_next( unsigned long& val ) const override
-    {
-        return MC_INCOMPATIBLE_VR;
-    }
-    virtual MC_STATUS get_next( get_buf_parms& val ) const override final
-    {
-        return MC_INCOMPATIBLE_VR;
-    }
+    using value_representation::get_next;
+    virtual MC_STATUS get_next( get_string_parms& val ) override final;
 
     // Returns the number of elements
     virtual int count() const override final
     {
-        return static_cast<int>( m_values.size() );
+        // TODO: fix this to return uint32_t
+        return static_cast<int>( m_values.count() );
     }
 
     // Indicates whether or not the element is null
     virtual bool is_null() const override final
     {
-        return m_values.empty();
+        return m_values.is_null();
     }
 
 protected:
@@ -267,8 +108,8 @@ protected:
     MC_STATUS set( std::string&& val );
     MC_STATUS set_next( std::string&& val );
 
-    MC_STATUS get( const std::string*& val ) const;
-    MC_STATUS get_next( const std::string*& val ) const;
+    MC_STATUS get( const std::string*& val );
+    MC_STATUS get_next( const std::string*& val );
 
 
     template <class Src>
@@ -292,7 +133,7 @@ protected:
     }
 
     template <class Dst>
-    MC_STATUS cast_and_get_string( Dst& val ) const
+    MC_STATUS cast_and_get_string( Dst& val )
     {
         return cast_and_call_string_getter( val,
                                             [this]( const std::string*& str_val )
@@ -302,7 +143,7 @@ protected:
     }
 
     template <class Dst>
-    MC_STATUS cast_and_get_next_string( Dst& val ) const
+    MC_STATUS cast_and_get_next_string( Dst& val )
     {
         return cast_and_call_string_getter( val,
                                             [this]( const std::string*& str_val )
@@ -315,17 +156,16 @@ protected:
     string_vr( const string_vr& rhs )
         : value_representation( rhs ),
           m_values( rhs.m_values ),
-          m_current_idx( rhs.m_current_idx ),
           m_pad( rhs.m_pad )
     {
     }
 
 private:
-    std::deque<std::string> m_values;
+    typedef vr_value_list<std::string, 0xFFFFFFFE> value_list_t;
 
-    // Used for get_next and delete_current
-    mutable size_t m_current_idx;
-    const char m_pad;
+private:
+    value_list_t m_values;
+    const char                 m_pad;
 };
 
 } // namespace vrs

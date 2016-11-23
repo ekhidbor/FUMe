@@ -51,7 +51,7 @@ MC_STATUS item_object::from_stream( rx_stream&      stream,
     MC_STATUS ret = stream.read_val( value_size, syntax );
     if( ret == MC_NORMAL_COMPLETION )
     {
-        ret = read_values( stream, syntax, value_size );
+        ret = read_values_from_item( stream, syntax, -1, value_size );
     }
     else
     {
@@ -62,7 +62,7 @@ MC_STATUS item_object::from_stream( rx_stream&      stream,
 }
 
 MC_STATUS item_object::to_stream( tx_stream&      stream,
-                                  TRANSFER_SYNTAX syntax ) const
+                                  TRANSFER_SYNTAX syntax )
 {
     MC_STATUS ret = write_item_size( stream, syntax );
     if( ret == MC_NORMAL_COMPLETION )

@@ -37,9 +37,9 @@ tag_to_vr_map create_default_tag_vr_dict();
 
 // For tags with conditional VR, return a tag_vr_packed struct. If tag is
 // not a conditional VR, returns false
-bool get_conditional_tag_vr( uint32_t               tag,
-                             const data_dictionary& dict,
-                             MC_VR&                 tag_vr );
+bool get_conditional_tag_vr( uint32_t         tag,
+                             data_dictionary& dict,
+                             MC_VR&           tag_vr );
 
 } // namespace fume
 
