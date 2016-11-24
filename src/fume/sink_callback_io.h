@@ -39,10 +39,6 @@ MC_STATUS read_vr_data_to_callback( rx_stream&              source,
                                     uint32_t                tag,
                                     const callback_parms_t& dest );
 
-MC_STATUS read_vr_data_to_ob( rx_stream&      source,
-                              TRANSFER_SYNTAX syntax,
-                              fume::vrs::ob&  dest );
-
 MC_STATUS read_encapsulated_value_to_function( rx_stream&            stream,
                                                TRANSFER_SYNTAX       syntax,
                                                const get_func_parms& dest );

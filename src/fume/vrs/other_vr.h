@@ -289,8 +289,8 @@ MC_STATUS other_vr<T, VR>::get( const get_func_parms& val )
 
             const uint32_t remaining_elems = remaining_bytes / sizeof(T);
 
-            T val;
-            ret = m_stream->read_val( val, EXPLICIT_LITTLE_ENDIAN );
+            T tmp;
+            ret = m_stream->read_val( tmp, EXPLICIT_LITTLE_ENDIAN );
 
             if( ret == MC_NORMAL_COMPLETION )
             {
@@ -298,8 +298,8 @@ MC_STATUS other_vr<T, VR>::get( const get_func_parms& val )
                 call_ret = val.callback( val.message_id,
                                          val.tag,
                                          val.callback_parm,
-                                         sizeof(val),
-                                         static_cast<void*>( &val ),
+                                         sizeof(tmp),
+                                         static_cast<void*>( &tmp ),
                                          static_cast<int>( first ),
                                          static_cast<int>( last ) );
                 first = false;

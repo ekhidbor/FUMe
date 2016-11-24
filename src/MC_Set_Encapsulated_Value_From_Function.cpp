@@ -21,7 +21,6 @@
 // local private
 #include "fume/library_context.h"
 #include "fume/data_dictionary.h"
-#include "fume/source_callback_io.h"
 #include "fume/vrs/ob.h"
 
 using boost::numeric_cast;
@@ -31,7 +30,6 @@ using fume::g_context;
 using fume::data_dictionary;
 using fume::set_func_parms;
 using fume::vrs::ob;
-using fume::write_encapsulated_value_from_function;
 
 MC_STATUS MC_Set_Encapsulated_Value_From_Function( int              MsgFileItemID,
                                                    unsigned long    Tag,
@@ -53,25 +51,15 @@ MC_STATUS MC_Set_Encapsulated_Value_From_Function( int              MsgFileItemI
                     ob* element = dynamic_cast<ob*>( dict->at( tag_u32) );
                     if( element != nullptr )
                     {
-                        TRANSFER_SYNTAX syntax = INVALID_TRANSFER_SYNTAX;
-                        ret = dict->get_transfer_syntax( syntax );
-                        if( ret == MC_NORMAL_COMPLETION )
+                        set_func_parms parms =
                         {
-                            set_func_parms parms =
-                            {
-                                YourSetFunction,
-                                UserInfo,
-                                MsgFileItemID,
-                                Tag
-                            };
-                            ret = write_encapsulated_value_from_function( *element,
-                                                                          syntax,
-                                                                          parms );
-                        }
-                        else
-                        {
-                            // Do nothing. Returns error from get_transfer_syntax
-                        }
+                            YourSetFunction,
+                            UserInfo,
+                            MsgFileItemID,
+                            Tag
+                        };
+
+                        ret = element->set_encapsulated( parms );
                     }
                     else
                     {

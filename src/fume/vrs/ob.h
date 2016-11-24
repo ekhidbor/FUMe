@@ -13,21 +13,18 @@
 
 // std
 #include <cstdint>
-#include <limits>
 #include <memory>
-#include <deque>
 
 // local public
 #include "mc3media.h"
 
 // local private
 #include "fume/value_representation.h"
-#include "fume/encapsulated_tx_stream.h"
 
 namespace fume
 {
 
-class seekable_stream;
+class encapsulated_value;
 
 namespace vrs
 {
@@ -37,7 +34,7 @@ namespace vrs
 // tx_stream and rx_stream to enable implementation of
 // MC_Set_(Next)?_Encapsulated_Value_From_Function and
 // MC_Get_(Next)?_Encapsulated_Value_From_Function
-class ob final : public value_representation, public encapsulated_tx_stream
+class ob final : public value_representation
 {
 public:
     ob();
@@ -50,29 +47,15 @@ public:
     virtual MC_STATUS from_stream( rx_stream&      stream,
                                    TRANSFER_SYNTAX syntax ) override final;
 
-// encapsulated_tx_stream
-public:
-    virtual MC_STATUS write( const void* buffer,
-                             uint32_t    buffer_bytes ) override final;
-    virtual uint64_t bytes_written() const override final;
-
-    virtual MC_STATUS provide_value_length( uint32_t        length,
-                                            TRANSFER_SYNTAX syntax ) override final;
-
-    virtual MC_STATUS provide_offset_table( const uint32_t* table,
-                                            uint32_t        table_elements,
-                                            TRANSFER_SYNTAX syntax ) override final;
-
-    virtual MC_STATUS start_of_frame( uint32_t        size,
-                                      TRANSFER_SYNTAX syntax ) override final;
-
-    virtual MC_STATUS end_of_sequence( TRANSFER_SYNTAX syntax ) override final;
-
-    virtual MC_STATUS finalize() override final;
-
 // value_representation -- modifiers
 public:
     virtual MC_STATUS set( const set_func_parms& val ) override final;
+
+    MC_STATUS set_encapsulated( const set_func_parms& val );
+
+    MC_STATUS set_next_encapsulated( const set_func_parms& val );
+
+    MC_STATUS close_encapsulated();
 
     // Sets the value of the data element to NULL (ie. zero length)
     virtual MC_STATUS set_null() override final;
@@ -81,8 +64,17 @@ public:
 public:
     virtual MC_STATUS get( const get_func_parms& val ) override final;
 
+    MC_STATUS get_encapsulated( const get_func_parms& val );
+
+    MC_STATUS get_next_encapsulated( const get_func_parms& val );
+
+    MC_STATUS get_frame( unsigned int idx, const get_func_parms& val );
+
     // Returns the number of elements
-    virtual int count() const override final;
+    virtual int count() const override final
+    {
+        return static_cast<int>( is_null() == false );
+    }
 
     // Indicates whether or not the element is null
     virtual bool is_null() const override final;
@@ -95,8 +87,7 @@ public:
     virtual std::unique_ptr<value_representation> clone() const override final;
 
 private:
-    std::unique_ptr<seekable_stream> m_stream;
-    std::deque<uint64_t>             m_offset_table;
+    std::unique_ptr<encapsulated_value> m_stream;
 };
 
 } // namespace vrs

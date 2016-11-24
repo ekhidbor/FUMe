@@ -21,7 +21,6 @@
 // local private
 #include "fume/library_context.h"
 #include "fume/data_dictionary.h"
-#include "fume/source_callback_io.h"
 #include "fume/vrs/ob.h"
 
 using boost::numeric_cast;
@@ -30,7 +29,6 @@ using boost::bad_numeric_cast;
 using fume::g_context;
 using fume::data_dictionary;
 using fume::vrs::ob;
-using fume::close_encapsulated_value;
 
 MC_STATUS MC_Close_Encapsulated_Value( int           MsgFileItemID,
                                        unsigned long Tag )
@@ -50,17 +48,7 @@ MC_STATUS MC_Close_Encapsulated_Value( int           MsgFileItemID,
                     ob* element = dynamic_cast<ob*>( dict->at( tag_u32) );
                     if( element != nullptr )
                     {
-                        TRANSFER_SYNTAX syntax = INVALID_TRANSFER_SYNTAX;
-                        ret = dict->get_transfer_syntax( syntax );
-                        if( ret == MC_NORMAL_COMPLETION )
-                        {
-                            ret = close_encapsulated_value( *element, syntax );
-                        }
-                        else
-                        {
-                            // Do nothing. Will return error from
-                            // get_transfer_syntax
-                        }
+                        ret = element->close_encapsulated();
                     }
                     else
                     {

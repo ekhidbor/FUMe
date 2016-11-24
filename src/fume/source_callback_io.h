@@ -28,25 +28,14 @@ namespace fume
 
 class tx_stream;
 
+MC_STATUS write_data_from_function( const set_func_parms& source,
+                                    tx_stream&            dest );
+
 MC_STATUS write_vr_data_from_callback( tx_stream&              dest,
                                        TRANSFER_SYNTAX         syntax,
                                        int                     message_id,
                                        uint32_t                tag,
                                        const callback_parms_t& source );
-
-MC_STATUS write_vr_data_from_function( tx_stream&            dest,
-                                       TRANSFER_SYNTAX       syntax,
-                                       const set_func_parms& source );
-
-MC_STATUS write_encapsulated_value_from_function( tx_stream&            dest,
-                                                  TRANSFER_SYNTAX       syntax,
-                                                  const set_func_parms& source );
-
-MC_STATUS write_next_encapsulated_value_from_function( tx_stream&            dest,
-                                                       TRANSFER_SYNTAX       syntax,
-                                                       const set_func_parms& source );
-
-MC_STATUS close_encapsulated_value( tx_stream& dest, TRANSFER_SYNTAX syntax );
 
 }
 

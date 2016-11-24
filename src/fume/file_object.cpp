@@ -53,6 +53,39 @@ namespace fume
 static const array<char, 4> DICOM_PREFIX { 'D', 'I', 'C', 'M' };
 static const char META_INFORMATION_VERSION[] = { 0, 1 };
 
+static MC_STATUS buffer_callback( int           CBMsgFileItemID,
+                                  unsigned long Cbtag,
+                                  int           CbisFirst,
+                                  void*         CbuserInfo,
+                                  int*          CbdataSizePtr,
+                                  void**        CbdataBufferPtr,
+                                  int*          CbisLastPtr )
+{
+    assert( CbdataBufferPtr != nullptr );
+    assert( CbuserInfo != nullptr );
+    assert( CbisLastPtr != nullptr );
+
+    set_buf_parms& parms( *static_cast<set_buf_parms*>( *CbdataBufferPtr ) );
+
+    *CbdataBufferPtr = const_cast<void*>( parms.first );
+    *CbdataSizePtr = parms.second;
+
+    return MC_NORMAL_COMPLETION;
+}
+
+static MC_STATUS write_meta_information_version( file_object& obj )
+{
+    set_buf_parms parms( META_INFORMATION_VERSION,
+                         sizeof(META_INFORMATION_VERSION) );
+    value_representation* element = obj.at( MC_ATT_FILE_META_INFORMATION_VERSION );
+    assert( element != nullptr );
+
+    if( element->is_null() == true )
+    {
+        element->set( parms );
+    }
+}
+
 file_object::file_object( int id, const char* filename, bool created_empty )
     : data_dictionary( id, created_empty ),
       m_filename( filename )
@@ -188,16 +221,7 @@ MC_STATUS file_object::fill_group_2_attributes()
 {
     // This function should always succeed. If it does not then there is a
     // library error
-    ob& meta_version
-    (
-        dynamic_cast<ob&>((*this)[MC_ATT_FILE_META_INFORMATION_VERSION])
-    );
-
-    if( meta_version.is_null() == true )
-    {
-        meta_version.write( META_INFORMATION_VERSION,
-                            sizeof(META_INFORMATION_VERSION) );
-    }
+    write_meta_information_version( *this );
 
     const string* implementation_version = nullptr;
     const string* implementation_uid = nullptr;

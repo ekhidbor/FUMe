@@ -1,5 +1,5 @@
-#ifndef ENCAPSULATED_TX_STREAM_H
-#define ENCAPSULATED_TX_STREAM_H
+#ifndef ENCAPSULATED_VALUE_SINK_H
+#define ENCAPSULATED_VALUE_SINK_H
 /**
  * This file is a part of the FUMe project.
  *
@@ -16,6 +16,7 @@
 
 // local public
 #include "mcstatus.h"
+#include "mc3msg.h"
 
 // local private
 #include "fume/tx_stream.h"
@@ -23,13 +24,13 @@
 namespace fume
 {
 
-class encapsulated_tx_stream : public tx_stream
+class encapsulated_value_sink : public tx_stream
 {
 public:
-    encapsulated_tx_stream()
+    encapsulated_value_sink()
     {
     }
-    virtual ~encapsulated_tx_stream()
+    virtual ~encapsulated_value_sink()
     {
     }
 
