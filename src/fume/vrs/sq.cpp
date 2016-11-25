@@ -103,18 +103,7 @@ static MC_STATUS write_item( tx_stream& stream, TRANSFER_SYNTAX syntax, int id )
         dynamic_cast<item_object*>( g_context->get_object( id ) );
     if( item != nullptr )
     {
-        // Write the item tag here. The Item object could do this
-        // but we do it here to keep symmetry between reading and
-        // writing an item
-        ret = stream.write_tag( MC_ATT_ITEM, syntax );
-        if( ret == MC_NORMAL_COMPLETION )
-        {
-            ret = item->to_stream( stream, syntax );
-        }
-        else
-        {
-            // Do nothing. Will return error
-        }
+        ret = item->to_stream( stream, syntax );
     }
     else
     {
@@ -174,7 +163,7 @@ MC_STATUS sq::from_stream( rx_stream& stream, TRANSFER_SYNTAX syntax )
                ((cur_offset - start_offset) + 1) < value_length )
         {
             uint32_t tag = 0;
-            ret = stream.read_tag( tag, syntax );
+            ret = stream.peek_tag( tag, syntax );
             if( ret == MC_NORMAL_COMPLETION )
             {
                 if( tag == MC_ATT_ITEM )
@@ -192,6 +181,9 @@ MC_STATUS sq::from_stream( rx_stream& stream, TRANSFER_SYNTAX syntax )
                 else if( tag == MC_ATT_SEQUENCE_DELIMITATION_ITEM )
                 {
                     uint32_t delimiter_len = 0;
+                    // If peek succeeded then a read of that same data will
+                    // also succeed
+                    (void)stream.read_tag( tag, syntax );
                     ret = stream.read_val( delimiter_len, syntax );
                     if( ret == MC_NORMAL_COMPLETION )
                     {
@@ -213,6 +205,14 @@ MC_STATUS sq::from_stream( rx_stream& stream, TRANSFER_SYNTAX syntax )
                         // Do nothing. Return error
                     }
                 }
+                else
+                {
+                    ret = MC_INVALID_TAG;
+                }
+            }
+            else
+            {
+                // Do nothing. Will return error
             }
         }
     }

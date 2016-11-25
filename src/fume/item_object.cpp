@@ -47,11 +47,25 @@ static MC_STATUS write_item_delimitation( tx_stream&      stream,
 MC_STATUS item_object::from_stream( rx_stream&      stream,
                                     TRANSFER_SYNTAX syntax )
 {
-    uint32_t value_size = 0;
-    MC_STATUS ret = stream.read_val( value_size, syntax );
+    uint32_t tag = 0;
+    // Read the tag. Caller just called peek. This is to keep
+    // symmetry with to_stream
+    MC_STATUS ret = stream.read_tag( tag, syntax );
     if( ret == MC_NORMAL_COMPLETION )
     {
-        ret = read_values_from_item( stream, syntax, -1, value_size );
+        // If we are here then the tag should be an item delimiter
+        assert( tag == MC_ATT_ITEM );
+
+        uint32_t value_size = 0;
+        MC_STATUS ret = stream.read_val( value_size, syntax );
+        if( ret == MC_NORMAL_COMPLETION )
+        {
+            ret = read_values_from_item( stream, syntax, -1, value_size );
+        }
+        else
+        {
+            // Do nothing. Will return error
+        }
     }
     else
     {
@@ -64,22 +78,30 @@ MC_STATUS item_object::from_stream( rx_stream&      stream,
 MC_STATUS item_object::to_stream( tx_stream&      stream,
                                   TRANSFER_SYNTAX syntax )
 {
-    MC_STATUS ret = write_item_size( stream, syntax );
+    MC_STATUS ret = stream.write_tag( MC_ATT_ITEM, syntax );
     if( ret == MC_NORMAL_COMPLETION )
     {
-        ret = write_values( stream, syntax, begin(), end() );
+        ret = write_item_size( stream, syntax );
         if( ret == MC_NORMAL_COMPLETION )
         {
-            ret = write_item_delimitation( stream, syntax );
+            ret = write_values( stream, syntax, begin(), end() );
+            if( ret == MC_NORMAL_COMPLETION )
+            {
+                ret = write_item_delimitation( stream, syntax );
+            }
+            else
+            {
+                // Do nothing. Will return error from to_stream
+            }
         }
         else
         {
-            // Do nothing. Will return error from to_stream
+            // Do nothing. Will return error from write_item_tag
         }
     }
     else
     {
-        // Do nothing. Will return error from write_item_tag
+        // Do nothing. Will return error from write_tag
     }
 
     return ret;
