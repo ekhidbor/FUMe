@@ -214,6 +214,8 @@ MC_STATUS sq::from_stream( rx_stream& stream, TRANSFER_SYNTAX syntax )
             {
                 // Do nothing. Will return error
             }
+
+             cur_offset = stream.tell_read();
         }
     }
     else

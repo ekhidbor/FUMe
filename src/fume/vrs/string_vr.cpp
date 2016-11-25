@@ -83,9 +83,9 @@ MC_STATUS string_vr::from_stream( rx_stream&      stream,
         value_length = value_length_16u;
     }
 
+    string cur_string;
     for( uint32_t i = 0; i < value_length && ret == MC_NORMAL_COMPLETION; ++i )
     {
-        string cur_string;
         char cur = '\0';
 
         ret = stream.read_val( cur, syntax );
@@ -113,6 +113,17 @@ MC_STATUS string_vr::from_stream( rx_stream&      stream,
 
     if( ret == MC_NORMAL_COMPLETION )
     {
+        // if there is "leftover" string data which was not delimited
+        if( cur_string.empty() == false )
+        {
+            // Add it to the value list
+            tmp_values.set_next( cur_string );
+        }
+        else
+        {
+            // All data already in the value list
+        }
+
         // Only Update our values list if everything succeeded
         m_values.swap( tmp_values );
     }
@@ -190,7 +201,7 @@ MC_STATUS string_vr::set( string&& val )
     // Must validate before push_back
     MC_STATUS validate_stat = validate_value( val );
 
-    MC_STATUS ret = m_values.set( std::move( val) );
+    MC_STATUS ret = m_values.set( std::move( val ) );
     if( ret == MC_NORMAL_COMPLETION )
     {
         ret = validate_stat;
