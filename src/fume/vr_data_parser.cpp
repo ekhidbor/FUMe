@@ -101,6 +101,7 @@ MC_STATUS read_raw_value( rx_stream&               source,
         ret = source.read( buffer, bytes_read );
         if( ret == MC_NORMAL_COMPLETION )
         {
+            bytes_written += bytes_read;
             ret = dest.write( buffer, bytes_read );
         }
         else
