@@ -40,7 +40,7 @@ MC_STATUS file_rx_stream::peek( void* buffer, uint32_t buffer_bytes )
 {
     MC_STATUS ret = MC_CANNOT_COMPLY;
 
-    if( buffer != nullptr && m_callback != nullptr )
+    if( buffer != nullptr )
     {
         // If available_bytes == 0, returns MC_END_OF_DATA
         // If 0 < available_bytes < buffer_bytes, returns MC_UNEXPECTED_EOD
@@ -136,6 +136,7 @@ MC_STATUS file_rx_stream::ensure_bytes_available( uint32_t min_bytes_available )
                                       data,
                                       data + cb_size );
                 m_last = cb_last != 0;
+                m_first = false;
 
                 ret = MC_NORMAL_COMPLETION;
             }
