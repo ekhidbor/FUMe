@@ -366,7 +366,9 @@ MC_STATUS encapsulated_value_impl<SeekableStream>::start_of_frame
         // Add an entry to the "virtual" offset table
         if( ret == MC_NORMAL_COMPLETION )
         {
-            m_offset_table.push_back( m_stream.tell_write() );
+            const uint64_t table_relative_offset = m_stream.tell_write() -
+                                                   m_end_of_table_offset;
+            m_offset_table.push_back( table_relative_offset );
         }
         else
         {
@@ -440,37 +442,49 @@ MC_STATUS encapsulated_value_impl<SeekableStream>::end_of_sequence
 template<class SeekableStream>
 MC_STATUS encapsulated_value_impl<SeekableStream>::correct_frame_size()
 {
-    const uint64_t cur_pos = m_stream.tell_write();
-    // Get the offset of the previous frame
-    const uint64_t prev_pos = m_offset_table.empty() ? m_end_of_table_offset :
-                                                       m_offset_table.back();
-    // Size is equal to the current position minus the previous position
-    // and the item delimiter and size (8 bytes)
-    const uint32_t size =
-        static_cast<uint32_t>( (cur_pos - prev_pos) - (sizeof(uint32_t) * 2) );
+    MC_STATUS ret = MC_CANNOT_COMPLY;
 
-    // Seek position in this stream is the position of the size parameter
-    // in the message. The offset table offset is referenced from the end
-    // of the offset table, so add the offset of the end of that to the
-    // position. That puts us at the item delimiter, so skip that
-    const uint64_t seek_pos = m_end_of_table_offset + prev_pos + sizeof(uint32_t);
-    MC_STATUS ret = m_stream.seek( seek_pos );
-    if( ret == MC_NORMAL_COMPLETION )
+    if( m_offset_table.empty() == false )
     {
-        ret = m_stream.write_val( size, EXPLICIT_LITTLE_ENDIAN );
+        const uint64_t cur_pos = m_stream.tell_write();
+        const uint64_t cur_offset = cur_pos - m_end_of_table_offset;
+        // Get the offset of the previous frame. If this is the first frame then
+        // the previous offset is zero because offsets are relative to the
+        // end of the offset table
+        const uint64_t prev_offset = m_offset_table.back();
+        // Size is equal to the current position minus the previous position
+        // and the item delimiter and size (8 bytes)
+        const uint32_t size = static_cast<uint32_t>( (cur_offset - prev_offset) -
+                                                     (sizeof(uint32_t) * 2) );
+
+        // Seek position in this stream is the position of the size parameter
+        // in the message. The offset table offset is referenced from the end
+        // of the offset table, so add the offset of the end of that to the
+        // position. That puts us at the item delimiter, so skip that
+        const uint64_t seek_pos =
+            m_end_of_table_offset + prev_offset + sizeof(uint32_t);
+        ret = m_stream.seek( seek_pos );
         if( ret == MC_NORMAL_COMPLETION )
         {
-            // Put the stream back to where it was
-            ret = m_stream.seek( cur_pos );
+            ret = m_stream.write_val( size, EXPLICIT_LITTLE_ENDIAN );
+            if( ret == MC_NORMAL_COMPLETION )
+            {
+                // Put the stream back to where it was
+                ret = m_stream.seek( cur_pos );
+            }
+            else
+            {
+                // Return error
+            }
         }
         else
         {
-            // Return error
+            // return error
         }
     }
     else
     {
-        // return error
+        ret = MC_NORMAL_COMPLETION;
     }
 
     return ret;

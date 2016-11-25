@@ -188,6 +188,16 @@ MC_STATUS read_encapsulated_frames( rx_stream&               source,
     }
     while( ret == MC_NORMAL_COMPLETION );
 
+    if( ret == MC_NO_MORE_VALUES )
+    {
+        ret = MC_NORMAL_COMPLETION;
+    }
+    else
+    {
+        // Return all other values unmodified. MC_NO_MORE_VALUES is the only
+        // valid non-normal return code
+    }
+
     return ret;
 }
 

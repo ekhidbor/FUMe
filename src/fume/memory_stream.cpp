@@ -95,14 +95,10 @@ MC_STATUS memory_stream::clear()
 
 MC_STATUS memory_stream::seek( uint64_t pos )
 {
-    MC_STATUS ret = MC_CANNOT_COMPLY;
-
     // seek is allowed to go past the end of the stream, but data
     // cannot be read
     m_offset = pos;
-    ret = MC_NORMAL_COMPLETION;
-
-    return ret;
+    return MC_NORMAL_COMPLETION;
 }
 
 }

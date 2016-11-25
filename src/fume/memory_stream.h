@@ -33,8 +33,8 @@ public:
     }
 
     memory_stream( const memory_stream& rhs )
-        : m_offset( rhs.m_offset ),
-          m_data( rhs.m_data )
+        : m_data( rhs.m_data ),
+          m_offset( rhs.m_offset )
     {
     }
 
