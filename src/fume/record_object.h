@@ -67,7 +67,7 @@ public:
         return m_child_record;
     }
 
-    MC_STATUS get_record_type( MC_DIR_RECORD_TYPE& type ) const;
+    MC_STATUS get_record_type( MC_DIR_RECORD_TYPE& type );
 
     uint32_t get_offset() const
     {
@@ -75,7 +75,7 @@ public:
     }
 
     virtual MC_STATUS to_stream( tx_stream&      stream,
-                                 TRANSFER_SYNTAX syntax ) const override;
+                                 TRANSFER_SYNTAX syntax ) override;
 
 private:
     int m_dicomdir_file_id;
@@ -83,7 +83,7 @@ private:
     int m_next_record;
     int m_child_record;
     // Used to fill in DICOMDIR offset parameters
-    mutable uint32_t m_offset;
+    uint32_t m_offset;
 };
 
 }

@@ -25,9 +25,10 @@
 #include "fume/data_dictionary.h"
 #include "fume/library_context.h"
 #include "fume/value_representation.h"
+#include "fume/application.h"
 #include "fume/tx_stream.h"
 #include "fume/rx_stream.h"
-#include "fume/callback_io.h"
+#include "fume/source_callback_io.h"
 #include "fume/vr_factory.h"
 #include "fume/vr_field.h"
 
@@ -417,20 +418,22 @@ MC_STATUS data_dictionary::set_callbacks( int application_id )
     return ret;
 }
 
-MC_STATUS data_dictionary::read_values( rx_stream&      stream,
-                                        TRANSFER_SYNTAX syntax,
-                                        uint32_t        size )
+MC_STATUS data_dictionary::read_values_from_item( rx_stream&      stream,
+                                                  TRANSFER_SYNTAX syntax,
+                                                  int             app_id,
+                                                  uint32_t        size )
 {
-    const uint32_t start_offset = stream.bytes_read();
+    const uint32_t start_offset = stream.tell_read();
     MC_STATUS ret = MC_NORMAL_COMPLETION;
+    bool graceful_end_of_data = false;
 
     value_dict tmp_value_dict;
 
     while( ret == MC_NORMAL_COMPLETION &&
-           ((stream.bytes_read() - start_offset) + 1) < size )
+           ((stream.tell_read() - start_offset) + 1) < size )
     {
         uint32_t tag = 0;
-        MC_STATUS ret = stream.read_tag( tag, syntax );
+        ret = stream.read_tag( tag, syntax );
         if( ret == MC_NORMAL_COMPLETION )
         {
             if( tag != MC_ATT_ITEM_DELIMITATION_ITEM     &&
@@ -461,12 +464,13 @@ MC_STATUS data_dictionary::read_values( rx_stream&      stream,
                 }
             }
             // If we've reached an item delimiter
-            else if( tag == MC_ATT_ITEM )
+            else if( tag == MC_ATT_ITEM_DELIMITATION_ITEM )
             {
                 // Read the length (which should be zero, but we aren't going
                 // to check)
                 uint32_t delim_length = 0;
                 ret = stream.read_val( delim_length, syntax );
+                break;
             }
             // We received something we shouln't have
             else
@@ -474,15 +478,182 @@ MC_STATUS data_dictionary::read_values( rx_stream&      stream,
                 ret = MC_UNEXPECTED_EOD;
             }
         }
+        else if( ret == MC_END_OF_DATA )
+        {
+            // No more data when trying to read the start of a tag.
+            // terminate gracefully
+            graceful_end_of_data = true;
+        }
     }
 
     // Upon success, copy the values into the dictionary
-    if( ret == MC_NORMAL_COMPLETION )
+    if( ret == MC_NORMAL_COMPLETION ||
+        (ret == MC_END_OF_DATA && graceful_end_of_data == true) )
     {
         for( value_dict::reference val : tmp_value_dict )
         {
             m_value_dict[val.first].swap( val.second );
         }
+
+        ret = MC_NORMAL_COMPLETION;
+    }
+
+    return ret;
+}
+
+MC_STATUS data_dictionary::read_values( rx_stream&      stream,
+                                        TRANSFER_SYNTAX syntax,
+                                        int             app_id )
+{
+    MC_STATUS ret = MC_NORMAL_COMPLETION;
+    bool graceful_end_of_data = false;
+
+    value_dict tmp_value_dict;
+
+    while( ret == MC_NORMAL_COMPLETION )
+    {
+        uint32_t tag = 0;
+        ret = stream.read_tag( tag, syntax );
+        if( ret == MC_NORMAL_COMPLETION )
+        {
+            if( tag != MC_ATT_ITEM_DELIMITATION_ITEM     &&
+                tag != MC_ATT_ITEM                       &&
+                tag != MC_ATT_SEQUENCE_DELIMITATION_ITEM )
+            {
+                unique_vr_ptr element;
+                ret = create_vr_from_stream( stream, syntax, tag, element );
+                if( ret == MC_NORMAL_COMPLETION && element != nullptr )
+                {
+                    ret = element->from_stream( stream, syntax );
+                    if( ret == MC_NORMAL_COMPLETION )
+                    {
+                        tmp_value_dict[tag].swap( element );
+                    }
+                    else
+                    {
+                        // Do nothing. Will return error
+                    }
+                }
+                else if( element == nullptr )
+                {
+                    ret = MC_INVALID_TAG;
+                }
+                else
+                {
+                    // Do nothing. Will return error
+                }
+            }
+            else
+            {
+                // We're not expecting to get delimiter tags
+                ret = MC_INVALID_TAG;
+            }
+        }
+        else if( ret == MC_END_OF_DATA )
+        {
+            // No more data when trying to read the start of a tag.
+            // terminate gracefully
+            graceful_end_of_data = true;
+        }
+    }
+
+    // Upon success, copy the values into the dictionary
+    if( ret == MC_NORMAL_COMPLETION ||
+        (ret == MC_END_OF_DATA && graceful_end_of_data == true) )
+    {
+        for( value_dict::reference val : tmp_value_dict )
+        {
+            m_value_dict[val.first].swap( val.second );
+        }
+
+        ret = MC_NORMAL_COMPLETION;
+    }
+
+    return ret;
+}
+
+MC_STATUS data_dictionary::read_values_upto( rx_stream&      stream,
+                                             TRANSFER_SYNTAX syntax,
+                                             int             app_id,
+                                             uint32_t        end_tag )
+{
+    MC_STATUS ret = MC_NORMAL_COMPLETION;
+    bool graceful_end_of_data = false;
+
+    value_dict tmp_value_dict;
+
+    while( MC_NORMAL_COMPLETION == ret )
+    {
+        uint32_t tag = 0;
+        ret = stream.peek_tag( tag, syntax );
+        if( ret == MC_NORMAL_COMPLETION )
+        {
+            if( tag != MC_ATT_ITEM_DELIMITATION_ITEM     &&
+                tag != MC_ATT_ITEM                       &&
+                tag != MC_ATT_SEQUENCE_DELIMITATION_ITEM )
+            {
+                if( tag <= end_tag )
+                {
+                    // This shouldn't fail if the peek succeeded
+                    (void)stream.read_tag( tag, syntax );
+
+                    unique_vr_ptr element;
+                    ret = create_vr_from_stream( stream, syntax, tag, element );
+                    if( ret == MC_NORMAL_COMPLETION && element != nullptr )
+                    {
+                        ret = element->from_stream( stream, syntax );
+                        if( ret == MC_NORMAL_COMPLETION )
+                        {
+                            tmp_value_dict[tag].swap( element );
+                        }
+                        else
+                        {
+                            // Do nothing. Will return error
+                        }
+                    }
+                    else if( element == nullptr )
+                    {
+                        ret = MC_INVALID_TAG;
+                    }
+                    else
+                    {
+                        // Do nothing. Will return error
+                    }
+                }
+                else
+                {
+                    graceful_end_of_data = true;
+                    ret = MC_END_OF_DATA;
+                }
+            }
+            else
+            {
+                // We're not expecting to get delimiter tags
+                ret = MC_INVALID_TAG;
+            }
+        }
+        else if( ret == MC_END_OF_DATA )
+        {
+            // No more data when trying to read the start of a tag.
+            // terminate gracefully
+            graceful_end_of_data = true;
+        }
+        else
+        {
+            // Do nothing. Will return error
+        }
+    }
+
+    // Upon success, copy the values into the dictionary
+    if( ret == MC_NORMAL_COMPLETION ||
+        (ret == MC_END_OF_DATA && graceful_end_of_data == true) )
+    {
+        for( value_dict::reference val : tmp_value_dict )
+        {
+            m_value_dict[val.first].swap( val.second );
+        }
+
+        ret = MC_NORMAL_COMPLETION;
     }
 
     return ret;
@@ -492,7 +663,7 @@ MC_STATUS data_dictionary::write_values( tx_stream&                 stream,
                                          TRANSFER_SYNTAX            syntax,
                                          int                        app_id,
                                          value_dict::const_iterator begin,
-                                         value_dict::const_iterator end ) const
+                                         value_dict::const_iterator end )
 {
     MC_STATUS ret = MC_NORMAL_COMPLETION;
 
@@ -584,7 +755,7 @@ MC_STATUS data_dictionary::write_values( tx_stream&                 stream,
     return ret;
 }
 
-MC_STATUS data_dictionary::get_vr_type( uint32_t tag, MC_VR& type ) const
+MC_STATUS data_dictionary::get_vr_type( uint32_t tag, MC_VR& type )
 {
     MC_STATUS ret = MC_CANNOT_COMPLY;
 
@@ -616,7 +787,7 @@ MC_STATUS data_dictionary::get_vr_type( uint32_t tag, MC_VR& type ) const
     return ret;
 }
 
-data_dictionary::unique_vr_ptr data_dictionary::create_vr( uint32_t tag ) const
+data_dictionary::unique_vr_ptr data_dictionary::create_vr( uint32_t tag )
 {
     unique_vr_ptr ret = nullptr;
 

@@ -15,6 +15,7 @@
 #include <cstdint>
 #include <string>
 #include <array>
+#include <memory>
 
 // local public
 #include "mcstatus.h"
@@ -27,14 +28,13 @@ namespace fume
 {
 
 class tx_stream;
+class rx_stream;
 
 class file_object : public data_dictionary
 {
 public:
     file_object( int id, const char* filename, bool created_empty );
-    virtual ~file_object()
-    {
-    }
+    virtual ~file_object();
 
     MC_STATUS write( int               alignment,
                      void*             user_info,
@@ -49,7 +49,8 @@ public:
                      WriteFileCallback callback );
 
     // TODO: Add all variants of this function
-    MC_STATUS open( void*            user_info,
+    MC_STATUS open( int              app_id,
+                    void*            user_info,
                     ReadFileCallback callback );
 
     MC_STATUS set_preamble( const void* preamble );
@@ -61,12 +62,14 @@ public:
     void empty_file();
 
     virtual MC_STATUS set_transfer_syntax( TRANSFER_SYNTAX syntax ) override final;
-    virtual MC_STATUS get_transfer_syntax( TRANSFER_SYNTAX& syntax ) const override final;
+    virtual MC_STATUS get_transfer_syntax( TRANSFER_SYNTAX& syntax ) override final;
 
 protected:
     MC_STATUS write_file( tx_stream& stream, int app_id );
-    MC_STATUS write_values( tx_stream& stream, int app_id ) const;
+    MC_STATUS write_values( tx_stream& stream, int app_id );
     using data_dictionary::write_values;
+
+    MC_STATUS read_file_header( rx_stream& stream, int app_id );
 
 private:
     MC_STATUS fill_group_2_attributes();
@@ -75,6 +78,9 @@ private:
 private:
     std::string              m_filename;
     std::array<uint8_t, 128> m_preamble;
+
+    // Needs to be a member data to implement the "upto" functions
+    std::unique_ptr<rx_stream> m_rx_stream;
 };
 
 }

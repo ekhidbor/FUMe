@@ -99,22 +99,11 @@ static MC_STATUS write_item( tx_stream& stream, TRANSFER_SYNTAX syntax, int id )
 
     MC_STATUS ret = MC_CANNOT_COMPLY;
 
-    const item_object* item =
+    item_object* item =
         dynamic_cast<item_object*>( g_context->get_object( id ) );
     if( item != nullptr )
     {
-        // Write the item tag here. The Item object could do this
-        // but we do it here to keep symmetry between reading and
-        // writing an item
-        ret = stream.write_tag( MC_ATT_ITEM, syntax );
-        if( ret == MC_NORMAL_COMPLETION )
-        {
-            ret = item->to_stream( stream, syntax );
-        }
-        else
-        {
-            // Do nothing. Will return error
-        }
+        ret = item->to_stream( stream, syntax );
     }
     else
     {
@@ -124,13 +113,14 @@ static MC_STATUS write_item( tx_stream& stream, TRANSFER_SYNTAX syntax, int id )
     return ret;
 }
 
-static void free_items( const deque<int>& items )
+template<class Iterator>
+static void free_items( Iterator begin, Iterator end )
 {
     if( g_context != nullptr )
     {
         // Delete all items
-        for_each( items.begin(),
-                  items.end(),
+        for_each( begin,
+                  end,
                   []( int item )
                   {
                       g_context->free_item_object( item );
@@ -141,18 +131,17 @@ static void free_items( const deque<int>& items )
 sq::sq( unsigned int min_vals, unsigned int max_vals, unsigned int multiple )
     : value_representation( min_vals, max_vals, multiple )
 {
-    m_current_idx = 0;
 }
 
 sq::~sq()
 {
-    free_items( m_items );
+    free_items( m_items.cbegin(), m_items.cend() );
 }
 
 MC_STATUS sq::from_stream( rx_stream& stream, TRANSFER_SYNTAX syntax )
 {
     uint32_t value_length = 0;
-    deque<int> tmp_items;
+    value_list_t tmp_items;
 
     // If the function succeeds then the old items need to
     // be freed. If it failed the leftover items need to
@@ -160,21 +149,21 @@ MC_STATUS sq::from_stream( rx_stream& stream, TRANSFER_SYNTAX syntax )
     // items in the list
     BOOST_SCOPE_EXIT( &tmp_items )
     {
-        free_items( tmp_items );
+        free_items( tmp_items.cbegin(), tmp_items.cend() );
     } BOOST_SCOPE_EXIT_END
     
     MC_STATUS ret = stream.read_val( value_length, syntax );
     if( ret == MC_NORMAL_COMPLETION )
     {
         const bool delimited = value_length == numeric_limits<uint32_t>::max();
-        const uint32_t start_offset = stream.bytes_read();
-        uint32_t cur_offset = stream.bytes_read();
+        const uint32_t start_offset = stream.tell_read();
+        uint32_t cur_offset = stream.tell_read();
 
         while( ret == MC_NORMAL_COMPLETION &&
                ((cur_offset - start_offset) + 1) < value_length )
         {
             uint32_t tag = 0;
-            ret = stream.read_tag( tag, syntax );
+            ret = stream.peek_tag( tag, syntax );
             if( ret == MC_NORMAL_COMPLETION )
             {
                 if( tag == MC_ATT_ITEM )
@@ -182,7 +171,7 @@ MC_STATUS sq::from_stream( rx_stream& stream, TRANSFER_SYNTAX syntax )
                     const int item_id = read_item( stream, syntax );
                     if( item_id > 0 )
                     {
-                        tmp_items.push_back( item_id );
+                        ret = tmp_items.set_next( item_id );
                     }
                     else
                     {
@@ -192,6 +181,9 @@ MC_STATUS sq::from_stream( rx_stream& stream, TRANSFER_SYNTAX syntax )
                 else if( tag == MC_ATT_SEQUENCE_DELIMITATION_ITEM )
                 {
                     uint32_t delimiter_len = 0;
+                    // If peek succeeded then a read of that same data will
+                    // also succeed
+                    (void)stream.read_tag( tag, syntax );
                     ret = stream.read_val( delimiter_len, syntax );
                     if( ret == MC_NORMAL_COMPLETION )
                     {
@@ -213,7 +205,17 @@ MC_STATUS sq::from_stream( rx_stream& stream, TRANSFER_SYNTAX syntax )
                         // Do nothing. Return error
                     }
                 }
+                else
+                {
+                    ret = MC_INVALID_TAG;
+                }
             }
+            else
+            {
+                // Do nothing. Will return error
+            }
+
+             cur_offset = stream.tell_read();
         }
     }
     else
@@ -224,18 +226,17 @@ MC_STATUS sq::from_stream( rx_stream& stream, TRANSFER_SYNTAX syntax )
     if( ret == MC_NORMAL_COMPLETION )
     {
         tmp_items.swap( m_items );
-        m_current_idx = 0;
     }
 
     return ret;
 }
 
-MC_STATUS sq::to_stream( tx_stream& stream, TRANSFER_SYNTAX syntax ) const
+MC_STATUS sq::to_stream( tx_stream& stream, TRANSFER_SYNTAX syntax )
 {
-    MC_STATUS ret = write_element_length( stream, syntax, m_items.empty() );
-    if( ret == MC_NORMAL_COMPLETION && m_items.empty() == false )
+    MC_STATUS ret = write_element_length( stream, syntax, m_items.is_null() );
+    if( ret == MC_NORMAL_COMPLETION && m_items.is_null() == false )
     {
-        for( deque<int>::const_iterator itr = m_items.cbegin();
+        for( value_list_t::const_iterator itr = m_items.cbegin();
              ret == MC_NORMAL_COMPLETION && itr != m_items.cend();
              ++itr )
         {
@@ -268,11 +269,7 @@ MC_STATUS sq::set( int val )
 
     if( dynamic_cast<item_object*>( g_context->get_object( val ) ) != nullptr )
     {
-        m_items.clear();
-        m_items.push_back( val );
-        m_current_idx = 0;
-
-        ret = MC_NORMAL_COMPLETION;
+        ret = m_items.set( val );
     }
     else
     {
@@ -290,10 +287,7 @@ MC_STATUS sq::set_next( int val )
 
     if( dynamic_cast<item_object*>( g_context->get_object( val ) ) != nullptr )
     {
-        m_items.push_back( val );
-        m_current_idx = 0;
-
-        ret = MC_NORMAL_COMPLETION;
+        ret = m_items.set_next( val );
     }
     else
     {
@@ -303,81 +297,16 @@ MC_STATUS sq::set_next( int val )
     return ret;
 }
 
-MC_STATUS sq::get( int& val ) const
+MC_STATUS sq::get( int& val )
 {
-    MC_STATUS ret = MC_CANNOT_COMPLY;
-
-    if( m_items.empty() == false )
-    {
-        m_current_idx = 0;
-        val = m_items[m_current_idx];
-        ret = MC_NORMAL_COMPLETION;
-    }
-    else
-    {
-        ret = MC_NULL_VALUE;
-    }
-
-    return ret;
+    return m_items.get( val );
 }
 
-MC_STATUS sq::get_next( int& val ) const
+MC_STATUS sq::get_next( int& val )
 {
-    MC_STATUS ret = MC_CANNOT_COMPLY;
-
-    if( m_items.empty() == false )
-    {
-        m_current_idx = min( m_items.size(), m_current_idx + 1 );
-        if( m_current_idx < m_items.size() )
-        {
-            val = m_items[m_current_idx];
-            ret = MC_NORMAL_COMPLETION;
-        }
-        else
-        {
-            ret = MC_NO_MORE_VALUES;
-        }
-    }
-    else
-    {
-        ret = MC_NULL_VALUE;
-    }
-
-    return ret;
+    return m_items.get_next( val );
 }
 
-MC_STATUS sq::delete_current()
-{
-    MC_STATUS ret = MC_CANNOT_COMPLY;
-
-    if( m_items.empty() == false )
-    {
-        if( m_current_idx < m_items.size() )
-        {
-            m_items.erase( m_items.cbegin() + m_current_idx );
-            // Adjust the index to continue to be valid if we removed
-            // the last element of a multi-element list
-            if( m_current_idx > 0 && m_current_idx >= m_items.size() )
-            {
-                --m_current_idx;
-            }
-            else
-            {
-                // Do nothing. Index is still valid
-            }
-        }
-        else
-        {
-            ret = MC_NO_MORE_VALUES;
-        }
-    }
-    else
-    {
-        ret = MC_NULL_VALUE;
-    }
-
-    return ret;
 } // namespace vrs
-} // namespace fume
 
-}
+} // namespace fume

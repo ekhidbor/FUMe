@@ -36,13 +36,13 @@ public:
 // tx_stream
 public:
     virtual MC_STATUS write( const void* buffer,
-                             size_t      buffer_bytes ) override final
+                             uint32_t    buffer_bytes ) override final
     {
         m_bytes_written += static_cast<uint32_t>( buffer_bytes );
         return MC_NORMAL_COMPLETION;
     }
 
-    virtual uint32_t bytes_written() const override final
+    virtual uint64_t tell_write() const override final
     {
         return m_bytes_written;
     }
@@ -52,7 +52,7 @@ private:
     null_tx_stream& operator=( const null_tx_stream& );
 
 private:
-    uint32_t m_bytes_written;
+    uint64_t m_bytes_written;
 };
 
 }

@@ -13,17 +13,19 @@
 
 // std
 #include <cstdint>
-#include <limits>
+#include <memory>
 
 // local public
 #include "mc3media.h"
 
 // local private
-#include "fume/vrs/other_vr.h"
-#include "fume/tx_stream.h"
+#include "fume/value_representation.h"
 
 namespace fume
 {
+
+class encapsulated_value;
+
 namespace vrs
 {
 
@@ -32,34 +34,63 @@ namespace vrs
 // tx_stream and rx_stream to enable implementation of
 // MC_Set_(Next)?_Encapsulated_Value_From_Function and
 // MC_Get_(Next)?_Encapsulated_Value_From_Function
-class ob final : public other_vr<uint8_t, OB>, public tx_stream
+class ob final : public value_representation
 {
 public:
-    ob()
-        : other_vr<uint8_t, OB>()
+    ob();
+    virtual ~ob();
+
+// serializable
+public:
+    virtual MC_STATUS to_stream( tx_stream&      stream,
+                                 TRANSFER_SYNTAX syntax ) override final;
+    virtual MC_STATUS from_stream( rx_stream&      stream,
+                                   TRANSFER_SYNTAX syntax ) override final;
+
+// value_representation -- modifiers
+public:
+    virtual MC_STATUS set( const set_func_parms& val ) override final;
+
+    MC_STATUS set_encapsulated( const set_func_parms& val );
+
+    MC_STATUS set_next_encapsulated( const set_func_parms& val );
+
+    MC_STATUS close_encapsulated();
+
+    // Sets the value of the data element to NULL (ie. zero length)
+    virtual MC_STATUS set_null() override final;
+
+// value_representation -- accessors
+public:
+    virtual MC_STATUS get( const get_func_parms& val ) override final;
+
+    MC_STATUS get_encapsulated( const get_func_parms& val );
+
+    MC_STATUS get_next_encapsulated( const get_func_parms& val );
+
+    MC_STATUS get_frame( unsigned int idx, const get_func_parms& val );
+
+    // Returns the number of elements
+    virtual int count() const override final
     {
-    }
-    virtual ~ob()
-    {
+        return static_cast<int>( is_null() == false );
     }
 
-    virtual MC_STATUS write( const void* buffer,
-                            size_t       buffer_bytes ) override final;
-    virtual uint32_t bytes_written() const override final
+    // Indicates whether or not the element is null
+    virtual bool is_null() const override final;
+
+    virtual MC_VR vr() const override final
     {
-        return static_cast<uint32_t>( count() );
+        return OB;
     }
 
-    virtual std::unique_ptr<value_representation> clone() const override final
-    {
-        return std::unique_ptr<value_representation>( new ob( *this ) );
-    }
+    virtual std::unique_ptr<value_representation> clone() const override final;
 
 private:
-    ob( const ob& rhs )
-        : other_vr<uint8_t, OB>( rhs )
-    {
-    }
+    ob( const ob& rhs );
+
+private:
+    std::unique_ptr<encapsulated_value> m_stream;
 };
 
 } // namespace vrs

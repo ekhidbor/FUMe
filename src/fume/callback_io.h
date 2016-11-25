@@ -15,34 +15,22 @@
 #include <cstdint>
 
 // local public
-#include "mcstatus.h"
-#include "mergecom.h"
 #include "mc3msg.h"
 
 // local private
-#include "fume/application.h"
-#include "fume/value_representation.h"
 
 namespace fume
 {
 
-class tx_stream;
+inline bool is_encapsulated( TRANSFER_SYNTAX syntax )
+{
+    return syntax != IMPLICIT_LITTLE_ENDIAN &&
+           syntax != EXPLICIT_LITTLE_ENDIAN &&
+           syntax != EXPLICIT_BIG_ENDIAN    &&
+           syntax != DEFLATED_EXPLICIT_LITTLE_ENDIAN;
+}
 
-MC_STATUS write_vr_data_from_callback( tx_stream&              stream,
-                                       TRANSFER_SYNTAX         syntax,
-                                       int                     message_id,
-                                       uint32_t                tag,
-                                       const callback_parms_t& callback );
-
-MC_STATUS write_encapsulated_value_from_function( tx_stream&            stream,
-                                                  TRANSFER_SYNTAX       syntax,
-                                                  const set_func_parms& parms );
-
-MC_STATUS write_next_encapsulated_value_from_function( tx_stream&            stream,
-                                                       TRANSFER_SYNTAX       syntax,
-                                                       const set_func_parms& parms );
-
-MC_STATUS close_encapsulated_value( tx_stream& stream, TRANSFER_SYNTAX syntax );
+MC_STATUS validate_callback_output( const void* buffer, int size );
 
 }
 

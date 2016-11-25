@@ -30,7 +30,7 @@ MC_STATUS MC_DDH_Get_Record_Type( int RecordID, MC_DIR_RECORD_TYPE* RecType )
     {
         if( g_context != nullptr && RecType != nullptr )
         {
-            const record_object* record =
+            record_object* record =
                 dynamic_cast<record_object*>( g_context->get_object( RecordID ) );
             if( record != nullptr )
             {

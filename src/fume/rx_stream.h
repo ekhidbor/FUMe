@@ -33,13 +33,18 @@ public:
     }
 
     // returns MC_NORMAL_COMPLETION if buffer_bytes have been successfully
-    // read and some other error code otherwise
-    virtual MC_STATUS read( void* buffer, size_t buffer_bytes ) = 0;
-    virtual uint32_t bytes_read() const = 0;
+    // returns MC_END_OF_DATA if the function is called and zero bytes
+    //                        are available
+    // returns MC_UNEXPECTED_EOD if the function is called and an insufficient
+    //                           but non-zero number of bytes are available
+    virtual MC_STATUS read( void* buffer, uint32_t buffer_bytes ) = 0;
+    virtual MC_STATUS peek( void* buffer, uint32_t buffer_bytes ) = 0;
+    virtual uint64_t tell_read() const = 0;
 
     MC_STATUS read_vr( MC_VR& vr, TRANSFER_SYNTAX syntax );
 
     MC_STATUS read_tag( uint32_t& tag, TRANSFER_SYNTAX syntax );
+    MC_STATUS peek_tag( uint32_t& tag, TRANSFER_SYNTAX syntax );
 
     MC_STATUS read_val( int8_t& val, TRANSFER_SYNTAX syntax );
     MC_STATUS read_val( uint8_t& val, TRANSFER_SYNTAX syntax );
@@ -51,9 +56,12 @@ public:
     MC_STATUS read_val( double& val, TRANSFER_SYNTAX syntax );
     MC_STATUS read_val( char& val, TRANSFER_SYNTAX syntax );
 
-private:
-    rx_stream( const rx_stream& );
-    rx_stream& operator=( const rx_stream& );
+    MC_STATUS read_vals( int16_t* vals, uint32_t num_vals, TRANSFER_SYNTAX syntax );
+    MC_STATUS read_vals( uint16_t* vals, uint32_t num_vals, TRANSFER_SYNTAX syntax );
+    MC_STATUS read_vals( int32_t* vals, uint32_t num_vals, TRANSFER_SYNTAX syntax );
+    MC_STATUS read_vals( uint32_t* vals, uint32_t num_vals, TRANSFER_SYNTAX syntax );
+    MC_STATUS read_vals( float* vals, uint32_t num_vals, TRANSFER_SYNTAX syntax );
+    MC_STATUS read_vals( double* vals, uint32_t num_vals, TRANSFER_SYNTAX syntax );
 };
 
 

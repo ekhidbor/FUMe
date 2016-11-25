@@ -58,6 +58,7 @@ _MC_Library_Initialization
 _MC_Library_Release
 _MC_List_Item_To_Filename
 _MC_Open_Association
+_MC_Open_File
 _MC_Open_Item
 _MC_Open_Message
 _MC_Read_Message

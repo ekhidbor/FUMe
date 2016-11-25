@@ -14,6 +14,7 @@
 #include <cassert>
 #include <algorithm>
 #include <string>
+#include <array>
 
 // boost
 #include "boost/numeric/conversion/cast.hpp"
@@ -26,6 +27,7 @@
 #include "fume/tx_stream.h"
 #include "fume/file_tx_stream.h"
 #include "fume/null_tx_stream.h"
+#include "fume/file_rx_stream.h"
 #include "fume/value_representation.h"
 #include "fume/vrs/ob.h"
 #include "fume/library_context.h"
@@ -35,6 +37,7 @@ using std::memcpy;
 using std::strncpy;
 using std::find_if;
 using std::string;
+using std::array;
 
 using boost::numeric_cast;
 using boost::bad_numeric_cast;
@@ -47,14 +50,53 @@ namespace fume
 // This array is written after the preamble. It is not
 // NULL-terminated and therefore should not be treated
 // as a C-style string
-static const char DICOM_PREFIX[] = { 'D', 'I', 'C', 'M' };
+static const array<char, 4> DICOM_PREFIX { 'D', 'I', 'C', 'M' };
 static const char META_INFORMATION_VERSION[] = { 0, 1 };
+
+static MC_STATUS buffer_callback( int           CBMsgFileItemID,
+                                  unsigned long Cbtag,
+                                  int           CbisFirst,
+                                  void*         CbuserInfo,
+                                  int*          CbdataSizePtr,
+                                  void**        CbdataBufferPtr,
+                                  int*          CbisLastPtr )
+{
+    assert( CbdataBufferPtr != nullptr );
+    assert( CbuserInfo != nullptr );
+    assert( CbisLastPtr != nullptr );
+
+    set_buf_parms& parms( *static_cast<set_buf_parms*>( CbuserInfo ) );
+
+    *CbdataBufferPtr = const_cast<void*>( parms.first );
+    *CbdataSizePtr = parms.second;
+    *CbisLastPtr = 1;
+
+    return MC_NORMAL_COMPLETION;
+}
+
+static void write_meta_information_version( file_object& obj )
+{
+    set_buf_parms buf_parms( META_INFORMATION_VERSION,
+                             sizeof(META_INFORMATION_VERSION) );
+    value_representation* element = obj.at( MC_ATT_FILE_META_INFORMATION_VERSION );
+    assert( element != nullptr );
+
+    if( element->is_null() == true )
+    {
+        set_func_parms func_parms = { buffer_callback, &buf_parms, -1, 0 };
+        element->set( func_parms );
+    }
+}
 
 file_object::file_object( int id, const char* filename, bool created_empty )
     : data_dictionary( id, created_empty ),
       m_filename( filename )
 {
     m_preamble.fill( 0 );
+}
+
+file_object::~file_object()
+{
 }
 
 
@@ -181,16 +223,7 @@ MC_STATUS file_object::fill_group_2_attributes()
 {
     // This function should always succeed. If it does not then there is a
     // library error
-    ob& meta_version
-    (
-        dynamic_cast<ob&>((*this)[MC_ATT_FILE_META_INFORMATION_VERSION])
-    );
-
-    if( meta_version.is_null() == true )
-    {
-        meta_version.write( META_INFORMATION_VERSION,
-                            sizeof(META_INFORMATION_VERSION) );
-    }
+    write_meta_information_version( *this );
 
     const string* implementation_version = nullptr;
     const string* implementation_uid = nullptr;
@@ -222,11 +255,60 @@ MC_STATUS file_object::fill_group_2_attributes()
     return update_file_group_length();
 }
 
-MC_STATUS file_object::open( void*            user_info,
+MC_STATUS file_object::open( int              app_id,
+                             void*            user_info,
                              ReadFileCallback callback )
 {
-    // TODO: implement
-    return MC_CANNOT_COMPLY;
+    MC_STATUS ret = MC_CANNOT_COMPLY;
+
+    if( callback != nullptr )
+    {
+        // There is not currently an open stream. So just read the entire
+        // file in
+        if( m_rx_stream == nullptr )
+        {
+            // We're reading the entire file in, so no need to save
+            // to the member variable
+            file_rx_stream stream( m_filename, callback, user_info );
+            ret = read_file_header( stream, app_id );
+            if( ret == MC_NORMAL_COMPLETION )
+            {
+                TRANSFER_SYNTAX syntax = INVALID_TRANSFER_SYNTAX;
+                ret = get_transfer_syntax( syntax );
+                if( ret == MC_NORMAL_COMPLETION )
+                {
+                    ret = read_values( stream, syntax, app_id );
+                }
+                else
+                {
+                    // Do nothing. Will return error
+                }
+            }
+            else
+            {
+                // Do nothing. Will return error
+            }
+        }
+        else
+        {
+            TRANSFER_SYNTAX syntax = INVALID_TRANSFER_SYNTAX;
+            ret = get_transfer_syntax( syntax );
+            if( ret == MC_NORMAL_COMPLETION )
+            {
+                ret = read_values( *m_rx_stream, syntax, app_id );
+            }
+            else
+            {
+                // Do nothing. Will return error
+            }
+        }
+    }
+    else
+    {
+        ret = MC_NULL_POINTER_PARM;
+    }
+
+    return ret;
 }
 
 MC_STATUS file_object::write_file( tx_stream& stream, int app_id )
@@ -235,11 +317,11 @@ MC_STATUS file_object::write_file( tx_stream& stream, int app_id )
     MC_STATUS ret = fill_group_2_attributes();
     if( ret == MC_NORMAL_COMPLETION )
     {
-        stream.write( m_preamble.data(), m_preamble.size() );
+        ret = stream.write( m_preamble.data(), m_preamble.size() );
         if( ret == MC_NORMAL_COMPLETION )
         {
             // Write the 4-character prefix
-            ret = stream.write( DICOM_PREFIX, sizeof(DICOM_PREFIX) );
+            ret = stream.write( DICOM_PREFIX.data(), DICOM_PREFIX.size() );
             if( ret == MC_NORMAL_COMPLETION )
             {
                 ret = write_values( stream, app_id );
@@ -257,6 +339,42 @@ MC_STATUS file_object::write_file( tx_stream& stream, int app_id )
     else
     {
         // Do nothing. WIll return error from update_file_group_length
+    }
+
+    return ret;
+}
+
+MC_STATUS file_object::read_file_header( rx_stream& stream, int app_id )
+{
+    MC_STATUS ret = stream.read( m_preamble.data(), m_preamble.size() );
+    if( ret == MC_NORMAL_COMPLETION )
+    {
+        // Read the 4-character prefix
+        array<char, 4> prefix;
+        ret = stream.read( prefix.data(), prefix.size() );
+        if( ret == MC_NORMAL_COMPLETION )
+        {
+            if( prefix == DICOM_PREFIX )
+            {
+                // Read the Group 2 elements in explicit little endian
+                ret = read_values_upto( stream,
+                                        EXPLICIT_LITTLE_ENDIAN,
+                                        app_id,
+                                        0x0002FFFFu );
+            }
+            else
+            {
+                ret = MC_INVALID_FILE;
+            }
+        }
+        else
+        {
+            // Do nothing. Will return error
+        }
+    }
+    else
+    {
+        // Do nothing. Will return error
     }
 
     return ret;
@@ -290,7 +408,7 @@ MC_STATUS file_object::set_transfer_syntax( TRANSFER_SYNTAX syntax )
     return ret;
 }
 
-MC_STATUS file_object::get_transfer_syntax( TRANSFER_SYNTAX& syntax ) const
+MC_STATUS file_object::get_transfer_syntax( TRANSFER_SYNTAX& syntax )
 {
     char syntax_uid[65] = { '\0' };
 
@@ -302,7 +420,7 @@ MC_STATUS file_object::get_transfer_syntax( TRANSFER_SYNTAX& syntax ) const
 
     MC_STATUS ret = MC_CANNOT_COMPLY;
 
-    const value_representation* syntax_vr = at( MC_ATT_TRANSFER_SYNTAX_UID );
+    value_representation* syntax_vr = at( MC_ATT_TRANSFER_SYNTAX_UID );
     if( syntax_vr != nullptr )
     {
         ret = syntax_vr->get( syntax_uid_parms );
@@ -323,7 +441,7 @@ MC_STATUS file_object::get_transfer_syntax( TRANSFER_SYNTAX& syntax ) const
     return ret;
 }
 
-MC_STATUS file_object::write_values( tx_stream& stream, int app_id ) const
+MC_STATUS file_object::write_values( tx_stream& stream, int app_id )
 {
     // Get iterators for all Group 2 attributes.
     const const_value_range& group2_range( get_value_range( 0x00020000u,
@@ -379,7 +497,7 @@ MC_STATUS file_object::update_file_group_length()
     {
         (*this)[MC_ATT_FILE_META_INFORMATION_GROUP_LENGTH].set
         (
-            stream.bytes_written()
+            static_cast<uint32_t>( stream.tell_write() )
         );
     }
     else

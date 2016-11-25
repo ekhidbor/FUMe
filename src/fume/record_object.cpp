@@ -51,21 +51,22 @@ record_object::record_object( int         dicomdir_file_id,
 }
 
 MC_STATUS record_object::to_stream( tx_stream&      stream,
-                                    TRANSFER_SYNTAX syntax ) const
+                                    TRANSFER_SYNTAX syntax )
 {
     // Save off the byte offset of this record
-    m_offset = stream.bytes_written();
+    // Has to be 32-bit for DICOMDIR structure to work
+    m_offset = static_cast<uint32_t>( stream.tell_write() );
     return item_object::to_stream( stream, syntax );
 }
 
-MC_STATUS record_object::get_record_type( MC_DIR_RECORD_TYPE& type ) const
+MC_STATUS record_object::get_record_type( MC_DIR_RECORD_TYPE& type )
 {
     MC_STATUS ret = MC_CANNOT_COMPLY;
 
     char record_type_str[64] = { '\0' };
     get_string_parms parms = { record_type_str, sizeof(record_type_str) };
 
-    const value_representation* record_type_val = at( MC_ATT_DIRECTORY_RECORD_TYPE );
+    value_representation* record_type_val = at( MC_ATT_DIRECTORY_RECORD_TYPE );
     if( record_type_val != nullptr )
     {
         ret = record_type_val->get( parms );

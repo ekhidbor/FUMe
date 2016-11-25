@@ -39,9 +39,9 @@ public:
 // tx_stream
 public:
     virtual MC_STATUS write( const void* buffer,
-                             size_t      buffer_bytes ) override final;
+                             uint32_t    buffer_bytes ) override final;
 
-    virtual uint32_t bytes_written() const override final
+    virtual uint64_t tell_write() const override final
     {
         return m_bytes_written;
     }
@@ -54,7 +54,7 @@ private:
     // Note: the passed in filename must have a lifetime exceeding
     // that of this object
     const std::string& m_filename;
-    uint32_t           m_bytes_written;
+    uint64_t           m_bytes_written;
     // Callback pointer and user info are owned by caller and
     // not this class
     WriteFileCallback  m_callback;

@@ -32,7 +32,7 @@ public:
     }
 
     virtual MC_STATUS to_stream( tx_stream&      stream,
-                                 TRANSFER_SYNTAX syntax ) const = 0;
+                                 TRANSFER_SYNTAX syntax ) = 0;
     virtual MC_STATUS from_stream( rx_stream&      stream,
                                    TRANSFER_SYNTAX syntax ) = 0;
 };

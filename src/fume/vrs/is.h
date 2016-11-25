@@ -37,6 +37,7 @@ public:
 
 // value_representation -- modifiers
 public:
+    using string_vr::set;
     virtual MC_STATUS set( double val ) override final
     {
         return cast_and_set_string( val );
@@ -70,6 +71,7 @@ public:
         return cast_and_set_string( val );
     }
 
+    using string_vr::set_next;
     virtual MC_STATUS set_next( double val ) override final
     {
         return cast_and_set_next_string( val );
@@ -105,68 +107,70 @@ public:
 
 // value_representation -- accessors
 public:
-    virtual MC_STATUS get( double& val ) const override final
+    using string_vr::get;
+    virtual MC_STATUS get( double& val ) override final
     {
         return cast_and_get_string( val );
     }
-    virtual MC_STATUS get( float& val ) const override final
+    virtual MC_STATUS get( float& val ) override final
     {
         return cast_and_get_string( val );
     }
-    virtual MC_STATUS get( int& val ) const override final
+    virtual MC_STATUS get( int& val ) override final
     {
         return cast_and_get_string( val );
     }
-    virtual MC_STATUS get( short& val ) const override final
+    virtual MC_STATUS get( short& val ) override final
     {
         return cast_and_get_string( val );
     }
-    virtual MC_STATUS get( long& val ) const override final
+    virtual MC_STATUS get( long& val ) override final
     {
         return cast_and_get_string( val );
     }
-    virtual MC_STATUS get( unsigned int& val ) const override final
+    virtual MC_STATUS get( unsigned int& val ) override final
     {
         return cast_and_get_string( val );
     }
-    virtual MC_STATUS get( unsigned short& val ) const override final
+    virtual MC_STATUS get( unsigned short& val ) override final
     {
         return cast_and_get_string( val );
     }
-    virtual MC_STATUS get( unsigned long& val ) const override final
+    virtual MC_STATUS get( unsigned long& val ) override final
     {
         return cast_and_get_string( val );
     }
 
-    virtual MC_STATUS get_next( double& val ) const override final
+    using string_vr::get_next;
+    virtual MC_STATUS get_next( double& val ) override final
     {
         return cast_and_get_next_string( val );
     }
-    virtual MC_STATUS get_next( float& val ) const override final
+    virtual MC_STATUS get_next( float& val ) override final
     {
         return cast_and_get_next_string( val );
     }
-    virtual MC_STATUS get_next( int& val ) const override final
+    virtual MC_STATUS get_next( int& val ) override final
     {
         return cast_and_get_next_string( val );
     }
-    virtual MC_STATUS get_next( short& val ) const override final
+    virtual MC_STATUS get_next( short& val ) override final
     {
         return cast_and_get_next_string( val );
     }
-    virtual MC_STATUS get_next( long& val ) const override final
+    virtual MC_STATUS get_next( long& val ) override final
     {
         return cast_and_get_next_string( val );
     }
-    virtual MC_STATUS get_next( unsigned int& val ) const override final
+    virtual MC_STATUS get_next( unsigned int& val ) override final
     {
         return cast_and_get_next_string( val );
     }
-    virtual MC_STATUS get_next( unsigned short& val ) const override final
+    virtual MC_STATUS get_next( unsigned short& val ) override final
     {
         return cast_and_get_next_string( val );
     }
-    virtual MC_STATUS get_next( unsigned long& val ) const override final
+    virtual MC_STATUS get_next( unsigned long& val ) override final
     {
         return cast_and_get_next_string( val );
     }

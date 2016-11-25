@@ -247,8 +247,8 @@ data_dictionary* library_context::get_object( int id )
 }
 
 unique_ptr<value_representation>
-library_context::create_vr( uint32_t               tag,
-                            const data_dictionary* dict ) const
+library_context::create_vr( uint32_t         tag,
+                            data_dictionary* dict ) const
 {
     unique_vr_ptr_t ret = nullptr;
 
@@ -274,9 +274,9 @@ library_context::create_vr( uint32_t               tag,
     return ret;
 }
 
-MC_STATUS library_context::get_vr_type( uint32_t               tag,
-                                        const data_dictionary* dict,
-                                        MC_VR&                 type ) const
+MC_STATUS library_context::get_vr_type( uint32_t         tag,
+                                        data_dictionary* dict,
+                                        MC_VR&           type ) const
 {
     unsigned short min_vals = 0;
     unsigned short max_vals = 0;
@@ -285,12 +285,12 @@ MC_STATUS library_context::get_vr_type( uint32_t               tag,
     return get_vr_info( tag, dict, type, min_vals, max_vals, multiple );
 }
 
-MC_STATUS library_context::get_vr_info( uint32_t               tag,
-                                        const data_dictionary* dict,
-                                        MC_VR&                 type,
-                                        unsigned short&        min_vals,
-                                        unsigned short&        max_vals,
-                                        unsigned short&        multiple ) const
+MC_STATUS library_context::get_vr_info( uint32_t         tag,
+                                        data_dictionary* dict,
+                                        MC_VR&           type,
+                                        unsigned short&  min_vals,
+                                        unsigned short&  max_vals,
+                                        unsigned short&  multiple ) const
 {
     MC_STATUS ret = MC_CANNOT_COMPLY;
 
