@@ -24,7 +24,7 @@ extern "C"
 {
 #endif
 
-enum MC_DIR_RECORD_TYPE
+typedef enum
 { 
     MC_REC_TYPE_PATIENT, 
     MC_REC_TYPE_STUDY, 
@@ -58,16 +58,16 @@ enum MC_DIR_RECORD_TYPE
     MC_REC_TYPE_TRACT,
     MC_REC_TYPE_ASSESSMENT, 
     MC_REC_TYPE_UNKNOWN
-};
+} MC_DIR_RECORD_TYPE;
 
-enum MC_TRAVERSAL_STATUS
+typedef enum
 {
     MC_TS_CONTINUE, 
     MC_TS_STOP_LEVEL, 
     MC_TS_STOP_LOWER, 
     MC_TS_STOP, 
     MC_TS_ERROR 
-};
+} MC_TRAVERSAL_STATUS;
 
 typedef MC_STATUS (*WriteFileCallback)
 (

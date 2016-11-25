@@ -459,9 +459,9 @@ typedef void* (*CfgFunction)(void);
 typedef void* (*DictionaryFunction)(void);
 typedef void* (*FutureFunction)(void);
 
-MCEXPORT MC_STATUS MC_Library_Initialization( CfgFunction        cfg    = NULL,
-                                              DictionaryFunction dict   = NULL,
-                                              FutureFunction     future = NULL );
+MCEXPORT MC_STATUS MC_Library_Initialization( CfgFunction        cfg,
+                                              DictionaryFunction dict,
+                                              FutureFunction     future );
 
 MCEXPORT MC_STATUS MC_Library_Release();
 
