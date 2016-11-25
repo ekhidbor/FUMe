@@ -433,7 +433,7 @@ MC_STATUS data_dictionary::read_values_from_item( rx_stream&      stream,
            ((stream.tell_read() - start_offset) + 1) < size )
     {
         uint32_t tag = 0;
-        MC_STATUS ret = stream.read_tag( tag, syntax );
+        ret = stream.read_tag( tag, syntax );
         if( ret == MC_NORMAL_COMPLETION )
         {
             if( tag != MC_ATT_ITEM_DELIMITATION_ITEM     &&
@@ -464,12 +464,13 @@ MC_STATUS data_dictionary::read_values_from_item( rx_stream&      stream,
                 }
             }
             // If we've reached an item delimiter
-            else if( tag == MC_ATT_ITEM )
+            else if( tag == MC_ATT_ITEM_DELIMITATION_ITEM )
             {
                 // Read the length (which should be zero, but we aren't going
                 // to check)
                 uint32_t delim_length = 0;
                 ret = stream.read_val( delim_length, syntax );
+                break;
             }
             // We received something we shouln't have
             else
@@ -512,7 +513,7 @@ MC_STATUS data_dictionary::read_values( rx_stream&      stream,
     while( ret == MC_NORMAL_COMPLETION )
     {
         uint32_t tag = 0;
-        MC_STATUS ret = stream.read_tag( tag, syntax );
+        ret = stream.read_tag( tag, syntax );
         if( ret == MC_NORMAL_COMPLETION )
         {
             if( tag != MC_ATT_ITEM_DELIMITATION_ITEM     &&
@@ -581,10 +582,10 @@ MC_STATUS data_dictionary::read_values_upto( rx_stream&      stream,
 
     value_dict tmp_value_dict;
 
-    while( ret == MC_NORMAL_COMPLETION )
+    while( MC_NORMAL_COMPLETION == ret )
     {
         uint32_t tag = 0;
-        MC_STATUS ret = stream.peek_tag( tag, syntax );
+        ret = stream.peek_tag( tag, syntax );
         if( ret == MC_NORMAL_COMPLETION )
         {
             if( tag != MC_ATT_ITEM_DELIMITATION_ITEM     &&
@@ -621,7 +622,8 @@ MC_STATUS data_dictionary::read_values_upto( rx_stream&      stream,
                 }
                 else
                 {
-                    ret = MC_NORMAL_COMPLETION;
+                    graceful_end_of_data = true;
+                    ret = MC_END_OF_DATA;
                 }
             }
             else
@@ -635,6 +637,10 @@ MC_STATUS data_dictionary::read_values_upto( rx_stream&      stream,
             // No more data when trying to read the start of a tag.
             // terminate gracefully
             graceful_end_of_data = true;
+        }
+        else
+        {
+            // Do nothing. Will return error
         }
     }
 
