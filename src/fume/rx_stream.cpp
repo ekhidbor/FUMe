@@ -81,6 +81,7 @@ static MC_STATUS wire_to_host( TRANSFER_SYNTAX syntax,
         case JPIP_REFERENCED_DEFLATE:
             little_to_native_inplace( val );
             ret = MC_NORMAL_COMPLETION;
+            break;
         case INVALID_TRANSFER_SYNTAX:
         default:
             ret = MC_INVALID_TRANSFER_SYNTAX;
@@ -125,6 +126,7 @@ MC_STATUS rx_stream::read_vr( MC_VR& vr, TRANSFER_SYNTAX syntax )
             ret = get_vr_code( vr_value, tmp_vr, vr_size );
             if( ret == MC_NORMAL_COMPLETION )
             {
+                vr = tmp_vr;
                 if( vr_size > vr_value.size() )
                 {
                     uint16_t extra = 0;
