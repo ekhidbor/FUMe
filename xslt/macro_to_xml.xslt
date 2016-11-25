@@ -47,19 +47,21 @@
         <xsl:apply-templates select="//db:table[dcm:ends-with(normalize-space(db:caption), 'Macro Attributes') and not(contains(db:caption, 'Example'))]/db:tbody"/>
         <xsl:apply-templates select="//db:table[dcm:ends-with(normalize-space(db:caption), 'Macro Attributes Description')]/db:tbody"/>
         <xsl:apply-templates select="//db:table[dcm:ends-with(normalize-space(db:caption), 'Module Attributes')]/db:tbody"/>
+        <!-- Enhanced XA/XRF Image Module Table -->
+        <xsl:apply-templates select="//db:table[@xml:id='table_C.8.19.2-1']/db:tbody"/>
     </Macros>
 </xsl:template>
 
 <xsl:template match="db:tbody">
     <!-- Some tables don't have the fourth column, indicating that such information
          should be obtained from PS3.4. So filter out those tables (for now)-->
-    <xsl:if test="db:tr/db:td[4]/db:para">
+    <!--<xsl:if test="../db:thead/db:tr/db:th[4]/db:para">-->
         <!-- Use the xml:id to identify the Macro. Include directives use this
              as an identifier -->
         <Macro ID="{../@xml:id}" Name="{../db:caption}">
             <xsl:apply-templates select="db:tr[dcm:indentation(.) = 0]"/>
         </Macro>
-    </xsl:if>
+    <!--</xsl:if>-->
 </xsl:template>
 
 </xsl:stylesheet>

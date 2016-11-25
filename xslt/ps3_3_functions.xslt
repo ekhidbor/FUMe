@@ -54,15 +54,32 @@
     </xsl:choose>
 </func:function>
 
+<func:function name="dcm:get_type">
+    <xsl:param name="row" />
+    <xsl:choose>
+        <xsl:when test="$row/db:td[4]/db:para">
+            <func:result select="normalize-space($row/db:td[3]/db:para)" />
+        </xsl:when>
+        <xsl:otherwise>
+            <func:result select="'1'" />
+        </xsl:otherwise>
+    </xsl:choose>
+</func:function>
+
 <xsl:template match="db:tr">
     <xsl:choose>
         <!-- For "Include" rows, the first column always has an xref element
              inside an emphasis element. It also has a colspan of 4, but
              we don't need to check that -->
-        <xsl:when test="db:td[1]/db:para/db:emphasis/db:xref">
-            <xsl:variable as="xs:string" name="link_id" select="db:td[1]/db:para/db:emphasis/db:xref/@linkend"/>
-            <xsl:if test="contains($link_id, 'table')">
-                <Include ID="{$link_id}" />
+        <xsl:when test="db:td[1]/db:para/db:emphasis and number(db:td[1]/@colspan) > 1">
+            <xsl:if test="db:td[1]/db:para/db:emphasis/db:xref">
+                <xsl:variable as="xs:string" name="link_id" select="db:td[1]/db:para/db:emphasis/db:xref/@linkend"/>
+                <xsl:if test="contains($link_id, 'table')">
+                    <Include ID="{$link_id}" />
+                </xsl:if>
+            </xsl:if>
+            <xsl:if test="not(db:td[1]/db:para/db:emphasis/db:xref)">
+                <Description Text="{normalize-space(translate(db:td[1]/db:para/db:emphasis, '&gt;', ''))}" />
             </xsl:if>
         </xsl:when>
         <!-- For "Item" rows, the first column has a colspan of 1. We
@@ -73,7 +90,7 @@
             <xsl:variable name="name" select="normalize-space(translate(db:td[1]/db:para, '&gt;', ''))" />
             <xsl:variable name="indentation" select="dcm:indentation(.)"/>
             <xsl:variable name="tag" select="normalize-space(db:td[2]/db:para)"/>
-            <xsl:variable name="type" select="normalize-space(db:td[3]/db:para)"/>
+            <xsl:variable name="type" select="dcm:get_type(.)"/>
 
             <xsl:if test="dcm:ends-with($name, 'Sequence')">
                 <xsl:variable name="next" select="following-sibling::db:tr[dcm:indentation(.) = $indentation]"/>
