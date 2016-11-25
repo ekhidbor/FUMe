@@ -87,6 +87,9 @@ public:
     virtual std::unique_ptr<value_representation> clone() const override final;
 
 private:
+    ob( const ob& rhs );
+
+private:
     std::unique_ptr<encapsulated_value> m_stream;
 };
 

@@ -65,24 +65,26 @@ static MC_STATUS buffer_callback( int           CBMsgFileItemID,
     assert( CbuserInfo != nullptr );
     assert( CbisLastPtr != nullptr );
 
-    set_buf_parms& parms( *static_cast<set_buf_parms*>( *CbdataBufferPtr ) );
+    set_buf_parms& parms( *static_cast<set_buf_parms*>( CbuserInfo ) );
 
     *CbdataBufferPtr = const_cast<void*>( parms.first );
     *CbdataSizePtr = parms.second;
+    *CbisLastPtr = 1;
 
     return MC_NORMAL_COMPLETION;
 }
 
-static MC_STATUS write_meta_information_version( file_object& obj )
+static void write_meta_information_version( file_object& obj )
 {
-    set_buf_parms parms( META_INFORMATION_VERSION,
-                         sizeof(META_INFORMATION_VERSION) );
+    set_buf_parms buf_parms( META_INFORMATION_VERSION,
+                             sizeof(META_INFORMATION_VERSION) );
     value_representation* element = obj.at( MC_ATT_FILE_META_INFORMATION_VERSION );
     assert( element != nullptr );
 
     if( element->is_null() == true )
     {
-        element->set( parms );
+        set_func_parms func_parms = { buffer_callback, &buf_parms, -1, 0 };
+        element->set( func_parms );
     }
 }
 
@@ -495,7 +497,7 @@ MC_STATUS file_object::update_file_group_length()
     {
         (*this)[MC_ATT_FILE_META_INFORMATION_GROUP_LENGTH].set
         (
-            static_cast<uint32_t>( stream.bytes_written() )
+            static_cast<uint32_t>( stream.tell_write() )
         );
     }
     else

@@ -210,4 +210,52 @@ MC_STATUS write_vr_data_from_callback( tx_stream&              stream,
     return ret;
 }
 
+MC_STATUS write_data_from_function( const set_func_parms& source,
+                                    tx_stream&            dest )
+{
+    bool first = true;
+    MC_STATUS ret = MC_CANNOT_COMPLY;
+    MC_STATUS call_ret = MC_NORMAL_COMPLETION;
+    int user_last = 0;
+    do
+    {
+        void* user_buf = nullptr;
+        int user_size = 0;
+        user_last = 0;
+
+        call_ret = source.callback( source.message_id,
+                                    source.tag,
+                                    static_cast<int>( first ),
+                                    source.callback_parm,
+                                    &user_size,
+                                    &user_buf,
+                                    &user_last );
+
+        if( (call_ret == MC_NORMAL_COMPLETION) &&
+            (user_buf != nullptr)              &&
+            (user_size > 0)                    &&
+            ((user_size % 2) == 0)              )
+        {
+            ret = dest.write( user_buf, user_size );
+        }
+        else if( call_ret != MC_NORMAL_COMPLETION )
+        {
+            ret = MC_CALLBACK_CANNOT_COMPLY;
+        }
+        else if( user_size > 0 && (user_size % 2) != 0 )
+        {
+            ret = MC_CALLBACK_DATA_SIZE_UNEVEN;
+        }
+        else
+        {
+            ret = MC_CALLBACK_PARM_ERROR;
+        }
+
+        first = false;
+    }
+    while( call_ret == MC_NORMAL_COMPLETION && user_last == 0 );
+
+    return ret;
+}
+
 }

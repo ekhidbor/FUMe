@@ -40,7 +40,7 @@ public:
     virtual MC_STATUS read( void* buffer, uint32_t buffer_bytes ) override final;
     virtual MC_STATUS peek( void* buffer, uint32_t buffer_bytes ) override final;
 
-    virtual uint64_t bytes_read() const override final
+    virtual uint64_t tell_read() const override final
     {
         return m_bytes_read;
     }

@@ -13,6 +13,7 @@
 
 // std
 #include <cstdint>
+#include <memory>
 
 // local public
 #include "mcstatus.h"
@@ -41,18 +42,29 @@ public:
     virtual MC_STATUS write_data_to_stream( tx_stream&      stream,
                                             TRANSFER_SYNTAX syntax ) = 0;
 
-    virtual MC_STATUS write_first_frame_to_stream( tx_stream&      stream,
-                                                   TRANSFER_SYNTAX syntax ) = 0;
+    virtual MC_STATUS write_first_frame_to_stream
+    (
+        encapsulated_value_sink& stream,
+        TRANSFER_SYNTAX          syntax
+    ) = 0;
 
-    virtual MC_STATUS write_next_frame_to_stream( tx_stream&      stream,
-                                                  TRANSFER_SYNTAX syntax ) = 0;
+    virtual MC_STATUS write_next_frame_to_stream
+    (
+        encapsulated_value_sink& stream,
+        TRANSFER_SYNTAX          syntax
+    ) = 0;
 
-    virtual MC_STATUS write_frame_to_stream( unsigned int    idx,
-                                             tx_stream&      stream,
-                                             TRANSFER_SYNTAX syntax ) = 0;
+    virtual MC_STATUS write_frame_to_stream
+    (
+        unsigned int             idx,
+        encapsulated_value_sink& stream,
+        TRANSFER_SYNTAX          syntax
+    ) = 0;
 
     virtual MC_STATUS clear() = 0;
     virtual uint64_t size() const = 0;
+
+    virtual std::unique_ptr<encapsulated_value> clone() const = 0;
 };
 
 

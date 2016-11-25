@@ -35,10 +35,6 @@ static MC_STATUS read_raw_value( rx_stream&               source,
                                  encapsulated_value_sink& dest,
                                  uint32_t                 vr_length );
 
-static MC_STATUS read_encapsulated_frame( rx_stream&               source,
-                                          TRANSFER_SYNTAX          syntax,
-                                          encapsulated_value_sink& dest );
-
 static MC_STATUS read_encapsulated_frames( rx_stream&               source,
                                            TRANSFER_SYNTAX          syntax,
                                            encapsulated_value_sink& dest );

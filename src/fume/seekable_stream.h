@@ -37,7 +37,7 @@ public:
     /** Resets the effective length of the stream to zero.
      *
      * Upon successful completion of this function, the values
-     * returned by both bytes_written() and bytes_read() will
+     * returned by tell_write(), tell_read(), and size() will
      * be zero. Note that this function may not change the
      * size of the underlying storage medium.
      *
@@ -45,13 +45,20 @@ public:
      *         An implementation-defined error code if it did not
      */
     virtual MC_STATUS clear() = 0;
-    /** Resets the position from which data is read from the stream to zero.
+    /** Resets the position from which data is read from or written to the
+     *  stream to zero.
      *
      * Upon successful completion of this function, the value returned by
-     * bytes_read() will be zero, and the data will be read from the start
-     * of the stream
+     * tell_read() and tell_write() will be zero, and the data will be read
+     * from or written to the start of the stream
      */
-    virtual MC_STATUS rewind_read() = 0;
+    MC_STATUS rewind()
+    {
+        return seek( 0u );
+    }
+
+    virtual MC_STATUS seek( uint64_t position ) = 0;
+    virtual uint64_t size() const = 0;
 
     virtual std::unique_ptr<seekable_stream> clone() = 0;
 };

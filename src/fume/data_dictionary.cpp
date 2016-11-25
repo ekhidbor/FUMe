@@ -423,14 +423,14 @@ MC_STATUS data_dictionary::read_values_from_item( rx_stream&      stream,
                                                   int             app_id,
                                                   uint32_t        size )
 {
-    const uint32_t start_offset = stream.bytes_read();
+    const uint32_t start_offset = stream.tell_read();
     MC_STATUS ret = MC_NORMAL_COMPLETION;
     bool graceful_end_of_data = false;
 
     value_dict tmp_value_dict;
 
     while( ret == MC_NORMAL_COMPLETION &&
-           ((stream.bytes_read() - start_offset) + 1) < size )
+           ((stream.tell_read() - start_offset) + 1) < size )
     {
         uint32_t tag = 0;
         MC_STATUS ret = stream.read_tag( tag, syntax );

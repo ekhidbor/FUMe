@@ -55,7 +55,7 @@ MC_STATUS record_object::to_stream( tx_stream&      stream,
 {
     // Save off the byte offset of this record
     // Has to be 32-bit for DICOMDIR structure to work
-    m_offset = static_cast<uint32_t>( stream.bytes_written() );
+    m_offset = static_cast<uint32_t>( stream.tell_write() );
     return item_object::to_stream( stream, syntax );
 }
 

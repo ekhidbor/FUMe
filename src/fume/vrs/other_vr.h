@@ -73,13 +73,13 @@ public:
     // Returns the number of elements
     virtual int count() const override final
     {
-        return static_cast<int>( m_stream->bytes_written() != 0 );
+        return static_cast<int>( m_stream->size() != 0 );
     }
 
     // Indicates whether or not the element is null
     virtual bool is_null() const override final
     {
-        return m_stream->bytes_written() == 0;
+        return count() == 0;
     }
 
     virtual MC_VR vr() const override final
@@ -154,7 +154,7 @@ MC_STATUS other_vr<T, VR>::to_stream( tx_stream&      stream,
                                       TRANSFER_SYNTAX syntax )
 {
     // TODO: ensure this in the callback setter
-    const uint32_t data_length = static_cast<uint32_t>( m_stream->bytes_written() );
+    const uint32_t data_length = static_cast<uint32_t>( m_stream->size() );
     MC_STATUS ret = stream.write_val( data_length, syntax );
     if( ret == MC_NORMAL_COMPLETION && data_length > 0u )
     {
@@ -162,7 +162,7 @@ MC_STATUS other_vr<T, VR>::to_stream( tx_stream&      stream,
         // datatype size
         assert( (data_length % sizeof(T)) == 0 );
         const uint32_t num_elems = data_length / sizeof(T);
-        ret = m_stream->rewind_read();
+        ret = m_stream->rewind();
         for( uint32_t i = 0;
              ret == MC_NORMAL_COMPLETION && i < num_elems;
              ++i )
@@ -274,13 +274,12 @@ MC_STATUS other_vr<T, VR>::get( const get_func_parms& val )
     {
         // Only encapsulated values can exceed 32-bits in length
         uint32_t remaining_bytes =
-            static_cast<uint32_t>( m_stream->bytes_written() -
-                                   m_stream->bytes_read() );
+            static_cast<uint32_t>( m_stream->size() - m_stream->tell_read() );
 
         bool first = true;
 
         MC_STATUS call_ret = MC_NORMAL_COMPLETION;
-        ret = m_stream->rewind_read();
+        ret = m_stream->rewind();
         while( call_ret == MC_NORMAL_COMPLETION && 
                ret == MC_NORMAL_COMPLETION &&
                remaining_bytes > 0 )

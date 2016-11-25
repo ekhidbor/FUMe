@@ -19,6 +19,8 @@
 
 using std::deque;
 using std::copy;
+using std::min;
+using std::max;
 
 namespace fume
 {
@@ -26,8 +28,17 @@ namespace fume
 MC_STATUS memory_stream::write( const void* buffer,
                                 uint32_t    buffer_bytes )
 {
-    const uint8_t* data = static_cast<const uint8_t*>( buffer );
-    m_data.insert( m_data.cend(), data, data + buffer_bytes );
+    const uint64_t new_size = max( m_offset + buffer_bytes,
+                                  static_cast<uint64_t>( m_data.size() ) );
+    m_data.resize( new_size );
+
+    const deque<uint8_t>::iterator dst_begin = m_data.begin() + m_offset;
+
+    const uint8_t* src_begin = static_cast<const uint8_t*>( buffer );
+    const uint8_t* src_end = src_begin + buffer_bytes;
+
+    copy( src_begin, src_end, dst_begin );
+    m_offset += buffer_bytes;
 
     return MC_NORMAL_COMPLETION;
 }
@@ -36,17 +47,16 @@ MC_STATUS memory_stream::peek( void* buffer, uint32_t buffer_bytes )
 {
     MC_STATUS ret = MC_CANNOT_COMPLY;
 
-    const uint64_t new_read_offset = m_read_offset + buffer_bytes;
-    if( new_read_offset <= m_data.size() )
+    const uint64_t new_offset = m_offset + buffer_bytes;
+    if( m_offset < m_data.size() && new_offset <= m_data.size() )
     {
-        const deque<uint8_t>::const_iterator begin = m_data.cbegin() +
-                                                     m_read_offset;
+        const deque<uint8_t>::const_iterator begin = m_data.cbegin() + m_offset;
         const deque<uint8_t>::const_iterator end = begin + buffer_bytes;
 
         copy( begin, end, static_cast<uint8_t*>( buffer ) );
         ret = MC_NORMAL_COMPLETION;
     }
-    if( m_read_offset == m_data.size() )
+    else if( m_offset == m_data.size() )
     {
         ret = MC_END_OF_DATA;
     }
@@ -63,7 +73,7 @@ MC_STATUS memory_stream::read( void* buffer, uint32_t buffer_bytes )
     MC_STATUS ret = peek( buffer, buffer_bytes );
     if( ret == MC_NORMAL_COMPLETION )
     {
-        m_read_offset += buffer_bytes;
+        m_offset += buffer_bytes;
         ret = MC_NORMAL_COMPLETION;
     }
     else
@@ -78,16 +88,21 @@ MC_STATUS memory_stream::read( void* buffer, uint32_t buffer_bytes )
 MC_STATUS memory_stream::clear()
 {
     m_data.clear();
-    m_read_offset = 0;
+    m_offset = 0;
 
     return MC_NORMAL_COMPLETION;
 }
 
-MC_STATUS memory_stream::rewind_read()
+MC_STATUS memory_stream::seek( uint64_t pos )
 {
-    m_read_offset = 0;
+    MC_STATUS ret = MC_CANNOT_COMPLY;
 
-    return MC_NORMAL_COMPLETION;
+    // seek is allowed to go past the end of the stream, but data
+    // cannot be read
+    m_offset = pos;
+    ret = MC_NORMAL_COMPLETION;
+
+    return ret;
 }
 
 }

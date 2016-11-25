@@ -167,8 +167,8 @@ MC_STATUS sq::from_stream( rx_stream& stream, TRANSFER_SYNTAX syntax )
     if( ret == MC_NORMAL_COMPLETION )
     {
         const bool delimited = value_length == numeric_limits<uint32_t>::max();
-        const uint32_t start_offset = stream.bytes_read();
-        uint32_t cur_offset = stream.bytes_read();
+        const uint32_t start_offset = stream.tell_read();
+        uint32_t cur_offset = stream.tell_read();
 
         while( ret == MC_NORMAL_COMPLETION &&
                ((cur_offset - start_offset) + 1) < value_length )

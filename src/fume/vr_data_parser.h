@@ -30,6 +30,10 @@ MC_STATUS read_vr_data( rx_stream&               source,
                         TRANSFER_SYNTAX          syntax,
                         encapsulated_value_sink& dest );
 
+MC_STATUS read_encapsulated_frame( rx_stream&               source,
+                                   TRANSFER_SYNTAX          syntax,
+                                   encapsulated_value_sink& dest );
+
 }
 
 

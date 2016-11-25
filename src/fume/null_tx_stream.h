@@ -42,7 +42,7 @@ public:
         return MC_NORMAL_COMPLETION;
     }
 
-    virtual uint64_t bytes_written() const override final
+    virtual uint64_t tell_write() const override final
     {
         return m_bytes_written;
     }
