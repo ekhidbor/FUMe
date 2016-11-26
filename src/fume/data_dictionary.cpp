@@ -23,6 +23,7 @@
 
 // local private
 #include "fume/data_dictionary.h"
+#include "fume/data_dictionary_search.h"
 #include "fume/library_context.h"
 #include "fume/value_representation.h"
 #include "fume/application.h"
@@ -94,6 +95,11 @@ bool data_dictionary::has_tag( uint32_t tag ) const
     return m_value_dict.count( tag ) > 0;
 }
 
+dictionary_iter data_dictionary::find( uint32_t tag )
+{
+    return m_value_dict.find( tag );
+}
+
 // NOTE: this internal function asserts that the Tag is valid. It
 // is intended as an internal function where the caller is absolutely
 // sure that the tag id is valid and an invalid tag id represents an
@@ -163,111 +169,22 @@ const value_representation* data_dictionary::at( uint32_t tag ) const
     return itr != m_value_dict.cend() ? itr->second.get() : nullptr;
 }
 
-MC_STATUS data_dictionary::set_empty( uint32_t tag )
+void data_dictionary::clear()
 {
-    MC_STATUS ret = MC_CANNOT_COMPLY;
-
-    const value_dict::iterator itr = m_value_dict.find( tag );
-
-    if( itr != m_value_dict.end() )
-    {
-        itr->second = nullptr;
-        ret = MC_NORMAL_COMPLETION;
-    }
-    else
-    {
-        ret = MC_INVALID_TAG;
-    }
-
-    return ret;
+    m_value_dict.clear();
 }
 
-void data_dictionary::set_all_empty()
+void data_dictionary::erase( dictionary_iter itr )
 {
-    for_each( m_value_dict.begin(),
-              m_value_dict.end(),
-              []( value_dict::reference val )
-              {
-                  val.second = nullptr;
-              } );
+    m_value_dict.erase( itr );
 }
 
-MC_STATUS data_dictionary::delete_attribute( uint32_t tag )
+void data_dictionary::erase( dictionary_iter begin, dictionary_iter end )
 {
-    MC_STATUS ret = MC_CANNOT_COMPLY;
-
-    const size_t elements_removed = m_value_dict.erase( tag );
-    // In case nonstandard VR, remove it from that list
-    m_nonstandard_vr_dict.erase( tag );
-
-    // Invalid tag if no elements removed
-    ret = elements_removed > 0 ? MC_NORMAL_COMPLETION : MC_INVALID_TAG;
-
-    return ret;
+    m_value_dict.erase( begin, end );
 }
 
-MC_STATUS data_dictionary::delete_range( uint32_t first_tag, uint32_t last_tag )
-{
-    MC_STATUS ret = MC_CANNOT_COMPLY;
-
-    if( first_tag <= last_tag )
-    {
-        const value_range& range( get_value_range( first_tag, last_tag ) );
-
-        m_value_dict.erase( range.begin(), range.end() );
-        ret = MC_NORMAL_COMPLETION;
-    }
-    else
-    {
-        ret = MC_INVALID_TAG;
-    }
-
-    return ret;
-}
-
-data_dictionary::const_value_range
-data_dictionary::get_value_range( uint32_t begin_tag, uint32_t end_tag ) const
-{
-    value_dict_const_itr itr_begin =
-        find_if( m_value_dict.begin(),
-                 m_value_dict.end(),
-                 [begin_tag]( value_dict::const_reference val )
-                 {
-                     return val.first >= begin_tag;
-                 } );
-    value_dict_const_itr itr_end =
-        find_if( itr_begin,
-                 m_value_dict.end(),
-                 [end_tag]( value_dict::const_reference val )
-                 {
-                     return val.first > end_tag;
-                 } );
-
-    return const_value_range( itr_begin, itr_end );
-}
-
-data_dictionary::value_range
-data_dictionary::get_value_range( uint32_t begin_tag, uint32_t end_tag )
-{
-    value_dict_itr itr_begin =
-        find_if( m_value_dict.begin(),
-                 m_value_dict.end(),
-                 [begin_tag]( value_dict::const_reference val )
-                 {
-                     return val.first >= begin_tag;
-                 } );
-    value_dict_itr itr_end =
-        find_if( itr_begin,
-                 m_value_dict.end(),
-                 [end_tag]( value_dict::const_reference val )
-                 {
-                     return val.first > end_tag;
-                 } );
-
-    return value_range( itr_begin, itr_end );
-}
-
-MC_STATUS data_dictionary::copy_values( const data_dictionary& source,
+MC_STATUS data_dictionary::copy_values( data_dictionary& source,
                                         const unsigned long*   tags )
 {
     if( tags != nullptr )
@@ -310,11 +227,13 @@ MC_STATUS data_dictionary::copy_values( const data_dictionary& source,
     return MC_NORMAL_COMPLETION;
 }
 
-void data_dictionary::copy_values( const data_dictionary& source,
+void data_dictionary::copy_values( data_dictionary& source,
                                    uint32_t               first_tag,
                                    uint32_t               last_tag )
 {
-    const const_value_range& range( source.get_value_range( first_tag, last_tag ) );
+    const dictionary_value_range& range( get_value_range( source,
+                                                          first_tag,
+                                                          last_tag ) );
 
     for( value_dict::const_reference source_elem : range )
     {
@@ -659,102 +578,6 @@ MC_STATUS data_dictionary::read_values_upto( rx_stream&      stream,
     return ret;
 }
 
-MC_STATUS data_dictionary::write_values( tx_stream&                 stream,
-                                         TRANSFER_SYNTAX            syntax,
-                                         int                        app_id,
-                                         value_dict::const_iterator begin,
-                                         value_dict::const_iterator end )
-{
-    MC_STATUS ret = MC_NORMAL_COMPLETION;
-
-    // should never happen
-    assert( g_context != nullptr );
-
-    const application* const app = g_context->get_application( app_id );
-
-    for( value_dict::const_iterator itr = begin;
-         itr != end && ret == MC_NORMAL_COMPLETION;
-         ++itr )
-    {
-        callback_parms_t callback =
-            app != nullptr ? app->get_callback_function( itr->first ) :
-                             callback_parms_t( nullptr, nullptr );
-
-        // Write an element if there is a Callback Function registered
-        // for this tag or if there is a value written to it
-        if( callback.first != nullptr || itr->second != nullptr )
-        {
-            // Write the tag number
-            ret = stream.write_tag( itr->first, syntax );
-            if( ret == MC_NORMAL_COMPLETION )
-            {
-                if( callback.first != nullptr )
-                {
-                    MC_VR tag_vr = UNKNOWN_VR;
-
-                    ret = get_vr_type( itr->first, tag_vr );
-                    if( ret == MC_NORMAL_COMPLETION )
-                    {
-                        ret = stream.write_vr( tag_vr, syntax );
-                        if( ret == MC_NORMAL_COMPLETION )
-                        {
-                            ret = write_vr_data_from_callback( stream,
-                                                               syntax,
-                                                               m_id,
-                                                               itr->first,
-                                                               callback );
-                        }
-                        else
-                        {
-                            // Do nothing. Will return error from 
-                        }
-                    }
-                    else
-                    {
-                        // Do nothing. Will return error from get_vr_type
-                    }
-                }
-                else if( itr->second != nullptr )
-                {
-                    // data_dictionary writes the VR. Techically the
-                    // value_representation class could do this, but writing it
-                    // here keeps symmetry between to_stream and from_stream
-                    // implementations (since data_dictionary has to read the
-                    // vr to be able to create the object). It also makes things
-                    // consistent between using the callback function and using
-                    // the value_representation.
-                    ret = stream.write_vr( itr->second->vr(), syntax );
-                    if( ret == MC_NORMAL_COMPLETION )
-                    {
-                        ret = itr->second->to_stream( stream, syntax );
-                    }
-                    else
-                    {
-                        // Do nothing. Will return error from write_vr
-                    }
-                }
-                else
-                {
-                    // Should be impossible
-                    assert( false );
-                }
-            }
-            else
-            {
-                // Do nothing. Will return error from write_tag
-            }
-        }
-        else
-        {
-            // a NULL value_representation pointer is defined as "not present
-            // in the message" provided there also is not a Callback Function
-            // registered for that tag. So do nothing
-        }
-    }
-
-    return ret;
-}
-
 MC_STATUS data_dictionary::get_vr_type( uint32_t tag, MC_VR& type )
 {
     MC_STATUS ret = MC_CANNOT_COMPLY;
@@ -787,7 +610,7 @@ MC_STATUS data_dictionary::get_vr_type( uint32_t tag, MC_VR& type )
     return ret;
 }
 
-data_dictionary::unique_vr_ptr data_dictionary::create_vr( uint32_t tag )
+unique_vr_ptr data_dictionary::create_vr( uint32_t tag )
 {
     unique_vr_ptr ret = nullptr;
 

@@ -119,7 +119,7 @@ int library_context::create_empty_file_object( const char* filename )
 
 int library_context::create_dicomdir_object( const char*        filename,
                                              const char*        fileset,
-                                             const file_object* template_file )
+                                             file_object* template_file )
 {
     // NOTE: error codes from this function are NEGATIVE because the
     // positive values indicate file IDs returned

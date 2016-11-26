@@ -67,7 +67,6 @@ public:
 protected:
     MC_STATUS write_file( tx_stream& stream, int app_id );
     MC_STATUS write_values( tx_stream& stream, int app_id );
-    using data_dictionary::write_values;
 
     MC_STATUS read_file_header( rx_stream& stream, int app_id );
 

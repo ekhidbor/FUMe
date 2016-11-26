@@ -19,6 +19,7 @@
 #include "fume/item_object.h"
 #include "fume/tx_stream.h"
 #include "fume/rx_stream.h"
+#include "fume/data_dictionary_io.h"
 
 namespace fume
 {
@@ -84,7 +85,7 @@ MC_STATUS item_object::to_stream( tx_stream&      stream,
         ret = write_item_size( stream, syntax );
         if( ret == MC_NORMAL_COMPLETION )
         {
-            ret = write_values( stream, syntax, begin(), end() );
+            ret = write_values( stream, syntax, *this, 0x00000000u, 0xFFFFFFFFu );
             if( ret == MC_NORMAL_COMPLETION )
             {
                 ret = write_item_delimitation( stream, syntax );

@@ -276,7 +276,7 @@ static MC_STATUS get_record_offsets( value_representation& record_sequence,
 
 dicomdir_object::dicomdir_object( int                    id,
                                   const char*            filename,
-                                  const data_dictionary* source,
+                                  data_dictionary* source,
                                   bool                   created_empty )
     : file_object( id, filename, created_empty )
 {

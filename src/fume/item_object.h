@@ -37,7 +37,7 @@ public:
 
     void empty_item()
     {
-        return set_all_empty();
+        return clear();
     }
 
     virtual MC_STATUS set_transfer_syntax( TRANSFER_SYNTAX syntax ) override final
@@ -55,9 +55,6 @@ public:
                                  TRANSFER_SYNTAX syntax ) override;
     virtual MC_STATUS from_stream( rx_stream&      stream,
                                    TRANSFER_SYNTAX syntax ) override;
-
-protected:
-    using data_dictionary::write_values;
 };
 
 }

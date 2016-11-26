@@ -29,7 +29,7 @@ class dicomdir_object : public file_object
 public:
     dicomdir_object( int                    id,
                      const char*            filename,
-                     const data_dictionary* source,
+                     data_dictionary* source,
                      bool                   created_empty );
     virtual ~dicomdir_object()
     {

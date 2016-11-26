@@ -32,6 +32,8 @@
 #include "fume/vrs/ob.h"
 #include "fume/library_context.h"
 #include "fume/transfer_syntax_to_uid.h"
+#include "fume/data_dictionary_search.h"
+#include "fume/data_dictionary_io.h"
 
 using std::memcpy;
 using std::strncpy;
@@ -382,7 +384,7 @@ MC_STATUS file_object::read_file_header( rx_stream& stream, int app_id )
 
 void file_object::empty_file()
 {
-    set_all_empty();
+    clear();
     m_preamble.fill( 0u );
 }
 
@@ -443,28 +445,26 @@ MC_STATUS file_object::get_transfer_syntax( TRANSFER_SYNTAX& syntax )
 
 MC_STATUS file_object::write_values( tx_stream& stream, int app_id )
 {
-    // Get iterators for all Group 2 attributes.
-    const const_value_range& group2_range( get_value_range( 0x00020000u,
-                                                            0x0002FFFFu ) );
-
     TRANSFER_SYNTAX syntax = INVALID_TRANSFER_SYNTAX;
     MC_STATUS ret = get_transfer_syntax( syntax );
     if( ret == MC_NORMAL_COMPLETION )
     {
         // Group 2 attributes are always written in Explicit Little Endian
         // transfer syntax
-        MC_STATUS ret = write_values( stream,
-                                      EXPLICIT_LITTLE_ENDIAN,
-                                      app_id,
-                                      group2_range.begin(),
-                                      group2_range.end() );
+        MC_STATUS ret = fume::write_values( stream,
+                                            EXPLICIT_LITTLE_ENDIAN,
+                                            *this,
+                                            app_id,
+                                            0x00020000u,
+                                            0x0002FFFFu );
         if( ret == MC_NORMAL_COMPLETION )
         {
-            ret = write_values( stream,
-                                syntax,
-                                app_id,
-                                group2_range.end(),
-                                end() );
+            ret = fume::write_values( stream,
+                                      syntax,
+                                      *this,
+                                      app_id,
+                                      0x00030000u,
+                                      0xFFFFFFFFu );
         }
         else
         {
@@ -484,15 +484,14 @@ MC_STATUS file_object::update_file_group_length()
     MC_STATUS ret = MC_CANNOT_COMPLY;
 
     null_tx_stream stream;
-    // Get iterators for all Group 2 attributes except group length
-    const const_value_range& group2_range( get_value_range( 0x00020001,
-                                                            0x0002FFFFu ) );
 
-    ret = write_values( stream,
-                        EXPLICIT_LITTLE_ENDIAN,
-                        -1,
-                        group2_range.begin(),
-                        group2_range.end() );
+    // Compute length for all Group 2 attributes except group length
+    ret = fume::write_values( stream,
+                              EXPLICIT_LITTLE_ENDIAN,
+                              *this,
+                              -1,
+                              0x00020001u,
+                              0x0002FFFFu );
     if( ret == MC_NORMAL_COMPLETION )
     {
         (*this)[MC_ATT_FILE_META_INFORMATION_GROUP_LENGTH].set

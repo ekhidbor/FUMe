@@ -49,7 +49,7 @@ public:
                             MC_COMMAND  command );
     int create_dicomdir_object( const char*        filename,
                                 const char*        fileset,
-                                const file_object* template_file );
+                                file_object* template_file );
     int create_empty_file_object( const char* filename );
 
     MC_STATUS free_file_object( int id );

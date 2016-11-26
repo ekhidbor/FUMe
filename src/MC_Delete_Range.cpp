@@ -20,13 +20,14 @@
 
 // local private
 #include "fume/library_context.h"
-#include "fume/data_dictionary.h"
+#include "fume/data_dictionary_search.h"
 
 using boost::numeric_cast;
 using boost::bad_numeric_cast;
 
 using fume::g_context;
 using fume::data_dictionary;
+using fume::erase_range;
 
 MC_STATUS MC_Delete_Range( int           MsgFileItemID,
                            unsigned long FirstTag,
@@ -41,8 +42,10 @@ MC_STATUS MC_Delete_Range( int           MsgFileItemID,
             data_dictionary* dict = g_context->get_object( MsgFileItemID );
             if( dict != nullptr )
             {
-                ret = dict->delete_range( numeric_cast<uint32_t>( FirstTag ),
-                                          numeric_cast<uint32_t>( LastTag ) );
+                erase_range( *dict,
+                             numeric_cast<uint32_t>( FirstTag ),
+                             numeric_cast<uint32_t>( LastTag ) );
+                ret = MC_NORMAL_COMPLETION;
             }
             else
             {

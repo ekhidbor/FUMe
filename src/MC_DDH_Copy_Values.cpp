@@ -30,7 +30,7 @@ MC_STATUS MC_DDH_Copy_Values( int SourceID, int DestID, unsigned long* TagList )
     {
         if( g_context != nullptr )
         {
-            const data_dictionary* src = g_context->get_object( SourceID );
+            data_dictionary* src = g_context->get_object( SourceID );
             data_dictionary* dst = g_context->get_object( DestID );
             if( src != nullptr && dst != nullptr )
             {

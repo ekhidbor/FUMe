@@ -20,13 +20,14 @@
 
 // local private
 #include "fume/library_context.h"
-#include "fume/data_dictionary.h"
+#include "fume/data_dictionary_search.h"
 
 using boost::numeric_cast;
 using boost::bad_numeric_cast;
 
 using fume::g_context;
 using fume::data_dictionary;
+using fume::erase_tag;
 
 MC_STATUS MC_Set_Value_To_Empty( int MsgFileItemID, unsigned long Tag )
 {
@@ -39,7 +40,9 @@ MC_STATUS MC_Set_Value_To_Empty( int MsgFileItemID, unsigned long Tag )
             data_dictionary* dict = g_context->get_object( MsgFileItemID );
             if( dict != nullptr )
             {
-                ret = dict->set_empty( numeric_cast<uint32_t>( Tag ) );
+                const bool value_erased =
+                    erase_tag( *dict, numeric_cast<uint32_t>( Tag ) );
+                ret = value_erased ? MC_NORMAL_COMPLETION : MC_INVALID_TAG;
             }
             else
             {
