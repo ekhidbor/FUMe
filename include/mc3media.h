@@ -113,6 +113,13 @@ MCEXPORT MC_STATUS MC_Open_File( int              ApplicationID,
                                  void*            UserInfo,
                                  ReadFileCallback YourFromMediaFunction );
 
+MCEXPORT MC_STATUS MC_Open_File_Upto_Tag( int              ApplicationID,
+                                          int              FileID,
+                                          void*            UserInfo,
+                                          unsigned long    Tag,
+                                          long*            Offset,
+                                          ReadFileCallback YourFromMediaFunction );
+
 MCEXPORT MC_STATUS MC_Write_File( int               FileID,
                                   int               NumBytes,
                                   void*             UserInfo,
