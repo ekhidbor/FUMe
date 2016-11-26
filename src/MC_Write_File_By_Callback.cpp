@@ -18,9 +18,11 @@
 /// local private
 #include "fume/library_context.h"
 #include "fume/file_object.h"
+#include "fume/file_object_io.h"
 
 using fume::g_context;
 using fume::file_object;
+using fume::write_file;
 
 MC_STATUS MC_Write_File_By_Callback( int               ApplicationID,
                                      int               FileID,
@@ -38,7 +40,8 @@ MC_STATUS MC_Write_File_By_Callback( int               ApplicationID,
                 dynamic_cast<file_object*>( g_context->get_object( FileID ) );
             if( file != nullptr )
             {
-                ret = file->write( ApplicationID,
+                ret = write_file( *file,
+                                   ApplicationID,
                                    NumBytes,
                                    UserInfo,
                                    YourToMediaFunction );

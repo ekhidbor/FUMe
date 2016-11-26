@@ -18,9 +18,11 @@
 /// local private
 #include "fume/library_context.h"
 #include "fume/file_object.h"
+#include "fume/file_object_io.h"
 
 using fume::g_context;
 using fume::file_object;
+using fume::open_file;
 
 MC_STATUS MC_Open_File( int              ApplicationID,
                         int              FileID,
@@ -37,9 +39,10 @@ MC_STATUS MC_Open_File( int              ApplicationID,
                 dynamic_cast<file_object*>( g_context->get_object( FileID ) );
             if( file != nullptr )
             {
-                ret = file->open( ApplicationID,
-                                  UserInfo,
-                                  YourFromMediaFunction );
+                ret = open_file( *file,
+                                 ApplicationID,
+                                 UserInfo,
+                                 YourFromMediaFunction );
             }
             else
             {

@@ -15,11 +15,9 @@
 #include <cstdint>
 #include <string>
 #include <array>
-#include <memory>
 
 // local public
 #include "mcstatus.h"
-#include "mc3media.h"
 
 // local private
 #include "fume/data_dictionary.h"
@@ -27,59 +25,30 @@
 namespace fume
 {
 
-class tx_stream;
-class rx_stream;
-
 class file_object : public data_dictionary
 {
 public:
     file_object( int id, const char* filename, bool created_empty );
     virtual ~file_object();
 
-    MC_STATUS write( int               alignment,
-                     void*             user_info,
-                     WriteFileCallback callback )
-    {
-        return write( application_id(), alignment, user_info, callback );
-    }
-
-    MC_STATUS write( int               app_id,
-                     int               alignment,
-                     void*             user_info,
-                     WriteFileCallback callback );
-
-    // TODO: Add all variants of this function
-    MC_STATUS open( int              app_id,
-                    void*            user_info,
-                    ReadFileCallback callback );
-
     MC_STATUS set_preamble( const void* preamble );
     MC_STATUS get_preamble( void* preamble ) const;
 
     MC_STATUS reset_filename( const char* filename );
     MC_STATUS get_filename( char* filename, int filesize ) const;
+    const std::string& get_filename() const
+    {
+        return m_filename;
+    }
 
     void empty_file();
 
     virtual MC_STATUS set_transfer_syntax( TRANSFER_SYNTAX syntax ) override final;
     virtual MC_STATUS get_transfer_syntax( TRANSFER_SYNTAX& syntax ) override final;
 
-protected:
-    MC_STATUS write_file( tx_stream& stream, int app_id );
-    MC_STATUS write_values( tx_stream& stream, int app_id );
-
-    MC_STATUS read_file_header( rx_stream& stream, int app_id );
-
-private:
-    MC_STATUS fill_group_2_attributes();
-    MC_STATUS update_file_group_length();
-
 private:
     std::string              m_filename;
     std::array<uint8_t, 128> m_preamble;
-
-    // Needs to be a member data to implement the "upto" functions
-    std::unique_ptr<rx_stream> m_rx_stream;
 };
 
 }

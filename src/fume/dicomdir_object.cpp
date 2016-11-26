@@ -26,6 +26,7 @@
 #include "fume/value_representation.h"
 #include "fume/record_object.h"
 #include "fume/data_dictionary_search.h"
+#include "fume/file_object_io.h"
 
 using std::unordered_map;
 
@@ -305,7 +306,7 @@ MC_STATUS dicomdir_object::update()
     // Update all offset values using the NULL stream.
     // Note we don't use the callback function. There shouldn't
     // be anything in a DICOMDIR which would use a callback
-    MC_STATUS ret = write_file( null_stream, -1 );
+    MC_STATUS ret = write_file( null_stream, *this, -1 );
     if( ret == MC_NORMAL_COMPLETION )
     {
         offset_map_t record_offsets;
@@ -317,7 +318,10 @@ MC_STATUS dicomdir_object::update()
             if( ret == MC_NORMAL_COMPLETION )
             {
                 FILE* f = nullptr;
-                ret = write( 0, static_cast<void*>( &f ), write_using_stdio );
+                ret = write_file( *this,
+                                  0,
+                                  static_cast<void*>( &f ),
+                                  write_using_stdio );
             }
             else
             {

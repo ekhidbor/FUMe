@@ -17,15 +17,14 @@
 
 // local public
 #include "mcstatus.h"
-
-// local private
-#include "fume/data_dictionary_types.h"
+#include "mc3msg.h"
 
 namespace fume
 {
 
 class tx_stream;
 class rx_stream;
+class data_dictionary;
 
 MC_STATUS write_values( tx_stream&       stream,
                         TRANSFER_SYNTAX  syntax,
