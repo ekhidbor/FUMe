@@ -95,7 +95,7 @@ private:
 
 private:
     value_dict          m_value_dict;
-    int                 m_id;
+    const int           m_id;
     bool                m_created_empty;
     nonstandard_vr_dict m_nonstandard_vr_dict;
     int                 m_application_id;
