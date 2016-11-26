@@ -19,9 +19,6 @@
 #include <utility>
 #include <functional>
 
-// boost
-#include "boost/range/iterator_range.hpp"
-
 // local public
 #include "mcstatus.h"
 #include "mc3msg.h"
@@ -33,15 +30,7 @@ namespace fume
 {
 
 class value_representation;
-class tx_stream;
 class rx_stream;
-
-typedef std::unique_ptr<value_representation>       unique_vr_ptr;
-typedef std::map<uint32_t, unique_vr_ptr>           value_dict;
-typedef value_dict::const_iterator                  value_dict_const_itr;
-typedef value_dict::iterator                        value_dict_itr;
-typedef boost::iterator_range<value_dict_const_itr> const_value_range;
-typedef boost::iterator_range<value_dict_itr>       value_range;
 
 class data_dictionary
 {
@@ -82,12 +71,7 @@ public:
 
     MC_STATUS get_vr_type( uint32_t tag, MC_VR& type );
 
-    MC_STATUS copy_values( data_dictionary&     source,
-                           const unsigned long* tags );
-
-    void copy_values( data_dictionary& source,
-                      uint32_t         first_tag,
-                      uint32_t         last_tag );
+    void insert( value_dict&& new_vals );
 
     bool created_empty() const
     {

@@ -10,6 +10,7 @@
  */
 
 // std
+#include <cassert>
 
 // local public
 #include "mcstatus.h"

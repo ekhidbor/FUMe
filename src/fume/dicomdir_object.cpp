@@ -25,6 +25,7 @@
 #include "fume/null_tx_stream.h"
 #include "fume/value_representation.h"
 #include "fume/record_object.h"
+#include "fume/data_dictionary_search.h"
 
 using std::unordered_map;
 
@@ -286,7 +287,7 @@ dicomdir_object::dicomdir_object( int                    id,
         // TODO: remove when we have message templates based on IOD type
         // Do before we assign DICOMDIR values to prevent these values from
         // overwriting ours
-        copy_values( *source, 0x00020000u, 0x0004FFFFu );
+        copy_values( *this, *source, 0x00020000u, 0x0004FFFFu );
     }
 
     (*this)[MC_ATT_OFFSET_OF_THE_FIRST_DIRECTORY_RECORD_OF_THE_ROOT_DIRECTORY_ENTITY].set( 0u );

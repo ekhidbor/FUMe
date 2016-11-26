@@ -39,6 +39,11 @@ MC_STATUS write_values( tx_stream&           stream,
                         uint32_t             start_tag,
                         uint32_t             end_tag );
 
+MC_STATUS write_values( tx_stream&           stream,
+                        TRANSFER_SYNTAX      syntax,
+                        data_dictionary&     dict,
+                        int                  app_id );
+
 }
 
 #endif

@@ -17,10 +17,11 @@
 
 // local private
 #include "fume/library_context.h"
-#include "fume/data_dictionary.h"
+#include "fume/data_dictionary_search.h"
 
 using fume::g_context;
 using fume::data_dictionary;
+using fume::copy_values;
 
 MC_STATUS MC_DDH_Copy_Values( int SourceID, int DestID, unsigned long* TagList )
 {
@@ -34,7 +35,8 @@ MC_STATUS MC_DDH_Copy_Values( int SourceID, int DestID, unsigned long* TagList )
             data_dictionary* dst = g_context->get_object( DestID );
             if( src != nullptr && dst != nullptr )
             {
-                ret = dst->copy_values( *src, TagList );
+                copy_values( *dst, *src, TagList );
+                ret = MC_NORMAL_COMPLETION;
             }
             else
             {

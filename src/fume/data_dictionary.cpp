@@ -13,10 +13,6 @@
 #include <cassert>
 #include <memory>
 #include <limits>
-#include <algorithm>
-
-// boost
-#include "boost/numeric/conversion/cast.hpp"
 
 // local public
 #include "diction.h"
@@ -26,20 +22,13 @@
 #include "fume/data_dictionary_search.h"
 #include "fume/library_context.h"
 #include "fume/value_representation.h"
-#include "fume/application.h"
-#include "fume/tx_stream.h"
-#include "fume/rx_stream.h"
 #include "fume/source_callback_io.h"
 #include "fume/vr_factory.h"
 #include "fume/vr_field.h"
+#include "fume/rx_stream.h"
 
 using std::numeric_limits;
-using std::for_each;
-using std::find_if;
 using std::unique_ptr;
-
-using boost::numeric_cast;
-using boost::bad_numeric_cast;
 
 namespace fume
 {
@@ -184,66 +173,6 @@ void data_dictionary::erase( dictionary_iter begin, dictionary_iter end )
     m_value_dict.erase( begin, end );
 }
 
-MC_STATUS data_dictionary::copy_values( data_dictionary& source,
-                                        const unsigned long*   tags )
-{
-    if( tags != nullptr )
-    {
-        for( size_t i = 0; tags[i] != 0; ++i )
-        {
-            try
-            {
-                const uint32_t tag_u32 = numeric_cast<uint32_t>( tags[i] );
-                // If this is a group length tag (has a elemt ID of 9)
-                if( (tag_u32 & 0x0000FFFFu) == 0 )
-                {
-                    // Copy all tags with that group ID
-                    const uint32_t tag_start = tag_u32 & 0xFFFF0000u;
-                    const uint32_t tag_end   = tag_u32 | 0x0000FFFFu;
-
-                    copy_values( source, tag_start, tag_end );
-                }
-                else
-                {
-                    const value_representation* vr = source.at( tag_u32 );
-                    if( vr != nullptr )
-                    {
-                        m_value_dict[tag_u32] = vr->clone();
-                    }
-                }
-            }
-            catch( const bad_numeric_cast& )
-            {
-                // Just ignore like any other tag not present in the message
-            }
-        }
-    }
-    else
-    {
-        // Copy all
-        copy_values( source, 0x00000000, 0xFFFFFFFF );
-    }
-
-    return MC_NORMAL_COMPLETION;
-}
-
-void data_dictionary::copy_values( data_dictionary& source,
-                                   uint32_t               first_tag,
-                                   uint32_t               last_tag )
-{
-    const dictionary_value_range& range( get_value_range( source,
-                                                          first_tag,
-                                                          last_tag ) );
-
-    for( value_dict::const_reference source_elem : range )
-    {
-        if( source_elem.second != nullptr )
-        {
-            m_value_dict[source_elem.first] = source_elem.second->clone();
-        }
-    }
-}
-
 MC_STATUS data_dictionary::add_standard_attribute( uint32_t tag )
 {
     MC_STATUS ret = MC_CANNOT_COMPLY;
@@ -335,6 +264,23 @@ MC_STATUS data_dictionary::set_callbacks( int application_id )
     }
 
     return ret;
+}
+
+void data_dictionary::insert( value_dict&& values )
+{
+    value_dict tmp_values( move( values ) );
+
+    for( value_dict::reference source_elem : tmp_values )
+    {
+        if( source_elem.second != nullptr )
+        {
+            m_value_dict[source_elem.first].swap( source_elem.second );
+        }
+        else
+        {
+            // If value is NULL do not modify original value
+        }
+    }
 }
 
 MC_STATUS data_dictionary::read_values_from_item( rx_stream&      stream,
