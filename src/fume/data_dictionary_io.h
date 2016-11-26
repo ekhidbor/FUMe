@@ -25,6 +25,7 @@ namespace fume
 {
 
 class tx_stream;
+class rx_stream;
 
 MC_STATUS write_values( tx_stream&       stream,
                         TRANSFER_SYNTAX  syntax,
@@ -43,6 +44,23 @@ MC_STATUS write_values( tx_stream&           stream,
                         TRANSFER_SYNTAX      syntax,
                         data_dictionary&     dict,
                         int                  app_id );
+
+MC_STATUS read_values_from_item( rx_stream&       stream,
+                                 TRANSFER_SYNTAX  syntax,
+                                 data_dictionary& dict,
+                                 int              app_id,
+                                 uint32_t         size );
+
+MC_STATUS read_values( rx_stream&       stream,
+                       TRANSFER_SYNTAX  syntax,
+                       data_dictionary& dict,
+                       int              app_id );
+
+MC_STATUS read_values_upto( rx_stream&       stream,
+                            TRANSFER_SYNTAX  syntax,
+                            data_dictionary& dict,
+                            int              app_id,
+                            uint32_t         end_tag );
 
 }
 

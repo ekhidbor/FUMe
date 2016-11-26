@@ -279,7 +279,7 @@ MC_STATUS file_object::open( int              app_id,
                 ret = get_transfer_syntax( syntax );
                 if( ret == MC_NORMAL_COMPLETION )
                 {
-                    ret = read_values( stream, syntax, app_id );
+                    ret = read_values( stream, syntax, *this, app_id );
                 }
                 else
                 {
@@ -297,7 +297,7 @@ MC_STATUS file_object::open( int              app_id,
             ret = get_transfer_syntax( syntax );
             if( ret == MC_NORMAL_COMPLETION )
             {
-                ret = read_values( *m_rx_stream, syntax, app_id );
+                ret = read_values( *m_rx_stream, syntax, *this, app_id );
             }
             else
             {
@@ -361,6 +361,7 @@ MC_STATUS file_object::read_file_header( rx_stream& stream, int app_id )
                 // Read the Group 2 elements in explicit little endian
                 ret = read_values_upto( stream,
                                         EXPLICIT_LITTLE_ENDIAN,
+                                        *this,
                                         app_id,
                                         0x0002FFFFu );
             }

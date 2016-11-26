@@ -13,11 +13,6 @@
 
 // std
 #include <cstdint>
-#include <map>
-#include <unordered_map>
-#include <memory>
-#include <utility>
-#include <functional>
 
 // local public
 #include "mcstatus.h"
@@ -30,7 +25,6 @@ namespace fume
 {
 
 class value_representation;
-class rx_stream;
 
 class data_dictionary
 {
@@ -92,22 +86,6 @@ public:
     {
         return m_application_id;
     }
-
-protected:
-
-    MC_STATUS read_values_from_item( rx_stream&      stream,
-                                     TRANSFER_SYNTAX syntax,
-                                     int             app_id,
-                                     uint32_t        size );
-
-    MC_STATUS read_values( rx_stream&      stream,
-                           TRANSFER_SYNTAX syntax,
-                           int             app_id );
-
-    MC_STATUS read_values_upto( rx_stream&      stream,
-                                TRANSFER_SYNTAX syntax,
-                                int             app_id,
-                                uint32_t        end_tag );
 
 private:
     data_dictionary( const data_dictionary& );
