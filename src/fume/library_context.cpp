@@ -17,9 +17,6 @@
 #include <algorithm>
 #include <string>
 
-// boost
-#include "boost/numeric/conversion/cast.hpp"
-
 // local public
 #include "mc3msg.h"
 
@@ -31,6 +28,7 @@
 #include "fume/item_object.h"
 #include "fume/record_object.h"
 #include "fume/vr_factory.h"
+#include "fume/value_representation.h"
 
 using std::numeric_limits;
 using std::unordered_map;
@@ -41,10 +39,6 @@ using std::all_of;
 using std::pair;
 using std::string;
 using std::default_random_engine;
-
-using boost::bimap;
-using boost::numeric_cast;
-using boost::bad_numeric_cast;
 
 namespace fume
 {
@@ -250,7 +244,7 @@ unique_ptr<value_representation>
 library_context::create_vr( uint32_t         tag,
                             data_dictionary* dict ) const
 {
-    unique_vr_ptr_t ret = nullptr;
+    unique_vr_ptr ret = nullptr;
 
     MC_VR type = UNKNOWN_VR;
     unsigned short min_vals = 0;

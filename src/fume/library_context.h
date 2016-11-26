@@ -27,7 +27,6 @@
 #include "mcstatus.h"
 
 // local private
-#include "fume/value_representation.h"
 #include "fume/tag_to_vr.h"
 #include "fume/configuration_maps.h"
 
@@ -37,6 +36,7 @@ namespace fume
 class data_dictionary;
 class file_object;
 class application;
+class value_representation;
 
 class library_context
 {

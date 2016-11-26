@@ -32,6 +32,9 @@ namespace fume
 namespace vrs
 {
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-function"
+
 template<class T>
 static size_t get_value_size( const std::deque<T>& val )
 {
@@ -71,6 +74,8 @@ static size_t get_new_size( const std::deque<std::string>& values,
     // the size of the new value
     return values.empty() ? val.size() : get_value_size( values ) + 1 + val.size();
 }
+
+#pragma GCC diagnostic pop
 
 template<class T, size_t MaxSize>
 class vr_value_list

@@ -49,12 +49,12 @@
 namespace fume
 {
 
-unique_vr_ptr_t create_vr( MC_VR        vr,
-                           unsigned int min_vals,
-                           unsigned int max_vals,
-                           unsigned int multiple )
+std::unique_ptr<value_representation> create_vr( MC_VR        vr,
+                                                 unsigned int min_vals,
+                                                 unsigned int max_vals,
+                                                 unsigned int multiple )
 {
-    unique_vr_ptr_t ret = nullptr;
+    std::unique_ptr<value_representation> ret = nullptr;
 
     switch( vr )
     {

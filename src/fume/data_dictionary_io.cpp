@@ -18,14 +18,16 @@
 #include "diction.h"
 
 // local private
-#include "fume/data_dictionary_io.h"
-#include "fume/data_dictionary_search.h"
 #include "fume/data_dictionary.h"
+#include "fume/value_representation.h"
 #include "fume/application.h"
 #include "fume/tx_stream.h"
 #include "fume/rx_stream.h"
 #include "fume/library_context.h"
 #include "fume/source_callback_io.h"
+#include "fume/sink_callback_io.h"
+#include "fume/data_dictionary_io.h"
+#include "fume/data_dictionary_search.h"
 #include "fume/vr_factory.h"
 
 namespace fume
@@ -42,6 +44,13 @@ static MC_STATUS write_values( tx_stream&       stream,
                                int              app_id,
                                dictionary_iter  begin,
                                dictionary_iter  end );
+
+static MC_STATUS read_element( rx_stream&         stream,
+                               TRANSFER_SYNTAX    syntax,
+                               uint32_t           tag,
+                               int                dict_id,
+                               value_dict&        dict,
+                               const application* app );
 
 MC_STATUS write_values( tx_stream&           stream,
                         TRANSFER_SYNTAX      syntax,
@@ -174,6 +183,8 @@ MC_STATUS read_values_from_item( rx_stream&       stream,
     MC_STATUS ret = MC_NORMAL_COMPLETION;
     bool graceful_end_of_data = false;
 
+    const application* const app = g_context->get_application( app_id );
+
     value_dict tmp_value_dict;
 
     while( ret == MC_NORMAL_COMPLETION &&
@@ -187,28 +198,12 @@ MC_STATUS read_values_from_item( rx_stream&       stream,
                 tag != MC_ATT_ITEM                       &&
                 tag != MC_ATT_SEQUENCE_DELIMITATION_ITEM )
             {
-                unique_vr_ptr element;
-                ret = create_vr_from_stream( stream, syntax, tag, element );
-                if( ret == MC_NORMAL_COMPLETION && element != nullptr )
-                {
-                    ret = element->from_stream( stream, syntax );
-                    if( ret == MC_NORMAL_COMPLETION )
-                    {
-                        tmp_value_dict[tag].swap( element );
-                    }
-                    else
-                    {
-                        // Do nothing. Will return error
-                    }
-                }
-                else if( element == nullptr )
-                {
-                    ret = MC_INVALID_TAG;
-                }
-                else
-                {
-                    // Do nothing. Will return error
-                }
+                ret = read_element( stream,
+                                    syntax,
+                                    tag,
+                                    dict.id(),
+                                    tmp_value_dict,
+                                    app );
             }
             // If we've reached an item delimiter
             else if( tag == MC_ATT_ITEM_DELIMITATION_ITEM )
@@ -252,6 +247,8 @@ MC_STATUS read_values( rx_stream&       stream,
     MC_STATUS ret = MC_NORMAL_COMPLETION;
     bool graceful_end_of_data = false;
 
+    const application* const app = g_context->get_application( app_id );
+
     value_dict tmp_value_dict;
 
     while( ret == MC_NORMAL_COMPLETION )
@@ -264,28 +261,12 @@ MC_STATUS read_values( rx_stream&       stream,
                 tag != MC_ATT_ITEM                       &&
                 tag != MC_ATT_SEQUENCE_DELIMITATION_ITEM )
             {
-                unique_vr_ptr element;
-                ret = create_vr_from_stream( stream, syntax, tag, element );
-                if( ret == MC_NORMAL_COMPLETION && element != nullptr )
-                {
-                    ret = element->from_stream( stream, syntax );
-                    if( ret == MC_NORMAL_COMPLETION )
-                    {
-                        tmp_value_dict[tag].swap( element );
-                    }
-                    else
-                    {
-                        // Do nothing. Will return error
-                    }
-                }
-                else if( element == nullptr )
-                {
-                    ret = MC_INVALID_TAG;
-                }
-                else
-                {
-                    // Do nothing. Will return error
-                }
+                ret = read_element( stream,
+                                    syntax,
+                                    tag,
+                                    dict.id(),
+                                    tmp_value_dict,
+                                    app );
             }
             else
             {
@@ -321,6 +302,8 @@ MC_STATUS read_values_upto( rx_stream&       stream,
     MC_STATUS ret = MC_NORMAL_COMPLETION;
     bool graceful_end_of_data = false;
 
+    const application* const app = g_context->get_application( app_id );
+
     value_dict tmp_value_dict;
 
     while( MC_NORMAL_COMPLETION == ret )
@@ -338,28 +321,12 @@ MC_STATUS read_values_upto( rx_stream&       stream,
                     // This shouldn't fail if the peek succeeded
                     (void)stream.read_tag( tag, syntax );
 
-                    unique_vr_ptr element;
-                    ret = create_vr_from_stream( stream, syntax, tag, element );
-                    if( ret == MC_NORMAL_COMPLETION && element != nullptr )
-                    {
-                        ret = element->from_stream( stream, syntax );
-                        if( ret == MC_NORMAL_COMPLETION )
-                        {
-                            tmp_value_dict[tag].swap( element );
-                        }
-                        else
-                        {
-                            // Do nothing. Will return error
-                        }
-                    }
-                    else if( element == nullptr )
-                    {
-                        ret = MC_INVALID_TAG;
-                    }
-                    else
-                    {
-                        // Do nothing. Will return error
-                    }
+                    ret = read_element( stream,
+                                        syntax,
+                                        tag,
+                                        dict.id(),
+                                        tmp_value_dict,
+                                        app );
                 }
                 else
                 {
@@ -427,5 +394,62 @@ MC_STATUS create_vr_from_stream( rx_stream&      stream,
     return ret;
 }
 
+MC_STATUS read_element( rx_stream&         stream,
+                        TRANSFER_SYNTAX    syntax,
+                        uint32_t           tag,
+                        int                dict_id,
+                        value_dict&        dict,
+                        const application* app )
+{
+    MC_STATUS ret = MC_CANNOT_COMPLY;
+
+    callback_parms_t callback =
+        app != nullptr ? app->get_callback_function( tag ) :
+                         callback_parms_t( nullptr, nullptr );
+    if( callback.first != nullptr )
+    {
+        MC_VR vr = UNKNOWN_VR;
+        ret = stream.read_vr( vr, syntax );
+        if( ret == MC_NORMAL_COMPLETION )
+        {
+            ret = read_vr_data_to_callback( stream,
+                                            syntax,
+                                            dict_id,
+                                            tag,
+                                            callback );
+        }
+        else
+        {
+            // Do nothing. Will return error
+        }
+    }
+    else
+    {
+        unique_vr_ptr element;
+        ret = create_vr_from_stream( stream, syntax, tag, element );
+        if( ret == MC_NORMAL_COMPLETION && element != nullptr )
+        {
+            ret = element->from_stream( stream, syntax );
+            if( ret == MC_NORMAL_COMPLETION )
+            {
+                dict[tag].swap( element );
+            }
+            else
+            {
+                // Do nothing. Will return error
+            }
+        }
+        else if( element == nullptr )
+        {
+            ret = MC_INVALID_TAG;
+        }
+        else
+        {
+            // Do nothing. Will return error
+        }
+    }
+
+    return ret;
+}
 
 }

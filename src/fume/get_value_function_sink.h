@@ -18,7 +18,7 @@
 #include "mcstatus.h"
 
 // local private
-#include "fume/value_representation.h"
+#include "fume/value_representation_types.h"
 #include "fume/encapsulated_value_sink.h"
 
 namespace fume

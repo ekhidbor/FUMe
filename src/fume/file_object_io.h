@@ -44,7 +44,12 @@ MC_STATUS open_file( file_object&     file,
                      void*            user_info,
                      ReadFileCallback callback );
 
-MC_STATUS read_file_header( rx_stream& stream, file_object& file, int app_id );
+MC_STATUS open_file_upto( file_object&     file,
+                          int              app_id,
+                          uint32_t         end_tag,
+                          uint64_t&        offset,
+                          void*            user_info,
+                          ReadFileCallback callback );
 
 }
 

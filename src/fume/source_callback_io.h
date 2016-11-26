@@ -21,7 +21,7 @@
 
 // local private
 #include "fume/application.h"
-#include "fume/value_representation.h"
+#include "fume/value_representation_types.h"
 
 namespace fume
 {

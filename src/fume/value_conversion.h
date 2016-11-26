@@ -13,9 +13,6 @@
 // local public
 #include "mcstatus.h"
 
-// local private
-#include "fume/value_representation.h"
-
 namespace fume
 {
 

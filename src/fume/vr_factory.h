@@ -17,18 +17,15 @@
 // local public
 #include "mc3msg.h"
 
-// local private
-#include "fume/value_representation.h"
-
 namespace fume
 {
 
-typedef std::unique_ptr<value_representation> unique_vr_ptr_t;
+class value_representation;
 
-unique_vr_ptr_t create_vr( MC_VR        vr,
-                           unsigned int min_vals,
-                           unsigned int max_vals,
-                           unsigned int multiple );
+std::unique_ptr<value_representation> create_vr( MC_VR        vr,
+                                                 unsigned int min_vals,
+                                                 unsigned int max_vals,
+                                                 unsigned int multiple );
 
 } // namespace fume
 

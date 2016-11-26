@@ -23,6 +23,7 @@
 #include "fume/file_object.h"
 #include "fume/tx_stream.h"
 #include "fume/rx_stream.h"
+#include "fume/value_representation.h"
 #include "fume/null_tx_stream.h"
 #include "fume/file_tx_stream.h"
 #include "fume/file_rx_stream.h"
@@ -45,6 +46,10 @@ static MC_STATUS update_file_group_length( data_dictionary& dict );
 static MC_STATUS write_file_values( tx_stream&       stream,
                                     data_dictionary& dict,
                                     int              app_id );
+
+static MC_STATUS read_file_header( rx_stream&   stream,
+                                   file_object& file,
+                                   int          app_id );
 
 // This array is written after the preamble. It is not
 // NULL-terminated and therefore should not be treated
@@ -321,6 +326,18 @@ MC_STATUS open_file( file_object&     file,
                      void*            user_info,
                      ReadFileCallback callback )
 {
+    uint64_t offset = 0;
+
+    return open_file_upto( file, app_id, 0xFFFFFFFFu, offset, user_info, callback );
+}
+
+MC_STATUS open_file_upto( file_object&     file,
+                          int              app_id,
+                          uint32_t         end_tag,
+                          uint64_t&        offset,
+                          void*            user_info,
+                          ReadFileCallback callback )
+{
     MC_STATUS ret = MC_CANNOT_COMPLY;
 
     if( callback != nullptr )
@@ -335,7 +352,15 @@ MC_STATUS open_file( file_object&     file,
             ret = file.get_transfer_syntax( syntax );
             if( ret == MC_NORMAL_COMPLETION )
             {
-                ret = read_values( stream, syntax, file, app_id );
+                ret = read_values_upto( stream, syntax, file, app_id, end_tag );
+                if( ret == MC_NORMAL_COMPLETION )
+                {
+                    offset = stream.tell_read();
+                }
+                else
+                {
+                    // Do nothing. Will return error
+                }
             }
             else
             {

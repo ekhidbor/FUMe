@@ -12,40 +12,17 @@
  */
 
 // std
-#include <utility>
 #include <memory>
 
 // local public
 #include "mcstatus.h"
-#include "mc3msg.h"
 
 // local private
 #include "fume/serializable.h"
+#include "fume/value_representation_types.h"
 
 namespace fume
 {
-
-typedef std::pair<const void*, unsigned long> set_buf_parms;
-typedef std::pair<      void*, unsigned long> get_buf_parms;
-
-typedef std::pair<MC_UChar*, MC_size_t> get_ustring_parms;
-typedef std::pair<char*,     MC_size_t> get_string_parms;
-
-struct set_func_parms
-{
-    SetValueCallback callback;
-    void*            callback_parm;
-    int              message_id;
-    unsigned long    tag;
-};
-
-struct get_func_parms
-{
-    GetValueCallback callback;
-    void*            callback_parm;
-    int              message_id;
-    unsigned long    tag;
-};
 
 class value_representation : public serializable
 {
