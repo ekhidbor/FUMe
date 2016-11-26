@@ -5,6 +5,7 @@ RAGEL   ?= ragel
 
 CXXFLAGS  = -std=c++11                  \
             -Wall                       \
+            -Werror                     \
             -pedantic                   \
             -O3                         \
             -fomit-frame-pointer        \
