@@ -373,7 +373,16 @@ MC_STATUS create_vr_from_stream( rx_stream&      stream,
     if( syntax != IMPLICIT_LITTLE_ENDIAN )
     {
         MC_VR vr = UNKNOWN_VR;
-        ret = stream.read_vr( vr, syntax );
+        if( syntax != IMPLICIT_LITTLE_ENDIAN )
+        {
+            ret = stream.read_vr( vr, syntax );
+        }
+        else
+        {
+            assert( g_context != nullptr );
+            ret = g_context->get_vr_type( tag, nullptr, vr );
+        }
+
         if( ret == MC_NORMAL_COMPLETION )
         {
             element = create_vr( vr, 1, 1, 1 );
@@ -408,8 +417,16 @@ MC_STATUS read_element( rx_stream&         stream,
                          callback_parms_t( nullptr, nullptr );
     if( callback.first != nullptr )
     {
-        MC_VR vr = UNKNOWN_VR;
-        ret = stream.read_vr( vr, syntax );
+        if( syntax != IMPLICIT_LITTLE_ENDIAN )
+        {
+            MC_VR vr = UNKNOWN_VR;
+            ret = stream.read_vr( vr, syntax );
+        }
+        else
+        {
+            ret = MC_NORMAL_COMPLETION;
+        }
+
         if( ret == MC_NORMAL_COMPLETION )
         {
             ret = read_vr_data_to_callback( stream,
